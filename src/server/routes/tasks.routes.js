@@ -1,5 +1,5 @@
 const express = require('express');
-const { createTask, getAllTasks, updateTask, deleteTask } = require('../services/tasks.service');
+const { createTask, getAllTasks, updateTask, deleteTask, reorderTasks } = require('../services/tasks.service');
 const logger = require('../logger');
 
 const router = express.Router();
@@ -48,6 +48,29 @@ router.get('/api/tasks', (_req, res) => {
   } catch (err) {
     logger.error({ err: err.message }, 'Failed to retrieve tasks');
     res.status(500).json({ error: true, message: 'Failed to retrieve tasks.', code: 'INTERNAL_ERROR' });
+  }
+});
+
+/**
+ * @description PUT /api/tasks/reorder — Bulk-update order_index for tasks.
+ */
+router.put('/api/tasks/reorder', (req, res) => {
+  if (!Array.isArray(req.body) || req.body.length === 0) {
+    return res.status(400).json({ error: true, message: 'Body must be a non-empty array of { id, order_index }.', code: 'VALIDATION_ERROR' });
+  }
+
+  for (const item of req.body) {
+    if (!Number.isInteger(item.id) || item.id <= 0 || !Number.isInteger(item.order_index)) {
+      return res.status(400).json({ error: true, message: 'Each item must have integer id (> 0) and order_index.', code: 'VALIDATION_ERROR' });
+    }
+  }
+
+  try {
+    reorderTasks(req.body);
+    res.json({ success: true, count: req.body.length });
+  } catch (err) {
+    logger.error({ err: err.message }, 'Reorder failed');
+    res.status(500).json({ error: true, message: 'Failed to reorder tasks.', code: 'INTERNAL_ERROR' });
   }
 });
 

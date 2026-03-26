@@ -63,12 +63,12 @@ function createTask(taskData) {
 }
 
 /**
- * @description Retrieve all tasks from the database.
+ * @description Retrieve all tasks from the database, ordered by order_index.
  * @returns {Array<Object>} Array of task rows.
  */
 function getAllTasks() {
   const db = getDatabase();
-  return db.prepare('SELECT * FROM tasks ORDER BY date_created DESC').all();
+  return db.prepare('SELECT * FROM tasks ORDER BY order_index ASC, date_created DESC').all();
 }
 
 /**
@@ -95,7 +95,7 @@ function updateTask(id, updates) {
     throw err;
   }
 
-  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'priority', 'status', 'associated_project', 'associated_customer', 'delegated_to', 'workstream'];
+  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'priority', 'status', 'associated_project', 'associated_customer', 'delegated_to', 'workstream', 'order_index'];
   const setClauses = [];
   const values = [];
 
@@ -134,4 +134,22 @@ function deleteTask(id) {
   logger.info({ taskId: id }, 'Task deleted');
 }
 
-module.exports = { createTask, getAllTasks, updateTask, deleteTask };
+/**
+ * @description Bulk-update order_index for multiple tasks (drag-and-drop reorder).
+ * @param {Array<{id: number, order_index: number}>} items - Array of id + order_index pairs.
+ */
+function reorderTasks(items) {
+  const db = getDatabase();
+  const stmt = db.prepare('UPDATE tasks SET order_index = ? WHERE id = ?');
+
+  const txn = db.transaction((rows) => {
+    for (const { id, order_index } of rows) {
+      stmt.run(order_index, id);
+    }
+  });
+
+  txn(items);
+  logger.info({ count: items.length }, 'Tasks reordered');
+}
+
+module.exports = { createTask, getAllTasks, updateTask, deleteTask, reorderTasks };

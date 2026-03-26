@@ -129,6 +129,7 @@ describe('GET /api/tasks', () => {
     expect(task).toHaveProperty('status');
     expect(task).toHaveProperty('workstream');
     expect(task).toHaveProperty('date_created');
+    expect(task).toHaveProperty('order_index');
   });
 });
 
@@ -181,10 +182,7 @@ describe('PUT /api/tasks/:id', () => {
       .send({ title: 'Ghost' });
 
     expect(res.status).toBe(404);
-    expect(res.body).toMatchObject({
-      error: true,
-      code: 'TASK_NOT_FOUND',
-    });
+    expect(res.body).toMatchObject({ error: true, code: 'TASK_NOT_FOUND' });
   });
 
   it('should return 400 for invalid priority on update', async () => {
@@ -193,10 +191,7 @@ describe('PUT /api/tasks/:id', () => {
       .send({ priority: 'SuperHigh' });
 
     expect(res.status).toBe(400);
-    expect(res.body).toMatchObject({
-      error: true,
-      code: 'VALIDATION_ERROR',
-    });
+    expect(res.body).toMatchObject({ error: true, code: 'VALIDATION_ERROR' });
   });
 
   it('should return 400 for invalid id format', async () => {
@@ -205,10 +200,47 @@ describe('PUT /api/tasks/:id', () => {
       .send({ title: 'Bad id' });
 
     expect(res.status).toBe(400);
-    expect(res.body).toMatchObject({
-      error: true,
-      code: 'VALIDATION_ERROR',
-    });
+    expect(res.body).toMatchObject({ error: true, code: 'VALIDATION_ERROR' });
+  });
+});
+
+describe('PUT /api/tasks/reorder', () => {
+  let taskIds;
+
+  beforeAll(async () => {
+    const a = await request(app).post('/api/tasks').send({ title: 'Reorder A' });
+    const b = await request(app).post('/api/tasks').send({ title: 'Reorder B' });
+    taskIds = [a.body.id, b.body.id];
+  });
+
+  it('should bulk-update order_index for tasks', async () => {
+    const res = await request(app)
+      .put('/api/tasks/reorder')
+      .send([
+        { id: taskIds[0], order_index: 1 },
+        { id: taskIds[1], order_index: 0 },
+      ]);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ success: true, count: 2 });
+  });
+
+  it('should return 400 for non-array body', async () => {
+    const res = await request(app)
+      .put('/api/tasks/reorder')
+      .send({ id: 1, order_index: 0 });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({ error: true, code: 'VALIDATION_ERROR' });
+  });
+
+  it('should return 400 for invalid item schema', async () => {
+    const res = await request(app)
+      .put('/api/tasks/reorder')
+      .send([{ id: 'abc', order_index: 0 }]);
+
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({ error: true, code: 'VALIDATION_ERROR' });
   });
 });
 
@@ -238,18 +270,12 @@ describe('DELETE /api/tasks/:id', () => {
   it('should return 404 when deleting non-existent task', async () => {
     const res = await request(app).delete('/api/tasks/99999');
     expect(res.status).toBe(404);
-    expect(res.body).toMatchObject({
-      error: true,
-      code: 'TASK_NOT_FOUND',
-    });
+    expect(res.body).toMatchObject({ error: true, code: 'TASK_NOT_FOUND' });
   });
 
   it('should return 400 for invalid id format', async () => {
     const res = await request(app).delete('/api/tasks/abc');
     expect(res.status).toBe(400);
-    expect(res.body).toMatchObject({
-      error: true,
-      code: 'VALIDATION_ERROR',
-    });
+    expect(res.body).toMatchObject({ error: true, code: 'VALIDATION_ERROR' });
   });
 });
