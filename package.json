@@ -6,7 +6,9 @@
   "main": "src/server/index.js",
   "scripts": {
     "start": "node src/server/index.js",
-    "dev": "node --watch src/server/index.js",
+    "dev": "concurrently --names server,client --prefix-colors blue,magenta \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "nodemon --watch src/server --watch src/db src/server/index.js",
+    "dev:client": "cd src/client && npx vite --port 7433",
     "test": "jest --forceExit --detectOpenHandles",
     "test:unit": "jest tests/unit --forceExit",
     "test:integration": "jest tests/integration --forceExit --detectOpenHandles",
@@ -22,8 +24,10 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "concurrently": "^9.1.0",
     "eslint": "^8.57.0",
     "jest": "^29.7.0",
+    "nodemon": "^3.1.0",
     "supertest": "^7.0.0"
   },
   "jest": {
