@@ -1,8 +1,9 @@
 import { Link, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import ThemeToggle from '@/components/ThemeToggle'
 
 /**
- * @description AppHeader — navigation bar with links between Kanban and Dashboard.
+ * @description AppHeader — navigation bar with theme toggle.
  */
 export default function AppHeader() {
   const { pathname } = useLocation()
@@ -36,6 +37,7 @@ export default function AppHeader() {
           Dashboard
         </Link>
       </nav>
+      <ThemeToggle />
     </header>
   )
 }

@@ -39,3 +39,10 @@ description: UI Design Standards, ShadCN Mandate & Responsiveness
   * If a required ShadCN component is not installed, install it via `npx shadcn@latest add <component>` before proceeding.
   * Do NOT use inline `style` attributes. All styling must flow through Tailwind utility classes or CSS custom properties defined in the design system.
   * Custom components are permitted ONLY for domain-specific patterns with no ShadCN equivalent (e.g., a Kanban column, a drag handle).
+
+## 9. Semantic Color Mandate
+* **Rule:** ALL colors must use Tailwind CSS semantic tokens (e.g., `bg-primary`, `text-destructive`, `border-border`, `text-muted-foreground`) or CSS custom properties defined in `index.css`. Absolutely NO hardcoded Tailwind color utilities (e.g., `bg-red-500`, `text-blue-600`, `border-slate-300`) are allowed.
+* **Enforcement:**
+  * Use only semantic color classes: `primary`, `secondary`, `muted`, `accent`, `destructive`, `foreground`, `background`, `card`, `popover`, `border`, `input`, `ring`, and any custom tokens defined under `:root` / `.dark` in `index.css`.
+  * If a new semantic color is needed (e.g., for priority badges), define it as a CSS custom property in `index.css` under both `:root` and `.dark`, then register it in the `@theme` block.
+  * During code review, any hardcoded Tailwind color class is an automatic rejection.

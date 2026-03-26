@@ -63,3 +63,21 @@ export async function deleteTask(id) {
     throw new Error(err.message || 'Failed to delete task');
   }
 }
+
+/**
+ * @description Bulk-reorder tasks via the backend API.
+ * @param {Array<{id: number, order_index: number}>} items - Array of id + order_index.
+ * @returns {Promise<Object>} Success response.
+ */
+export async function reorderTasks(items) {
+  const res = await fetch(`${API_BASE}/api/tasks/reorder`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(items),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.message || 'Failed to reorder tasks');
+  }
+  return res.json();
+}
