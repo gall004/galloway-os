@@ -7,7 +7,7 @@ const path = require('path');
  */
 const config = {
   /** @type {number} Express server port */
-  port: parseInt(process.env.PORT, 10) || 3000,
+  port: parseInt(process.env.PORT, 10) || 7432,
 
   /** @type {string} Node environment */
   nodeEnv: process.env.NODE_ENV || 'development',
