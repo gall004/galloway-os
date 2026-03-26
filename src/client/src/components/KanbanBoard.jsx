@@ -1,35 +1,69 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import TaskCard from '@/components/TaskCard'
-import { fetchTasks } from '@/lib/api'
-
-const COLUMNS = [
-  { key: 'Backlog', label: 'Backlog', color: 'border-slate-300 dark:border-slate-700' },
-  { key: 'Next Up', label: 'Next Up', color: 'border-blue-400 dark:border-blue-600' },
-  { key: 'In Progress', label: 'In Progress', color: 'border-amber-400 dark:border-amber-600' },
-  { key: 'Delegated/Waiting', label: 'Delegated / Waiting', color: 'border-orange-400 dark:border-orange-600' },
-  { key: 'Done', label: 'Done', color: 'border-emerald-400 dark:border-emerald-600' },
-]
+import KanbanColumn from '@/components/KanbanColumn'
+import TaskModal from '@/components/TaskModal'
+import { Button } from '@/components/ui/button'
+import { fetchTasks, updateTask, createTask } from '@/lib/api'
+import { COLUMNS } from '@/lib/constants'
 
 /**
- * @description KanbanBoard — renders 5 columns and maps tasks into them by status.
- * Fetches tasks from the backend API on mount.
+ * @description KanbanBoard — 5-column drag-and-drop board with optimistic updates.
+ * Supports task creation via header button and editing via card click.
  */
 export default function KanbanBoard() {
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingTask, setEditingTask] = useState(null)
 
-  useEffect(() => {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  )
+
+  const loadTasks = useCallback(() => {
     fetchTasks()
-      .then((data) => {
-        setTasks(data)
-        setLoading(false)
-      })
-      .catch((err) => {
-        setError(err.message)
-        setLoading(false)
-      })
+      .then((data) => { setTasks(data); setLoading(false) })
+      .catch((err) => { setError(err.message); setLoading(false) })
   }, [])
+
+  useEffect(() => { loadTasks() }, [loadTasks])
+
+  const handleDragEnd = useCallback(async (event) => {
+    const { active, over } = event
+    if (!over) return
+
+    const task = active.data.current?.task
+    const newStatus = over.data.current?.status
+    if (!task || !newStatus || task.status === newStatus) return
+
+    const prevTasks = [...tasks]
+    setTasks((prev) =>
+      prev.map((t) => (t.id === task.id ? { ...t, status: newStatus } : t))
+    )
+
+    try {
+      await updateTask(task.id, { status: newStatus })
+    } catch {
+      setTasks(prevTasks)
+    }
+  }, [tasks])
+
+  const handleSaveTask = useCallback(async (taskData) => {
+    if (editingTask) {
+      const updated = await updateTask(editingTask.id, taskData)
+      setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+    } else {
+      const created = await createTask(taskData)
+      setTasks((prev) => [created, ...prev])
+    }
+    setModalOpen(false)
+    setEditingTask(null)
+  }, [editingTask])
+
+  const openCreate = () => { setEditingTask(null); setModalOpen(true) }
+  const openEdit = (task) => { setEditingTask(task); setModalOpen(true) }
 
   if (loading) {
     return (
@@ -44,12 +78,9 @@ export default function KanbanBoard() {
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">
         <p className="text-destructive font-medium">Failed to load tasks</p>
         <p className="text-sm text-muted-foreground">{error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-        >
+        <Button onClick={() => { setError(null); setLoading(true); loadTasks() }}>
           Try Again
-        </button>
+        </Button>
       </div>
     )
   }
@@ -60,30 +91,28 @@ export default function KanbanBoard() {
   }, {})
 
   return (
-    <div className="grid grid-cols-5 gap-4 p-4 min-h-[calc(100vh-80px)]">
-      {COLUMNS.map((col) => (
-        <div
-          key={col.key}
-          className={`flex flex-col rounded-lg bg-muted/50 border-t-4 ${col.color}`}
-        >
-          <div className="flex items-center justify-between px-3 py-2.5">
-            <h2 className="text-sm font-semibold text-foreground">{col.label}</h2>
-            <span className="text-xs text-muted-foreground font-medium bg-muted rounded-full px-2 py-0.5">
-              {tasksByStatus[col.key]?.length || 0}
-            </span>
-          </div>
-          <div className="flex-1 overflow-y-auto px-2 pb-2">
-            {tasksByStatus[col.key]?.map((task) => (
-              <TaskCard key={task.id} task={task} />
-            ))}
-            {tasksByStatus[col.key]?.length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-8 italic">
-                No tasks
-              </p>
-            )}
-          </div>
+    <>
+      <div className="flex items-center justify-between px-4 py-2">
+        <span className="text-xs text-muted-foreground">{tasks.length} tasks</span>
+        <Button size="sm" onClick={openCreate}>+ New Task</Button>
+      </div>
+      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <div className="grid grid-cols-5 gap-4 px-4 pb-4 min-h-[calc(100vh-120px)]">
+          {COLUMNS.map((col) => (
+            <KanbanColumn key={col.key} column={col} count={tasksByStatus[col.key]?.length || 0}>
+              {tasksByStatus[col.key]?.map((task) => (
+                <TaskCard key={task.id} task={task} onClick={openEdit} />
+              ))}
+            </KanbanColumn>
+          ))}
         </div>
-      ))}
-    </div>
+      </DndContext>
+      <TaskModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        task={editingTask}
+        onSave={handleSaveTask}
+      />
+    </>
   )
 }

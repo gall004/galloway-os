@@ -1,18 +1,19 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import AppHeader from '@/components/AppHeader'
 import KanbanBoard from '@/components/KanbanBoard'
+import RetroactiveDashboard from '@/components/RetroactiveDashboard'
 
 function App() {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border px-6 py-3 flex items-center justify-between">
-        <h1 className="text-lg font-heading font-bold text-foreground tracking-tight">
-          galloway-os
-        </h1>
-        <span className="text-xs text-muted-foreground">
-          Task Engine
-        </span>
-      </header>
-      <KanbanBoard />
-    </div>
+    <BrowserRouter>
+      <div className="min-h-screen bg-background">
+        <AppHeader />
+        <Routes>
+          <Route path="/" element={<KanbanBoard />} />
+          <Route path="/dashboard" element={<RetroactiveDashboard />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   )
 }
 

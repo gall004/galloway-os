@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const logger = require('./logger');
 const healthRoutes = require('./routes/health.routes');
 const taskRoutes = require('./routes/tasks.routes');
@@ -11,6 +12,7 @@ const taskRoutes = require('./routes/tasks.routes');
 function createApp() {
   const app = express();
 
+  app.use(cors());
   app.use(express.json());
 
   app.use(healthRoutes);
