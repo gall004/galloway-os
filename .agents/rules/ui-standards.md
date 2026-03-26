@@ -1,7 +1,7 @@
 ---
 trigger: glob
-globs: src/client/**/*.html, src/client/**/*.css, src/client/**/*.js
-description: UI Design Standards & Responsiveness
+globs: src/client/**/*.tsx, src/client/**/*.ts, src/client/**/*.jsx, src/client/**/*.js, src/client/**/*.css
+description: UI Design Standards, ShadCN Mandate & Responsiveness
 ---
 
 ## 1. Responsive Design
@@ -31,3 +31,11 @@ description: UI Design Standards & Responsiveness
 ## 7. Error Boundaries
 * **Rule:** If a critical API call fails rendering the page useless, the UI must show a professionally styled fallback with a clear "Try Again" option.
 * **Enforcement:** Never display raw error messages or stack traces to the user. Catch fetch errors and present user-friendly recovery UI.
+
+## 8. The ShadCN Mandate
+* **Rule:** The frontend stack is **React + Tailwind CSS (v4) + ShadCN**. You MUST use ShadCN components by default. Do NOT build custom UI primitives (e.g., Buttons, Cards, Dialogs, Inputs, Dropdowns) from scratch if a ShadCN equivalent exists. All styling must use Tailwind utility classes.
+* **Enforcement:**
+  * Always prefer ShadCN UI components over native HTML elements or hand-rolled alternatives (e.g., use `<Button>` not `<button>`, `<Card>` not a custom `div` wrapper, `<Input>` not `<input>`).
+  * If a required ShadCN component is not installed, install it via `npx shadcn@latest add <component>` before proceeding.
+  * Do NOT use inline `style` attributes. All styling must flow through Tailwind utility classes or CSS custom properties defined in the design system.
+  * Custom components are permitted ONLY for domain-specific patterns with no ShadCN equivalent (e.g., a Kanban column, a drag handle).
