@@ -2,13 +2,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@/components/ui/button'
 
 /**
- * @description Reusable delete confirmation dialog (AlertDialog wrapper).
- * @param {{ title: string, description: string, onConfirm: Function, children: React.ReactNode }} props
+ * @description Reusable delete confirmation dialog (AlertDialog wrapper). Supports controlled state.
+ * @param {{ title: string, description: string, onConfirm: Function, children?: React.ReactNode, open?: boolean, onOpenChange?: Function }} props
  */
-export default function DeleteConfirmDialog({ title, description, onConfirm, children }) {
+export default function DeleteConfirmDialog({ title, description, onConfirm, children, open, onOpenChange }) {
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      {children && <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
