@@ -11,7 +11,7 @@ import { fetchTasks, updateTask, createTask, deleteTask, reorderTasks, fetchConf
 import { COLUMNS } from '@/lib/constants'
 
 /**
- * @description KanbanBoard — resizable board routing by status_name, displaying status_label.
+ * @description KanbanBoard — resizable board with context-menu insertion support.
  */
 export default function KanbanBoard() {
   const [tasks, setTasks] = useState([])
@@ -20,17 +20,18 @@ export default function KanbanBoard() {
   const [error, setError] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingTask, setEditingTask] = useState(null)
+  const [insertDefaults, setInsertDefaults] = useState(null)
   const [activeTask, setActiveTask] = useState(null)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const loadAll = useCallback(async () => {
     try {
-      const [t, priorities, customers, projects, statuses] = await Promise.all([
-        fetchTasks(), fetchConfig('priorities'), fetchConfig('customers'), fetchConfig('projects'), fetchConfig('statuses'),
+      const [t, customers, projects, statuses] = await Promise.all([
+        fetchTasks(), fetchConfig('customers'), fetchConfig('projects'), fetchConfig('statuses'),
       ])
       setTasks(t)
-      setConfig({ priorities, customers, projects, statuses })
+      setConfig({ customers, projects, statuses })
       setLoading(false)
     } catch (err) { setError(err.message); setLoading(false) }
   }, [])
@@ -118,12 +119,18 @@ export default function KanbanBoard() {
         setTasks((prev) => [created, ...prev])
         toast.success('Task created')
       }
-      setModalOpen(false); setEditingTask(null)
+      setModalOpen(false); setEditingTask(null); setInsertDefaults(null)
+      loadAll()
     } catch (e) { toast.error(e.message) }
-  }, [editingTask])
+  }, [editingTask, loadAll])
 
-  const openCreate = () => { setEditingTask(null); setModalOpen(true) }
-  const openEdit = (task) => { setEditingTask(task); setModalOpen(true) }
+  const openCreate = () => { setEditingTask(null); setInsertDefaults(null); setModalOpen(true) }
+  const openEdit = (task) => { setEditingTask(task); setInsertDefaults(null); setModalOpen(true) }
+  const openInsert = useCallback(({ status_name, order_index }) => {
+    setEditingTask(null)
+    setInsertDefaults({ status_name, order_index })
+    setModalOpen(true)
+  }, [])
 
   if (loading) return <div className="flex items-center justify-center min-h-[50vh]"><p className="text-muted-foreground animate-pulse">Loading tasks…</p></div>
   if (error) return (
@@ -143,7 +150,7 @@ export default function KanbanBoard() {
         <ResizablePanelGroup direction="horizontal" className="px-4 pb-4 min-h-[calc(100vh-120px)]">
           <ResizablePanel defaultSize={75} minSize={20}>
             {(() => { const col = COLUMNS[0]; const colTasks = getTasksForColumn(col.key); return (
-              <KanbanColumn columnKey={col.key} label={getColumnLabel(col.key)} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)}>
+              <KanbanColumn columnKey={col.key} label={getColumnLabel(col.key)} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)} onInsertTask={openInsert}>
                 {colTasks.map((task) => <TaskCard key={task.id} task={task} onClick={openEdit} onComplete={handleComplete} onDelete={handleDelete} />)}
               </KanbanColumn>
             ) })()}
@@ -151,7 +158,7 @@ export default function KanbanBoard() {
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={25} minSize={15}>
             {(() => { const col = COLUMNS[1]; const colTasks = getTasksForColumn(col.key); return (
-              <KanbanColumn columnKey={col.key} label={getColumnLabel(col.key)} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)}>
+              <KanbanColumn columnKey={col.key} label={getColumnLabel(col.key)} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)} onInsertTask={openInsert}>
                 {colTasks.map((task) => <TaskCard key={task.id} task={task} onClick={openEdit} onComplete={handleComplete} onDelete={handleDelete} />)}
               </KanbanColumn>
             ) })()}
@@ -159,7 +166,7 @@ export default function KanbanBoard() {
         </ResizablePanelGroup>
         <DragOverlay dropAnimation={null}>{activeTask ? <div className="z-50"><TaskCard task={activeTask} overlay /></div> : null}</DragOverlay>
       </DndContext>
-      <TaskModal open={modalOpen} onOpenChange={setModalOpen} task={editingTask} onSave={handleSaveTask} onDelete={handleDelete} config={config} />
+      <TaskModal open={modalOpen} onOpenChange={setModalOpen} task={editingTask} onSave={handleSaveTask} onDelete={handleDelete} config={config} insertDefaults={insertDefaults} />
     </>
   )
 }

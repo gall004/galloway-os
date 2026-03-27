@@ -13,7 +13,7 @@ import { fetchConfig, createConfig, updateConfig, deleteConfig } from '@/lib/api
  * @description Reusable CRUD table for a config entity. Supports readOnly mode (no add/delete).
  * @param {{ entity, label, parentEntity?, parentLabel?, readOnly?, nameField? }} props
  */
-export default function ConfigTable({ entity, label, parentEntity, parentLabel, readOnly = false, nameField = 'name' }) {
+export default function ConfigTable({ entity, label, pluralLabel, parentEntity, parentLabel, readOnly = false, nameField = 'name' }) {
   const [items, setItems] = useState([])
   const [parents, setParents] = useState([])
   const [modalOpen, setModalOpen] = useState(false)
@@ -68,7 +68,7 @@ export default function ConfigTable({ entity, label, parentEntity, parentLabel, 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-foreground">{label}s</h3>
+        <h3 className="text-sm font-semibold text-foreground">{pluralLabel || `${label}s`}</h3>
         {!readOnly && <Button size="sm" onClick={openCreate}>+ Add</Button>}
       </div>
       <Table>
@@ -112,13 +112,13 @@ export default function ConfigTable({ entity, label, parentEntity, parentLabel, 
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="config-value">{readOnly ? 'Display Label' : 'Name'}</Label>
-              <Input id="config-value" placeholder={readOnly ? 'e.g., My Custom Label' : `e.g., ${label === 'Customer' ? 'Acme Corp' : label === 'Project' ? 'Q3 Rollout' : 'Urgent'}`} value={formValue} onChange={(e) => setFormValue(e.target.value)} />
+              <Input id="config-value" className="w-full" placeholder={readOnly ? 'e.g., My Custom Label' : `e.g., ${label === 'Customer' ? 'Acme Corp' : label === 'Project' ? 'Q3 Rollout' : 'Urgent'}`} value={formValue} onChange={(e) => setFormValue(e.target.value)} />
             </div>
             {parentEntity && !readOnly && (
               <div className="space-y-2">
                 <Label>{parentLabel}</Label>
                 <Select value={parentId} onValueChange={setParentId}>
-                  <SelectTrigger><SelectValue placeholder={`Select ${parentLabel}`} /></SelectTrigger>
+                  <SelectTrigger className="w-full"><SelectValue placeholder={`Select ${parentLabel}`} /></SelectTrigger>
                   <SelectContent>
                     {parents.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}
                   </SelectContent>

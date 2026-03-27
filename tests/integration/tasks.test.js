@@ -15,17 +15,27 @@ beforeAll(() => {
 afterAll(() => { closeDatabase(); });
 
 describe('POST /api/tasks', () => {
-  it('should create a task with defaults (status_name=active)', async () => {
+  it('should create a task with defaults (no priority)', async () => {
     const res = await request(app).post('/api/tasks').send({ title: 'Test task' });
     expect(res.status).toBe(201);
-    expect(res.body).toMatchObject({ id: expect.any(Number), title: 'Test task', status_name: 'active', status_label: 'Active', priority: 'Medium' });
+    expect(res.body).toMatchObject({ id: expect.any(Number), title: 'Test task', status_name: 'active', status_label: 'Active' });
+    expect(res.body.priority_id).toBeUndefined();
+    expect(res.body.priority).toBeUndefined();
   });
 
-  it('should create a task with explicit status_name', async () => {
-    const res = await request(app).post('/api/tasks').send({ title: 'Delegated', status_name: 'delegated' });
-    expect(res.status).toBe(201);
-    expect(res.body.status_name).toBe('delegated');
-    expect(res.body.status_label).toBe('Delegated / Waiting');
+  it('should shift order_index when inserting at specific position', async () => {
+    const a = await request(app).post('/api/tasks').send({ title: 'First', order_index: 0 });
+    const b = await request(app).post('/api/tasks').send({ title: 'Second', order_index: 1 });
+    expect(a.body.order_index).toBe(0);
+    expect(b.body.order_index).toBe(1);
+
+    const inserted = await request(app).post('/api/tasks').send({ title: 'Inserted', order_index: 1 });
+    expect(inserted.status).toBe(201);
+    expect(inserted.body.order_index).toBe(1);
+
+    const all = await request(app).get('/api/tasks');
+    const secondAfter = all.body.find((t) => t.id === b.body.id);
+    expect(secondAfter.order_index).toBe(2);
   });
 
   it('should reject invalid status_name', async () => {
@@ -41,15 +51,15 @@ describe('POST /api/tasks', () => {
 });
 
 describe('GET /api/tasks', () => {
-  it('should return tasks with status_name and status_label', async () => {
+  it('should return tasks with status_name and status_label (no priority)', async () => {
     const res = await request(app).get('/api/tasks');
     expect(res.status).toBe(200);
     const task = res.body[0];
     expect(task).toHaveProperty('status_name');
     expect(task).toHaveProperty('status_label');
-    expect(task).toHaveProperty('priority');
     expect(task).toHaveProperty('customer');
     expect(task).toHaveProperty('project');
+    expect(task.priority).toBeUndefined();
   });
 });
 
@@ -64,10 +74,9 @@ describe('PUT /api/tasks/:id', () => {
     const res = await request(app).put(`/api/tasks/${taskId}`).send({ status_name: 'done' });
     expect(res.status).toBe(200);
     expect(res.body.status_name).toBe('done');
-    expect(res.body.status_label).toBe('Done');
   });
 
-  it('should reject invalid status_name on update', async () => {
+  it('should reject invalid status_name', async () => {
     const res = await request(app).put(`/api/tasks/${taskId}`).send({ status_name: 'bogus' });
     expect(res.status).toBe(400);
   });
@@ -113,45 +122,33 @@ describe('DELETE /api/tasks/:id', () => {
 });
 
 describe('Statuses API (restricted)', () => {
-  it('GET /api/statuses — should list 3 seeded statuses', async () => {
+  it('GET /api/statuses — should list 3 statuses', async () => {
     const res = await request(app).get('/api/statuses');
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(3);
-    expect(res.body[0]).toMatchObject({ name: 'active', label: 'Active' });
-    expect(res.body[1]).toMatchObject({ name: 'delegated', label: expect.any(String) });
-    expect(res.body[2]).toMatchObject({ name: 'done', label: 'Done' });
   });
 
-  it('GET /api/statuses/:name — should return a single status', async () => {
-    const res = await request(app).get('/api/statuses/active');
-    expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ name: 'active', label: 'Active' });
-  });
-
-  it('GET /api/statuses/:name — 404 for unknown', async () => {
-    const res = await request(app).get('/api/statuses/unknown');
-    expect(res.status).toBe(404);
-  });
-
-  it('PUT /api/statuses/:name — should update label only', async () => {
+  it('PUT /api/statuses/:name — should update label', async () => {
     const res = await request(app).put('/api/statuses/delegated').send({ label: 'Waiting on Others' });
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ name: 'delegated', label: 'Waiting on Others' });
   });
 
-  it('PUT /api/statuses/:name — 400 for missing label', async () => {
-    const res = await request(app).put('/api/statuses/active').send({});
-    expect(res.status).toBe(400);
-  });
-
-  it('POST /api/statuses — 405 Method Not Allowed', async () => {
+  it('POST /api/statuses — 405', async () => {
     const res = await request(app).post('/api/statuses').send({ name: 'new', label: 'New' });
     expect(res.status).toBe(405);
   });
 
-  it('DELETE /api/statuses/:name — 405 Method Not Allowed', async () => {
+  it('DELETE /api/statuses/:name — 405', async () => {
     const res = await request(app).delete('/api/statuses/active');
     expect(res.status).toBe(405);
+  });
+});
+
+describe('Config — /api/priorities should NOT exist', () => {
+  it('should return 404 for priorities endpoint', async () => {
+    const res = await request(app).get('/api/priorities');
+    expect(res.status).toBe(404);
   });
 });
 

@@ -1,15 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { toast } from 'sonner'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { fetchTasks, updateTask } from '@/lib/api'
-import { PRIORITY_STYLES } from '@/lib/constants'
 
 /**
- * @description RetroactiveDashboard — completed tasks table with Reopen action (status_name).
+ * @description RetroactiveDashboard — completed tasks table with Reopen action. No priority column.
  */
 export default function RetroactiveDashboard() {
   const [allTasks, setAllTasks] = useState([])
@@ -82,8 +80,7 @@ export default function RetroactiveDashboard() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[250px]">Title</TableHead>
-              <TableHead>Priority</TableHead>
+              <TableHead className="w-[300px]">Title</TableHead>
               <TableHead><Button variant="ghost" size="sm" className="px-0 font-medium" onClick={() => toggleSort('date_completed')}>Completed {sortIcon('date_completed')}</Button></TableHead>
               <TableHead><Button variant="ghost" size="sm" className="px-0 font-medium" onClick={() => toggleSort('project')}>Project {sortIcon('project')}</Button></TableHead>
               <TableHead className="w-24 text-right">Actions</TableHead>
@@ -91,11 +88,10 @@ export default function RetroactiveDashboard() {
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground italic">No completed tasks.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground italic">No completed tasks.</TableCell></TableRow>
             ) : filtered.map((task) => (
               <TableRow key={task.id}>
                 <TableCell className="font-medium">{task.title}{task.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{task.description}</p>}</TableCell>
-                <TableCell><Badge variant="outline" className={`text-[10px] ${PRIORITY_STYLES[task.priority] || ''}`}>{task.priority}</Badge></TableCell>
                 <TableCell className="text-sm">{formatDate(task.date_completed)}</TableCell>
                 <TableCell className="text-sm">{task.project && task.project !== 'N/A' ? task.project : '—'}</TableCell>
                 <TableCell className="text-right"><Button variant="ghost" size="sm" onClick={() => handleReopen(task)} title="Reopen">↩️</Button></TableCell>

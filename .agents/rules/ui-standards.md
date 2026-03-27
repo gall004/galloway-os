@@ -66,5 +66,6 @@ description: UI Design Standards, ShadCN Mandate & Responsiveness
 * **Enforcement:**
   * Every form field must have a visible `<FormLabel>` and relevant `<FormDescription>` for complex or non-obvious inputs.
   * All form inputs must include descriptive `placeholder` text.
+  * **All `<Input>`, `<SelectTrigger>`, and `<Textarea>` elements MUST include the `w-full` Tailwind class** so they stretch to fill their container or CSS Grid column. No form control should ever appear narrower than its parent.
   * Dialogs must set a constrained `max-width` (e.g., `sm:max-w-[600px]` for task forms, `sm:max-w-[425px]` for config forms).
   * The primary action button must live inside `<DialogFooter>` with proper padding.

@@ -5,7 +5,6 @@ const logger = require('../logger');
 const router = express.Router();
 
 const ENTITIES = [
-  { path: 'priorities', table: 'priorities' },
   { path: 'customers', table: 'customers' },
   { path: 'projects', table: 'projects', hasCustomerFK: true },
 ];

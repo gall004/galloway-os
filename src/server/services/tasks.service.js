@@ -3,11 +3,9 @@ const logger = require('../logger');
 
 const TASKS_SELECT = `
   SELECT tasks.*,
-    p.name AS priority,
     s.label AS status_label,
     c.name AS customer, pr.name AS project
   FROM tasks
-  LEFT JOIN priorities p ON tasks.priority_id = p.id
   LEFT JOIN statuses s ON tasks.status_name = s.name
   LEFT JOIN customers c ON tasks.customer_id = c.id
   LEFT JOIN projects pr ON tasks.project_id = pr.id
@@ -29,8 +27,18 @@ function validateStatus(db, statusName) {
 }
 
 /**
- * @description Create a new task in the database.
- * @param {Object} data - Task fields (status_name key, FK IDs for priority/project/customer).
+ * @description Shift order_index of tasks in a column to make room for insertion.
+ * @param {Object} db - Database instance.
+ * @param {string} statusName - Target status column.
+ * @param {number} fromIndex - Index at which to insert (shift everything >= this).
+ */
+function shiftOrderIndexes(db, statusName, fromIndex) {
+  db.prepare('UPDATE tasks SET order_index = order_index + 1 WHERE status_name = ? AND order_index >= ?').run(statusName, fromIndex);
+}
+
+/**
+ * @description Create a new task. If order_index is provided, shifts existing tasks to make room.
+ * @param {Object} data - Task fields.
  * @returns {Object} The created task with joined names.
  * @throws {Error} If validation fails.
  */
@@ -47,8 +55,14 @@ function createTask(data) {
     }
   }
 
+  const orderIndex = data.order_index !== null && data.order_index !== undefined ? data.order_index : 0;
+
+  if (data.order_index !== null && data.order_index !== undefined) {
+    shiftOrderIndexes(db, statusName, orderIndex);
+  }
+
   const stmt = db.prepare(`
-    INSERT INTO tasks (title, description, date_due, status_name, priority_id, project_id, customer_id, delegated_to)
+    INSERT INTO tasks (title, description, date_due, status_name, project_id, customer_id, delegated_to, order_index)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
@@ -57,10 +71,10 @@ function createTask(data) {
     data.description || null,
     data.date_due || null,
     statusName,
-    data.priority_id || 3,
     data.project_id || 1,
     data.customer_id || 1,
     data.delegated_to || null,
+    orderIndex,
   );
 
   const task = db.prepare(`${TASKS_SELECT} WHERE tasks.id = ?`).get(result.lastInsertRowid);
@@ -105,7 +119,7 @@ function updateTask(id, updates) {
     }
   }
 
-  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'status_name', 'priority_id', 'project_id', 'customer_id', 'delegated_to', 'order_index'];
+  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'status_name', 'project_id', 'customer_id', 'delegated_to', 'order_index'];
   const setClauses = [];
   const values = [];
 
