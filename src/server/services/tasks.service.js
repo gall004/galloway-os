@@ -110,8 +110,11 @@ function updateTask(id, updates) {
 
   if (updates.status_name && updates.status_name !== existing.status_name) {
     validateStatus(db, updates.status_name);
-    if (updates.status_name === 'done') updates.date_completed = new Date().toISOString();
-    else if (existing.status_name === 'done') updates.date_completed = null;
+    if (updates.status_name === 'done') {
+      updates.date_completed = new Date().toISOString();
+    } else if (existing.status_name === 'done') {
+      updates.date_completed = null;
+    }
   }
 
   if (updates.project_id && updates.project_id !== 1) {
