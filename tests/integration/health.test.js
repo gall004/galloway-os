@@ -36,7 +36,7 @@ describe('GET /healthz', () => {
 
 describe('GET /nonexistent', () => {
   it('should return 404 for unknown routes', async () => {
-    const res = await request(app).get('/nonexistent');
+    const res = await request(app).get('/api/nonexistent');
 
     expect(res.status).toBe(404);
   });

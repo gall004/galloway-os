@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const logger = require('./logger');
 const healthRoutes = require('./routes/health.routes');
 const taskRoutes = require('./routes/tasks.routes');
@@ -21,6 +22,22 @@ function createApp() {
   app.use(taskRoutes);
   app.use(configRoutes);
   app.use(statusesRoutes);
+
+  // Serve static assets from the React PWA build
+  app.use(express.static(path.join(__dirname, '../client/dist')));
+
+  // Catch-all route to serve the SPA for any unrecognized GET request
+  app.get('*', (req, res, next) => {
+    if (req.url.startsWith('/api') || req.url.startsWith('/healthz')) {
+      return next();
+    }
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'), (err) => {
+      if (err) {
+        next(err);
+      }
+    });
+  });
+
   app.use((err, _req, res, _next) => {
     logger.error({ err: err.message, stack: err.stack }, 'Unhandled error');
     res.status(500).json({
