@@ -37,6 +37,7 @@ function registerEntityRoutes(entity) {
     try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id) || id <= 0) return res.status(400).json({ error: true, message: 'Invalid ID.', code: 'VALIDATION_ERROR' });
+      if (id === 1) return res.status(403).json({ error: true, message: 'Cannot edit the default system entity.', code: 'FORBIDDEN' });
       res.json(svc.update(id, req.body));
     } catch (err) {
       const status = err.code === 'NOT_FOUND' ? 404 : 500;
@@ -48,6 +49,7 @@ function registerEntityRoutes(entity) {
     try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id) || id <= 0) return res.status(400).json({ error: true, message: 'Invalid ID.', code: 'VALIDATION_ERROR' });
+      if (id === 1) return res.status(403).json({ error: true, message: 'Cannot delete the default system entity.', code: 'FORBIDDEN' });
       svc.remove(id);
       res.status(204).send();
     } catch (err) {

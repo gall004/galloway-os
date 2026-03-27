@@ -89,11 +89,15 @@ export default function ConfigTable({ entity, label, pluralLabel, parentEntity, 
               <TableCell>{readOnly ? item.label : item.name}</TableCell>
               {parentEntity && <TableCell>{item.customer_name || '—'}</TableCell>}
               <TableCell className="text-right space-x-1">
-                <Button variant="ghost" size="sm" onClick={() => openEdit(item)}>✏️</Button>
-                {!readOnly && (
-                  <DeleteConfirmDialog title={`Delete ${label}?`} description={`This will permanently delete "${item.name}". This cannot be undone.`} onConfirm={() => handleDelete(item)}>
-                    <Button variant="ghost" size="sm">🗑️</Button>
-                  </DeleteConfirmDialog>
+                {item.id !== 1 && (
+                  <>
+                    <Button variant="ghost" size="sm" onClick={() => openEdit(item)}>✏️</Button>
+                    {!readOnly && (
+                      <DeleteConfirmDialog title={`Delete ${label}?`} description={`This will permanently delete "${item.name}". This cannot be undone.`} onConfirm={() => handleDelete(item)}>
+                        <Button variant="ghost" size="sm">🗑️</Button>
+                      </DeleteConfirmDialog>
+                    )}
+                  </>
                 )}
               </TableCell>
             </TableRow>
