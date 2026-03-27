@@ -4,16 +4,16 @@ import { arrayMove } from '@dnd-kit/sortable'
 import { toast } from 'sonner'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import TaskCard from '@/components/TaskCard'
-import KanbanColumn from '@/components/KanbanColumn'
+import PriorityColumn from '@/components/PriorityColumn'
 import TaskModal from '@/components/TaskModal'
 import { Button } from '@/components/ui/button'
 import { fetchTasks, updateTask, createTask, deleteTask, reorderTasks, fetchConfig } from '@/lib/api'
 import { COLUMNS } from '@/lib/constants'
 
 /**
- * @description KanbanBoard — resizable board with context-menu insertion support.
+ * @description PriorityBoard — resizable board with context-menu insertion support.
  */
-export default function KanbanBoard() {
+export default function PriorityBoard() {
   const [tasks, setTasks] = useState([])
   const [config, setConfig] = useState({})
   const [loading, setLoading] = useState(true)
@@ -150,17 +150,17 @@ export default function KanbanBoard() {
         <ResizablePanelGroup direction="horizontal" className="px-4 pb-4 min-h-[calc(100vh-120px)]">
           <ResizablePanel defaultSize={75} minSize={20}>
             {(() => { const col = COLUMNS[0]; const colTasks = getTasksForColumn(col.key); return (
-              <KanbanColumn columnKey={col.key} label={getColumnLabel(col.key)} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)} onInsertTask={openInsert}>
+              <PriorityColumn columnKey={col.key} label={getColumnLabel(col.key)} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)} onInsertTask={openInsert}>
                 {colTasks.map((task) => <TaskCard key={task.id} task={task} onClick={openEdit} onComplete={handleComplete} onDelete={handleDelete} />)}
-              </KanbanColumn>
+              </PriorityColumn>
             ) })()}
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={25} minSize={15}>
             {(() => { const col = COLUMNS[1]; const colTasks = getTasksForColumn(col.key); return (
-              <KanbanColumn columnKey={col.key} label={getColumnLabel(col.key)} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)} onInsertTask={openInsert}>
+              <PriorityColumn columnKey={col.key} label={getColumnLabel(col.key)} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)} onInsertTask={openInsert}>
                 {colTasks.map((task) => <TaskCard key={task.id} task={task} onClick={openEdit} onComplete={handleComplete} onDelete={handleDelete} />)}
-              </KanbanColumn>
+              </PriorityColumn>
             ) })()}
           </ResizablePanel>
         </ResizablePanelGroup>

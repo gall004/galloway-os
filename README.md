@@ -1,6 +1,6 @@
 # galloway-os
 
-> A frictionless, high-visibility Kanban interface that instantly clarifies immediate priorities, reliably tracks delegated work, and automatically curates a searchable system of record for retroactive performance tracking — without introducing unnecessary administrative overhead.
+> A frictionless, high-visibility Priority interface that instantly clarifies immediate priorities, reliably tracks delegated work, and automatically curates a searchable system of record for retroactive performance tracking — without introducing unnecessary administrative overhead.
 
 ## Architecture
 

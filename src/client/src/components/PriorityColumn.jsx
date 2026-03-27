@@ -3,10 +3,10 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu'
 
 /**
- * @description KanbanColumn — droppable + sortable container with right-click context menu.
+ * @description PriorityColumn — droppable + sortable container with right-click context menu.
  * @param {{ columnKey, label, count, taskIds, children, onInsertTask }} props
  */
-export default function KanbanColumn({ columnKey, label, count, taskIds, children, onInsertTask }) {
+export default function PriorityColumn({ columnKey, label, count, taskIds, children, onInsertTask }) {
   const { isOver, setNodeRef } = useDroppable({
     id: `column-${columnKey}`,
     data: { columnKey },

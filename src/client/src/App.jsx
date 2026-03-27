@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from '@/components/ui/sonner'
 import AppHeader from '@/components/AppHeader'
-import KanbanBoard from '@/components/KanbanBoard'
+import PriorityBoard from '@/components/PriorityBoard'
 import RetroactiveDashboard from '@/components/RetroactiveDashboard'
 import SettingsView from '@/components/SettingsView'
 
@@ -14,7 +14,7 @@ export default function App() {
       <div className="min-h-screen bg-background text-foreground">
         <AppHeader />
         <Routes>
-          <Route path="/" element={<KanbanBoard />} />
+          <Route path="/" element={<PriorityBoard />} />
           <Route path="/dashboard" element={<RetroactiveDashboard />} />
           <Route path="/settings" element={<SettingsView />} />
         </Routes>

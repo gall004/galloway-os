@@ -1,6 +1,6 @@
 /**
  * @description Initial migration: Create the tasks table.
- * Establishes the core schema for the Kanban task management system.
+ * Establishes the core schema for the Priority task management system.
  */
 const up = `
   CREATE TABLE IF NOT EXISTS tasks (

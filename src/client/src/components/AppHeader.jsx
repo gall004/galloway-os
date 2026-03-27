@@ -9,7 +9,7 @@ export default function AppHeader() {
   const { pathname } = useLocation()
 
   const links = [
-    { to: '/', label: 'Kanban' },
+    { to: '/', label: 'Priority' },
     { to: '/dashboard', label: 'Dashboard' },
     { to: '/settings', label: 'Settings' },
   ]
