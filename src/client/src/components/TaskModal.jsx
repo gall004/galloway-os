@@ -1,143 +1,96 @@
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { PRIORITIES, STATUSES, WORKSTREAMS } from '@/lib/constants'
+import { Button } from '@/components/ui/button'
+import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
 
 /**
- * @description TaskModal — ShadCN Dialog for creating and editing tasks.
- * Dual-purpose: create (task=null) or edit (task=Object).
- * @param {{ open, onOpenChange, task, onSave }} props
+ * @description TaskModal — create/edit task with FK dropdowns and delete action.
+ * @param {{ open, onOpenChange, task, onSave, onDelete, config }} props
  */
-export default function TaskModal({ open, onOpenChange, task, onSave }) {
-  const isEdit = Boolean(task)
-  const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState(getDefaults())
-
-  function getDefaults() {
-    return {
-      title: '', description: '', priority: 'Medium', status: 'Backlog',
-      date_due: '', associated_project: '', associated_customer: '',
-      delegated_to: '', workstream: 'None',
-    }
-  }
+export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, config }) {
+  const [form, setForm] = useState({})
 
   useEffect(() => {
     if (open) {
       setForm(task ? {
-        title: task.title || '',
-        description: task.description || '',
-        priority: task.priority || 'Medium',
-        status: task.status || 'Backlog',
-        date_due: task.date_due ? task.date_due.split('T')[0] : '',
-        associated_project: task.associated_project || '',
-        associated_customer: task.associated_customer || '',
-        delegated_to: task.delegated_to || '',
-        workstream: task.workstream || 'None',
-      } : getDefaults())
+        title: task.title || '', description: task.description || '', date_due: task.date_due || '',
+        priority_id: String(task.priority_id || 3), status_id: String(task.status_id || 2),
+        project_id: String(task.project_id || 1), customer_id: String(task.customer_id || 1),
+        workstream_id: String(task.workstream_id || 1), delegated_to: task.delegated_to || '',
+      } : {
+        title: '', description: '', date_due: '', priority_id: '3', status_id: '2',
+        project_id: '1', customer_id: '1', workstream_id: '1', delegated_to: '',
+      })
     }
   }, [open, task])
 
-  const handleField = (field, value) => setForm((prev) => ({ ...prev, [field]: value }))
+  const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e?.target ? e.target.value : e }))
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!form.title.trim()) return
-    setSaving(true)
-    try {
-      const payload = {
-        ...form,
-        date_due: form.date_due || null,
-        associated_project: form.associated_project || null,
-        associated_customer: form.associated_customer || null,
-        delegated_to: form.delegated_to || null,
-      }
-      await onSave(payload)
-    } finally {
-      setSaving(false)
-    }
+  const handleProjectChange = (val) => {
+    setForm((f) => {
+      const proj = config.projects?.find((p) => String(p.id) === val)
+      return { ...f, project_id: val, customer_id: proj?.customer_id && proj.customer_id !== 1 ? String(proj.customer_id) : f.customer_id }
+    })
+  }
+
+  const handleSave = () => {
+    const data = { ...form, priority_id: Number(form.priority_id), status_id: Number(form.status_id), project_id: Number(form.project_id), customer_id: Number(form.customer_id), workstream_id: Number(form.workstream_id) }
+    onSave(data)
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit Task' : 'New Task'}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="title">Title *</Label>
-            <Input id="title" value={form.title} onChange={(e) => handleField('title', e.target.value)} placeholder="What needs to be done?" required />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="description">Description</Label>
-            <Textarea id="description" value={form.description} onChange={(e) => handleField('description', e.target.value)} placeholder="Additional details…" rows={3} />
-          </div>
-
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{task ? 'Edit Task' : 'New Task'}</DialogTitle></DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div><Label>Title</Label><Input value={form.title || ''} onChange={set('title')} /></div>
+          <div><Label>Description</Label><Textarea value={form.description || ''} onChange={set('description')} rows={3} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Priority</Label>
-              <Select value={form.priority} onValueChange={(v) => handleField('priority', v)}>
+            <div><Label>Priority</Label>
+              <Select value={form.priority_id} onValueChange={set('priority_id')}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {PRIORITIES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Status</Label>
-              <Select value={form.status} onValueChange={(v) => handleField('status', v)}>
+                <SelectContent>{config.priorities?.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
+              </Select></div>
+            <div><Label>Status</Label>
+              <Select value={form.status_id} onValueChange={set('status_id')}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+                <SelectContent>{config.statuses?.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}</SelectContent>
+              </Select></div>
           </div>
-
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Workstream</Label>
-              <Select value={form.workstream} onValueChange={(v) => handleField('workstream', v)}>
+            <div><Label>Project</Label>
+              <Select value={form.project_id} onValueChange={handleProjectChange}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {WORKSTREAMS.map((w) => <SelectItem key={w} value={w}>{w}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="date_due">Due Date</Label>
-              <Input id="date_due" type="date" value={form.date_due} onChange={(e) => handleField('date_due', e.target.value)} />
-            </div>
+                <SelectContent>{config.projects?.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
+              </Select></div>
+            <div><Label>Customer</Label>
+              <Select value={form.customer_id} onValueChange={set('customer_id')}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{config.customers?.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
+              </Select></div>
           </div>
-
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="project">Project</Label>
-              <Input id="project" value={form.associated_project} onChange={(e) => handleField('associated_project', e.target.value)} placeholder="Project name" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="customer">Customer</Label>
-              <Input id="customer" value={form.associated_customer} onChange={(e) => handleField('associated_customer', e.target.value)} placeholder="Customer name" />
-            </div>
+            <div><Label>Workstream</Label>
+              <Select value={form.workstream_id} onValueChange={set('workstream_id')}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{config.workstreams?.map((w) => <SelectItem key={w.id} value={String(w.id)}>{w.name}</SelectItem>)}</SelectContent>
+              </Select></div>
+            <div><Label>Due Date</Label><Input type="date" value={form.date_due || ''} onChange={set('date_due')} /></div>
           </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="delegated">Delegated To</Label>
-            <Input id="delegated" value={form.delegated_to} onChange={(e) => handleField('delegated_to', e.target.value)} placeholder="Person responsible" />
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" disabled={saving || !form.title.trim()}>
-              {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Task'}
-            </Button>
-          </DialogFooter>
-        </form>
+          <div><Label>Delegated To</Label><Input value={form.delegated_to || ''} onChange={set('delegated_to')} /></div>
+        </div>
+        <DialogFooter className="flex justify-between">
+          {task && (
+            <DeleteConfirmDialog title="Delete task?" description={`Permanently delete "${task.title}"?`} onConfirm={() => { onDelete?.(task); onOpenChange(false) }}>
+              <Button variant="destructive" size="sm">Delete Task</Button>
+            </DeleteConfirmDialog>
+          )}
+          <Button onClick={handleSave} disabled={!form.title?.trim()}>Save</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

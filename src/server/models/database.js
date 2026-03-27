@@ -13,16 +13,17 @@ let db = null;
  * @returns {import('better-sqlite3').Database} The database instance.
  */
 function initializeDatabase() {
-  const isMemory = config.databasePath === ':memory:';
+  const isMemory = process.env.DATABASE_PATH === ':memory:';
+  const dbPath = isMemory ? ':memory:' : config.databasePath;
 
   if (!isMemory) {
-    const dbDir = path.dirname(config.databasePath);
+    const dbDir = path.dirname(dbPath);
     if (!fs.existsSync(dbDir)) {
       fs.mkdirSync(dbDir, { recursive: true });
     }
   }
 
-  db = new Database(config.databasePath);
+  db = new Database(dbPath);
 
   if (!isMemory) {
     db.pragma('journal_mode = WAL');
@@ -31,7 +32,7 @@ function initializeDatabase() {
   db.pragma('busy_timeout = 5000');
   db.pragma('foreign_keys = ON');
 
-  logger.info({ path: config.databasePath }, 'SQLite database connected');
+  logger.info({ path: dbPath }, 'SQLite database connected');
   return db;
 }
 

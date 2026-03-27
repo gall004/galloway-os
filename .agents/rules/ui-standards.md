@@ -46,3 +46,17 @@ description: UI Design Standards, ShadCN Mandate & Responsiveness
   * Use only semantic color classes: `primary`, `secondary`, `muted`, `accent`, `destructive`, `foreground`, `background`, `card`, `popover`, `border`, `input`, `ring`, and any custom tokens defined under `:root` / `.dark` in `index.css`.
   * If a new semantic color is needed (e.g., for priority badges), define it as a CSS custom property in `index.css` under both `:root` and `.dark`, then register it in the `@theme` block.
   * During code review, any hardcoded Tailwind color class is an automatic rejection.
+
+## 10. Mandatory Notifications
+* **Rule:** ALL successful mutations (Create, Update, Delete) and ALL errors MUST trigger a UI notification using ShadCN's Sonner (toast) component.
+* **Enforcement:**
+  * On success: `toast.success("Task created")` or equivalent descriptive message.
+  * On error: `toast.error("Failed to create task")` with the error message.
+  * No silent failures or silent successes are permitted. The user must always know the outcome of their action.
+
+## 11. Critical Action Confirmations
+* **Rule:** ALL destructive actions (e.g., Delete) MUST be gated by a ShadCN `AlertDialog` requiring explicit user confirmation before execution.
+* **Enforcement:**
+  * The AlertDialog must clearly state what will be destroyed (e.g., "Delete task: {title}?").
+  * The confirm button must use destructive styling (`variant="destructive"`).
+  * Never delete a record on a single click without confirmation.
