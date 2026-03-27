@@ -68,7 +68,15 @@ export default function TaskCard({ task, onClick, onComplete, onDelete, onInsert
     </Card>
   )
 
-  if (overlay) return cardContent
+  if (isDragging) {
+    return (
+      <div ref={setNodeRef} style={style} className="pb-2.5">
+        <Card className="rounded-xl border-2 border-dashed border-primary/50 bg-primary/5 shadow-none !opacity-100 overflow-hidden">
+          <div className="opacity-0">{cardContent}</div>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <>
