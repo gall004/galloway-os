@@ -88,9 +88,35 @@ export default function PriorityBoard() {
       const newStatusName = targetCol
       const prevTasks = [...tasks]
       const newLabel = config.statuses?.find((s) => s.name === newStatusName)?.label || newStatusName
-      setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status_name: newStatusName, status_label: newLabel } : t))
-      try { await updateTask(task.id, { status_name: newStatusName }); toast.success('Task moved') }
-      catch { setTasks(prevTasks); toast.error('Failed to move task') }
+      
+      const colTasks = getTasksForColumn(targetCol)
+      let newIndex = colTasks.length
+      const overTaskData = overTask || colTasks.find((t) => `task-${t.id}` === overId)
+      
+      if (overTaskData) {
+        const found = colTasks.findIndex((t) => t.id === overTaskData.id)
+        if (found !== -1) newIndex = found
+      }
+
+      const newColTasks = [...colTasks]
+      newColTasks.splice(newIndex, 0, { ...task, status_name: newStatusName, status_label: newLabel })
+      
+      const targetUpdates = newColTasks.map((t, i) => ({ id: t.id, order_index: i }))
+
+      setTasks((prev) => {
+        const withoutTask = prev.filter((t) => t.id !== task.id)
+        const otherTasks = withoutTask.filter((t) => t.status_name !== newStatusName)
+        return [...otherTasks, ...newColTasks.map((t, i) => ({ ...t, order_index: i }))].sort((a, b) => a.order_index - b.order_index)
+      })
+
+      try {
+        await updateTask(task.id, { status_name: newStatusName, order_index: newIndex })
+        await reorderTasks(targetUpdates)
+        toast.success('Task moved')
+      } catch {
+        setTasks(prevTasks)
+        toast.error('Failed to move task')
+      }
     }
   }, [tasks, loadAll, getColumnForTask, getTasksForColumn, config.statuses])
 
