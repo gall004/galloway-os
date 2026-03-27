@@ -5,7 +5,6 @@ import ConfigTable from '@/components/ConfigTable'
 const TABS = [
   { key: 'customers', label: 'Customer' },
   { key: 'projects', label: 'Project', parentEntity: 'customers', parentLabel: 'Customer' },
-  { key: 'statuses', label: 'Status' },
   { key: 'priorities', label: 'Priority' },
 ]
 

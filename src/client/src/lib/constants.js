@@ -1,7 +1,9 @@
 export const COLUMNS = [
-  { key: 'My Tasks', label: 'My Tasks', statusNames: ['Backlog', 'Next Up', 'In Progress'] },
+  { key: 'Active', label: 'Active', statusNames: ['Active'] },
   { key: 'Delegated/Waiting', label: 'Delegated / Waiting', statusNames: ['Delegated/Waiting'] },
 ]
+
+export const STATUSES = ['Active', 'Delegated/Waiting', 'Done']
 
 export const PRIORITY_STYLES = {
   Low: 'bg-priority-low text-priority-low-foreground',

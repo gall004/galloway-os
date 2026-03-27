@@ -32,8 +32,8 @@ router.post('/api/tasks', (req, res) => {
     res.status(201).json(task);
   } catch (err) {
     logger.warn({ err: err.message }, 'Task creation failed');
-    const status = err.message?.includes('FOREIGN KEY') ? 400 : 500;
-    res.status(status).json({ error: true, message: err.message, code: 'VALIDATION_ERROR' });
+    const status = err.code === 'VALIDATION_ERROR' || err.message?.includes('FOREIGN KEY') ? 400 : 500;
+    res.status(status).json({ error: true, message: err.message, code: err.code || 'VALIDATION_ERROR' });
   }
 });
 

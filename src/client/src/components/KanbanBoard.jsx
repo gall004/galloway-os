@@ -11,7 +11,7 @@ import { fetchTasks, updateTask, createTask, deleteTask, reorderTasks, fetchConf
 import { COLUMNS } from '@/lib/constants'
 
 /**
- * @description KanbanBoard — 2-column resizable board with vertical sorting.
+ * @description KanbanBoard — resizable board with TEXT status, vertical sorting.
  */
 export default function KanbanBoard() {
   const [tasks, setTasks] = useState([])
@@ -26,12 +26,11 @@ export default function KanbanBoard() {
 
   const loadAll = useCallback(async () => {
     try {
-      const [t, priorities, statuses, customers, projects] = await Promise.all([
-        fetchTasks(), fetchConfig('priorities'), fetchConfig('statuses'),
-        fetchConfig('customers'), fetchConfig('projects'),
+      const [t, priorities, customers, projects] = await Promise.all([
+        fetchTasks(), fetchConfig('priorities'), fetchConfig('customers'), fetchConfig('projects'),
       ])
       setTasks(t)
-      setConfig({ priorities, statuses, customers, projects })
+      setConfig({ priorities, customers, projects })
       setLoading(false)
     } catch (err) { setError(err.message); setLoading(false) }
   }, [])
@@ -81,24 +80,21 @@ export default function KanbanBoard() {
       try { await reorderTasks(updates) } catch { loadAll() }
     } else {
       const targetColDef = COLUMNS.find((c) => c.key === targetCol)
-      const newStatusName = targetColDef?.statusNames[0]
-      const newStatusId = config.statuses?.find((s) => s.name === newStatusName)?.id
-      if (!newStatusId) return
+      const newStatus = targetColDef?.statusNames[0]
+      if (!newStatus) return
       const prevTasks = [...tasks]
-      setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status: newStatusName, status_id: newStatusId } : t))
-      try { await updateTask(task.id, { status_id: newStatusId }); toast.success('Task moved') }
+      setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status: newStatus } : t))
+      try { await updateTask(task.id, { status: newStatus }); toast.success('Task moved') }
       catch { setTasks(prevTasks); toast.error('Failed to move task') }
     }
-  }, [tasks, loadAll, getColumnForTask, getTasksForColumn, config.statuses])
+  }, [tasks, loadAll, getColumnForTask, getTasksForColumn])
 
   const handleComplete = useCallback(async (task) => {
-    const doneId = config.statuses?.find((s) => s.name === 'Done')?.id
-    if (!doneId) return
     const prevTasks = [...tasks]
     setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status: 'Done', date_completed: new Date().toISOString() } : t))
-    try { await updateTask(task.id, { status_id: doneId, date_completed: new Date().toISOString() }); toast.success('Task completed') }
+    try { await updateTask(task.id, { status: 'Done', date_completed: new Date().toISOString() }); toast.success('Task completed') }
     catch { setTasks(prevTasks); toast.error('Failed to complete task') }
-  }, [tasks, config.statuses])
+  }, [tasks])
 
   const handleDelete = useCallback(async (task) => {
     const prevTasks = [...tasks]

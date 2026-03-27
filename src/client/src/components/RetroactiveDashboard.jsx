@@ -5,15 +5,14 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { fetchTasks, updateTask, fetchConfig } from '@/lib/api'
+import { fetchTasks, updateTask } from '@/lib/api'
 import { PRIORITY_STYLES } from '@/lib/constants'
 
 /**
- * @description RetroactiveDashboard — data table of completed tasks with Reopen action.
+ * @description RetroactiveDashboard — completed tasks table with Reopen action (TEXT status).
  */
 export default function RetroactiveDashboard() {
   const [allTasks, setAllTasks] = useState([])
-  const [config, setConfig] = useState({})
   const [loading, setLoading] = useState(true)
   const [sortField, setSortField] = useState('date_completed')
   const [sortDir, setSortDir] = useState('desc')
@@ -22,9 +21,8 @@ export default function RetroactiveDashboard() {
 
   const load = useCallback(async () => {
     try {
-      const [t, statuses] = await Promise.all([fetchTasks(), fetchConfig('statuses')])
+      const t = await fetchTasks()
       setAllTasks(t)
-      setConfig({ statuses })
       setLoading(false)
     } catch { setLoading(false) }
   }, [])
@@ -58,10 +56,8 @@ export default function RetroactiveDashboard() {
   const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'
 
   const handleReopen = async (task) => {
-    const backlogId = config.statuses?.find((s) => s.name === 'Backlog')?.id
-    if (!backlogId) return
     try {
-      const updated = await updateTask(task.id, { status_id: backlogId, date_completed: null })
+      const updated = await updateTask(task.id, { status: 'Active', date_completed: null })
       setAllTasks((prev) => prev.map((t) => t.id === updated.id ? updated : t))
       toast.success('Task reopened')
     } catch (e) { toast.error(e.message) }

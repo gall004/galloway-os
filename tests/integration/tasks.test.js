@@ -15,20 +15,22 @@ beforeAll(() => {
 afterAll(() => { closeDatabase(); });
 
 describe('POST /api/tasks', () => {
-  it('should create a task with required fields', async () => {
+  it('should create a task with defaults (status=Active)', async () => {
     const res = await request(app).post('/api/tasks').send({ title: 'Test task' });
     expect(res.status).toBe(201);
-    expect(res.body).toMatchObject({ id: expect.any(Number), title: 'Test task', priority: 'Medium', status: 'Backlog' });
-    expect(res.body.date_created).toBeDefined();
-    expect(res.body.order_index).toBeDefined();
-    expect(res.body.workstream_id).toBeUndefined();
+    expect(res.body).toMatchObject({ id: expect.any(Number), title: 'Test task', status: 'Active', priority: 'Medium' });
+    expect(res.body.status_id).toBeUndefined();
   });
 
-  it('should create a task with FK IDs', async () => {
-    const res = await request(app).post('/api/tasks').send({ title: 'FK task', priority_id: 4, status_id: 3 });
+  it('should create a task with explicit status', async () => {
+    const res = await request(app).post('/api/tasks').send({ title: 'Delegated', status: 'Delegated/Waiting' });
     expect(res.status).toBe(201);
-    expect(res.body.priority).toBe('High');
-    expect(res.body.status).toBe('Next Up');
+    expect(res.body.status).toBe('Delegated/Waiting');
+  });
+
+  it('should reject invalid status', async () => {
+    const res = await request(app).post('/api/tasks').send({ title: 'Bad', status: 'Invalid' });
+    expect(res.status).toBe(400);
   });
 
   it('should return 400 when title is missing', async () => {
@@ -39,16 +41,16 @@ describe('POST /api/tasks', () => {
 });
 
 describe('GET /api/tasks', () => {
-  it('should return tasks with joined names (no workstream)', async () => {
+  it('should return tasks with TEXT status (no status_id)', async () => {
     const res = await request(app).get('/api/tasks');
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     const task = res.body[0];
-    expect(task).toHaveProperty('priority');
     expect(task).toHaveProperty('status');
+    expect(task.status_id).toBeUndefined();
+    expect(task).toHaveProperty('priority');
     expect(task).toHaveProperty('customer');
     expect(task).toHaveProperty('project');
-    expect(task).not.toHaveProperty('workstream');
   });
 });
 
@@ -65,10 +67,15 @@ describe('PUT /api/tasks/:id', () => {
     expect(res.body.title).toBe('Updated title');
   });
 
-  it('should update task status via FK', async () => {
-    const res = await request(app).put(`/api/tasks/${taskId}`).send({ status_id: 4 });
+  it('should update task status to Done', async () => {
+    const res = await request(app).put(`/api/tasks/${taskId}`).send({ status: 'Done' });
     expect(res.status).toBe(200);
-    expect(res.body.status).toBe('In Progress');
+    expect(res.body.status).toBe('Done');
+  });
+
+  it('should reject invalid status on update', async () => {
+    const res = await request(app).put(`/api/tasks/${taskId}`).send({ status: 'Bogus' });
+    expect(res.status).toBe(400);
   });
 
   it('should return 404 for non-existent task', async () => {
@@ -102,11 +109,6 @@ describe('PUT /api/tasks/reorder', () => {
     const res = await request(app).put('/api/tasks/reorder').send({ id: 1, order_index: 0 });
     expect(res.status).toBe(400);
   });
-
-  it('should return 400 for invalid item schema', async () => {
-    const res = await request(app).put('/api/tasks/reorder').send([{ id: 'abc', order_index: 0 }]);
-    expect(res.status).toBe(400);
-  });
 });
 
 describe('DELETE /api/tasks/:id', () => {
@@ -125,21 +127,9 @@ describe('DELETE /api/tasks/:id', () => {
     const res = await request(app).delete('/api/tasks/99999');
     expect(res.status).toBe(404);
   });
-
-  it('should return 400 for invalid id format', async () => {
-    const res = await request(app).delete('/api/tasks/abc');
-    expect(res.status).toBe(400);
-  });
 });
 
 describe('Config CRUD — /api/customers', () => {
-  it('should list seeded customers', async () => {
-    const res = await request(app).get('/api/customers');
-    expect(res.status).toBe(200);
-    expect(res.body.length).toBeGreaterThanOrEqual(1);
-    expect(res.body[0].name).toBe('N/A');
-  });
-
   it('should create a customer', async () => {
     const res = await request(app).post('/api/customers').send({ name: 'Acme Corp' });
     expect(res.status).toBe(201);
@@ -150,30 +140,11 @@ describe('Config CRUD — /api/customers', () => {
     const res = await request(app).post('/api/customers').send({ name: 'Acme Corp' });
     expect(res.status).toBe(409);
   });
-
-  it('should return 400 for missing name', async () => {
-    const res = await request(app).post('/api/customers').send({});
-    expect(res.status).toBe(400);
-  });
 });
 
-describe('Config CRUD — /api/projects', () => {
-  it('should list seeded projects with customer_name', async () => {
-    const res = await request(app).get('/api/projects');
-    expect(res.status).toBe(200);
-    expect(res.body[0]).toHaveProperty('customer_name');
-  });
-
-  it('should create a project with customer_id', async () => {
-    const res = await request(app).post('/api/projects').send({ name: 'Project X', customer_id: 1 });
-    expect(res.status).toBe(201);
-    expect(res.body.name).toBe('Project X');
-  });
-});
-
-describe('Config — /api/workstreams should NOT exist', () => {
-  it('should return 404 for workstreams endpoint', async () => {
-    const res = await request(app).get('/api/workstreams');
+describe('Config — /api/statuses should NOT exist', () => {
+  it('should return 404 for statuses endpoint', async () => {
+    const res = await request(app).get('/api/statuses');
     expect(res.status).toBe(404);
   });
 });

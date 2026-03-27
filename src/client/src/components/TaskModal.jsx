@@ -2,106 +2,149 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
+import { STATUSES } from '@/lib/constants'
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional().default(''),
   date_due: z.string().optional().default(''),
+  status: z.string().default('Active'),
   priority_id: z.string().default('3'),
-  status_id: z.string().default('2'),
   project_id: z.string().default('1'),
   customer_id: z.string().default('1'),
   delegated_to: z.string().optional().default(''),
 })
 
 /**
- * @description TaskModal — create/edit task with zod validation and FK dropdowns.
+ * @description TaskModal — premium create/edit task dialog with zod validation.
  * @param {{ open, onOpenChange, task, onSave, onDelete, config }} props
  */
 export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, config }) {
-  const form = useForm({ resolver: zodResolver(taskSchema), defaultValues: { title: '', description: '', date_due: '', priority_id: '3', status_id: '2', project_id: '1', customer_id: '1', delegated_to: '' } })
+  const form = useForm({
+    resolver: zodResolver(taskSchema),
+    defaultValues: { title: '', description: '', date_due: '', status: 'Active', priority_id: '3', project_id: '1', customer_id: '1', delegated_to: '' },
+  })
 
   useEffect(() => {
     if (open) {
       form.reset(task ? {
         title: task.title || '', description: task.description || '', date_due: task.date_due || '',
-        priority_id: String(task.priority_id || 3), status_id: String(task.status_id || 2),
+        status: task.status || 'Active', priority_id: String(task.priority_id || 3),
         project_id: String(task.project_id || 1), customer_id: String(task.customer_id || 1),
         delegated_to: task.delegated_to || '',
-      } : { title: '', description: '', date_due: '', priority_id: '3', status_id: '2', project_id: '1', customer_id: '1', delegated_to: '' })
+      } : { title: '', description: '', date_due: '', status: 'Active', priority_id: '3', project_id: '1', customer_id: '1', delegated_to: '' })
     }
   }, [open, task, form])
 
   const handleProjectChange = (val, onChange) => {
     onChange(val)
     const proj = config.projects?.find((p) => String(p.id) === val)
-    if (proj?.customer_id && proj.customer_id !== 1) form.setValue('customer_id', String(proj.customer_id))
+    if (proj?.customer_id && proj.customer_id !== 1) {
+      form.setValue('customer_id', String(proj.customer_id))
+    }
   }
 
   const handleSubmit = (data) => {
-    onSave({ ...data, priority_id: Number(data.priority_id), status_id: Number(data.status_id), project_id: Number(data.project_id), customer_id: Number(data.customer_id) })
+    onSave({ ...data, priority_id: Number(data.priority_id), project_id: Number(data.project_id), customer_id: Number(data.customer_id) })
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>{task ? 'Edit Task' : 'New Task'}</DialogTitle></DialogHeader>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{task ? 'Edit Task' : 'Create New Task'}</DialogTitle>
+          <DialogDescription>{task ? 'Update the fields below and save.' : 'Fill in the details to add a new task to your board.'}</DialogDescription>
+        </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField control={form.control} name="title" render={({ field }) => (
-              <FormItem><FormLabel>Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="description" render={({ field }) => (
-              <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} rows={2} /></FormControl></FormItem>
-            )} />
-            <div className="grid grid-cols-3 gap-3">
-              <FormField control={form.control} name="priority_id" render={({ field }) => (
-                <FormItem><FormLabel>Priority</FormLabel><Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                  <SelectContent>{config.priorities?.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
-                </Select></FormItem>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
+            <div className="max-w-md">
+              <FormField control={form.control} name="title" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl><Input placeholder="e.g., Q3 Sales Deck" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
               )} />
-              <FormField control={form.control} name="status_id" render={({ field }) => (
-                <FormItem><FormLabel>Status</FormLabel><Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                  <SelectContent>{config.statuses?.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}</SelectContent>
-                </Select></FormItem>
+            </div>
+            <div className="max-w-lg">
+              <FormField control={form.control} name="description" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl><Textarea placeholder="Add context, links, or notes…" rows={3} {...field} /></FormControl>
+                  <FormDescription>Optional details to help track this task.</FormDescription>
+                </FormItem>
+              )} />
+            </div>
+            <div className="grid grid-cols-3 gap-6">
+              <FormField control={form.control} name="priority_id" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Priority</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger></FormControl>
+                    <SelectContent>{config.priorities?.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                  <FormDescription>Urgency level.</FormDescription>
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="status" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger></FormControl>
+                    <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                  </Select>
+                </FormItem>
               )} />
               <FormField control={form.control} name="date_due" render={({ field }) => (
-                <FormItem><FormLabel>Due Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl></FormItem>
+                <FormItem>
+                  <FormLabel>Due Date</FormLabel>
+                  <FormControl><Input type="date" {...field} /></FormControl>
+                  <FormDescription>When it's due.</FormDescription>
+                </FormItem>
               )} />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-6">
               <FormField control={form.control} name="project_id" render={({ field }) => (
-                <FormItem><FormLabel>Project</FormLabel><Select value={field.value} onValueChange={(v) => handleProjectChange(v, field.onChange)}>
-                  <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                  <SelectContent>{config.projects?.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
-                </Select></FormItem>
+                <FormItem>
+                  <FormLabel>Project</FormLabel>
+                  <Select value={field.value} onValueChange={(v) => handleProjectChange(v, field.onChange)}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger></FormControl>
+                    <SelectContent>{config.projects?.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                  <FormDescription>Auto-assigns customer.</FormDescription>
+                </FormItem>
               )} />
               <FormField control={form.control} name="customer_id" render={({ field }) => (
-                <FormItem><FormLabel>Customer</FormLabel><Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                  <SelectContent>{config.customers?.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
-                </Select></FormItem>
+                <FormItem>
+                  <FormLabel>Customer</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger></FormControl>
+                    <SelectContent>{config.customers?.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </FormItem>
               )} />
               <FormField control={form.control} name="delegated_to" render={({ field }) => (
-                <FormItem><FormLabel>Delegated To</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
+                <FormItem>
+                  <FormLabel>Delegated To</FormLabel>
+                  <FormControl><Input placeholder="e.g., Jane Smith" {...field} /></FormControl>
+                  <FormDescription>Person responsible.</FormDescription>
+                </FormItem>
               )} />
             </div>
-            <DialogFooter className="flex justify-between">
+            <DialogFooter className="pt-4 flex items-center justify-between gap-2">
               {task && (
-                <DeleteConfirmDialog title="Delete task?" description={`Permanently delete "${task.title}"?`} onConfirm={() => { onDelete?.(task); onOpenChange(false) }}>
+                <DeleteConfirmDialog title="Delete task?" description={`This will permanently delete "${task.title}". This cannot be undone.`} onConfirm={() => { onDelete?.(task); onOpenChange(false) }}>
                   <Button type="button" variant="destructive" size="sm">Delete Task</Button>
                 </DeleteConfirmDialog>
               )}
-              <Button type="submit">Save</Button>
+              <Button type="submit">Save Task</Button>
             </DialogFooter>
           </form>
         </Form>
