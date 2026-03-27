@@ -166,7 +166,7 @@ export default function KanbanBoard() {
         </ResizablePanelGroup>
         <DragOverlay dropAnimation={null}>{activeTask ? <div className="z-50"><TaskCard task={activeTask} overlay /></div> : null}</DragOverlay>
       </DndContext>
-      <TaskModal open={modalOpen} onOpenChange={setModalOpen} task={editingTask} onSave={handleSaveTask} onDelete={handleDelete} config={config} insertDefaults={insertDefaults} />
+      <TaskModal open={modalOpen} onOpenChange={setModalOpen} task={editingTask} onSave={handleSaveTask} onDelete={handleDelete} config={config} onConfigChange={setConfig} insertDefaults={insertDefaults} />
     </>
   )
 }
