@@ -6,7 +6,6 @@ const router = express.Router();
 
 const ENTITIES = [
   { path: 'priorities', table: 'priorities' },
-  { path: 'statuses', table: 'statuses' },
   { path: 'customers', table: 'customers' },
   { path: 'projects', table: 'projects', hasCustomerFK: true },
 ];

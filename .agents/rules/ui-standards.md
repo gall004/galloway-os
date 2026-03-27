@@ -60,3 +60,11 @@ description: UI Design Standards, ShadCN Mandate & Responsiveness
   * The AlertDialog must clearly state what will be destroyed (e.g., "Delete task: {title}?").
   * The confirm button must use destructive styling (`variant="destructive"`).
   * Never delete a record on a single click without confirmation.
+
+## 12. Form & Dialog Anatomy
+* **Rule:** All forms MUST use the complete ShadCN anatomy: `<FormLabel>`, `<FormControl>`, `<FormDescription>` (help text), and `<FormMessage>`. Inputs must never stretch uncomfortably wide; use responsive `max-width`s or CSS grids with proper gaps (`gap-6`). All Modals MUST use `<DialogHeader>`, `<DialogTitle>`, `<DialogDescription>`, and `<DialogFooter>`.
+* **Enforcement:**
+  * Every form field must have a visible `<FormLabel>` and relevant `<FormDescription>` for complex or non-obvious inputs.
+  * All form inputs must include descriptive `placeholder` text.
+  * Dialogs must set a constrained `max-width` (e.g., `sm:max-w-[600px]` for task forms, `sm:max-w-[425px]` for config forms).
+  * The primary action button must live inside `<DialogFooter>` with proper padding.

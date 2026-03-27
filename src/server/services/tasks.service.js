@@ -1,25 +1,33 @@
 const { getDatabase } = require('../models/database');
 const logger = require('../logger');
 
+const VALID_STATUSES = ['Active', 'Delegated/Waiting', 'Done'];
+
 const TASKS_SELECT = `
   SELECT tasks.*,
-    p.name AS priority, s.name AS status,
+    p.name AS priority,
     c.name AS customer, pr.name AS project
   FROM tasks
   LEFT JOIN priorities p ON tasks.priority_id = p.id
-  LEFT JOIN statuses s ON tasks.status_id = s.id
   LEFT JOIN customers c ON tasks.customer_id = c.id
   LEFT JOIN projects pr ON tasks.project_id = pr.id
 `;
 
 /**
  * @description Create a new task in the database.
- * @param {Object} data - Task fields (accepts FK IDs).
+ * @param {Object} data - Task fields (status as TEXT, FK IDs for priority/project/customer).
  * @returns {Object} The created task with joined names.
  * @throws {Error} If validation fails.
  */
 function createTask(data) {
   const db = getDatabase();
+  const status = data.status || 'Active';
+
+  if (!VALID_STATUSES.includes(status)) {
+    const err = new Error(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`);
+    err.code = 'VALIDATION_ERROR';
+    throw err;
+  }
 
   if (data.project_id && data.project_id !== 1) {
     const proj = db.prepare('SELECT customer_id FROM projects WHERE id = ?').get(data.project_id);
@@ -29,7 +37,7 @@ function createTask(data) {
   }
 
   const stmt = db.prepare(`
-    INSERT INTO tasks (title, description, date_due, priority_id, status_id, project_id, customer_id, delegated_to)
+    INSERT INTO tasks (title, description, date_due, status, priority_id, project_id, customer_id, delegated_to)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
@@ -37,8 +45,8 @@ function createTask(data) {
     data.title,
     data.description || null,
     data.date_due || null,
+    status,
     data.priority_id || 3,
-    data.status_id || 2,
     data.project_id || 1,
     data.customer_id || 1,
     data.delegated_to || null,
@@ -61,9 +69,9 @@ function getAllTasks() {
 /**
  * @description Update an existing task by ID.
  * @param {number} id - Task ID.
- * @param {Object} updates - Fields to update (FK IDs or scalar fields).
+ * @param {Object} updates - Fields to update.
  * @returns {Object} The updated task with joined names.
- * @throws {Error} If not found.
+ * @throws {Error} If not found or invalid status.
  */
 function updateTask(id, updates) {
   const db = getDatabase();
@@ -75,6 +83,12 @@ function updateTask(id, updates) {
     throw err;
   }
 
+  if (updates.status && !VALID_STATUSES.includes(updates.status)) {
+    const err = new Error(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`);
+    err.code = 'VALIDATION_ERROR';
+    throw err;
+  }
+
   if (updates.project_id && updates.project_id !== 1) {
     const proj = db.prepare('SELECT customer_id FROM projects WHERE id = ?').get(updates.project_id);
     if (proj && proj.customer_id !== 1 && !updates.customer_id) {
@@ -82,7 +96,7 @@ function updateTask(id, updates) {
     }
   }
 
-  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'priority_id', 'status_id', 'project_id', 'customer_id', 'delegated_to', 'order_index'];
+  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'status', 'priority_id', 'project_id', 'customer_id', 'delegated_to', 'order_index'];
   const setClauses = [];
   const values = [];
 
@@ -139,4 +153,4 @@ function reorderTasks(items) {
   logger.info({ count: items.length }, 'Tasks reordered');
 }
 
-module.exports = { createTask, getAllTasks, updateTask, deleteTask, reorderTasks };
+module.exports = { createTask, getAllTasks, updateTask, deleteTask, reorderTasks, VALID_STATUSES };

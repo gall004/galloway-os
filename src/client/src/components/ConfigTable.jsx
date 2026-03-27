@@ -3,13 +3,14 @@ import { toast } from 'sonner'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
 import { fetchConfig, createConfig, updateConfig, deleteConfig } from '@/lib/api'
 
 /**
- * @description Reusable CRUD table for a config entity.
+ * @description Reusable CRUD table for a config entity with polished dialogs.
  * @param {{ entity: string, label: string, parentEntity?: string, parentLabel?: string }} props
  */
 export default function ConfigTable({ entity, label, parentEntity, parentLabel }) {
@@ -22,7 +23,7 @@ export default function ConfigTable({ entity, label, parentEntity, parentLabel }
 
   const load = useCallback(() => {
     fetchConfig(entity).then(setItems).catch((e) => toast.error(e.message))
-    if (parentEntity) fetchConfig(parentEntity).then(setParents).catch(() => {})
+    if (parentEntity) { fetchConfig(parentEntity).then(setParents).catch(() => {}) }
   }, [entity, parentEntity])
 
   useEffect(() => { load() }, [load])
@@ -32,7 +33,7 @@ export default function ConfigTable({ entity, label, parentEntity, parentLabel }
 
   const handleSave = async () => {
     const data = { name }
-    if (parentEntity) data.customer_id = Number(parentId) || 1
+    if (parentEntity) { data.customer_id = Number(parentId) || 1 }
     try {
       if (editItem) {
         await updateConfig(entity, editItem.id, data)
@@ -77,7 +78,7 @@ export default function ConfigTable({ entity, label, parentEntity, parentLabel }
               {parentEntity && <TableCell>{item.customer_name || '—'}</TableCell>}
               <TableCell className="text-right space-x-1">
                 <Button variant="ghost" size="sm" onClick={() => openEdit(item)}>✏️</Button>
-                <DeleteConfirmDialog title={`Delete ${label}?`} description={`This will permanently delete "${item.name}".`} onConfirm={() => handleDelete(item)}>
+                <DeleteConfirmDialog title={`Delete ${label}?`} description={`This will permanently delete "${item.name}". This cannot be undone.`} onConfirm={() => handleDelete(item)}>
                   <Button variant="ghost" size="sm">🗑️</Button>
                 </DeleteConfirmDialog>
               </TableCell>
@@ -86,23 +87,30 @@ export default function ConfigTable({ entity, label, parentEntity, parentLabel }
         </TableBody>
       </Table>
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>{editItem ? `Edit ${label}` : `New ${label}`}</DialogTitle>
+            <DialogDescription>{editItem ? `Update the name below.` : `Add a new ${label.toLowerCase()} to your configuration.`}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
-            <Input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="config-name">Name</Label>
+              <Input id="config-name" placeholder={`e.g., ${label === 'Customer' ? 'Acme Corp' : label === 'Project' ? 'Q3 Rollout' : 'Urgent'}`} value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
             {parentEntity && (
-              <Select value={parentId} onValueChange={setParentId}>
-                <SelectTrigger><SelectValue placeholder={`Select ${parentLabel}`} /></SelectTrigger>
-                <SelectContent>
-                  {parents.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label>{parentLabel}</Label>
+                <Select value={parentId} onValueChange={setParentId}>
+                  <SelectTrigger><SelectValue placeholder={`Select ${parentLabel}`} /></SelectTrigger>
+                  <SelectContent>
+                    {parents.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
           </div>
           <DialogFooter>
-            <Button onClick={handleSave} disabled={!name.trim()}>Save</Button>
+            <Button onClick={handleSave} disabled={!name.trim()}>Save {label}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
