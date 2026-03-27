@@ -12,11 +12,12 @@ services:
     environment:
       - PORT=7432
       - NODE_ENV=production
-      - DATABASE_PATH=./data/galloway-os.sqlite
+      # Explicitly route the SQLite DB strictly to the mounted volume per Phase 16 specs
+      - DATABASE_PATH=/app/src/db/galloway-os.sqlite
       - LOG_LEVEL=info
     volumes:
-      # Persistent SQLite database on host filesystem
-      - ./data:/app/data
+      # Mount explicitly strictly to src/db for complete architectural data isolation
+      - ./src/db:/app/src/db
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:7432/healthz"]
       interval: 30s

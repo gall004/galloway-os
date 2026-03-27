@@ -1,43 +1,48 @@
-# ---- Build Stage ----
-FROM node:20-alpine AS builder
+# ---- Stage 1: Build the Vite PWA Frontend ----
+FROM node:24-alpine AS builder
 
-WORKDIR /app
+WORKDIR /app/src/client
+COPY src/client/package*.json ./
 
-COPY package*.json ./
-RUN npm ci --only=production
+# Specifically use --legacy-peer-deps to bypass Vite peer-dependency version locking
+RUN npm ci --legacy-peer-deps
 
-# ---- Runtime Stage ----
-FROM node:20-alpine
+COPY src/client ./
+RUN npm run build
+
+# ---- Stage 2: Production Server Environment ----
+FROM node:24-alpine
+
+# Set execution mode explicitly
+ENV NODE_ENV=production
 
 WORKDIR /app
 
 # Create a non-root user for security
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# Copy production dependencies from builder
-COPY --from=builder /app/node_modules ./node_modules
+# Install production dependencies for the Express backend
+COPY package*.json ./
+RUN apk add --no-cache python3 make g++ \
+    && npm ci --omit=dev \
+    && apk del python3 make g++
 
-# Copy application source
-COPY src/server/ ./src/server/
-COPY src/db/ ./src/db/
-COPY package.json ./
+# Copy the backend source files
+COPY src/server ./src/server
+COPY src/db ./src/db
 
-# Build the frontend static assets
-COPY src/client/ ./src/client/
-RUN cd src/client && npm ci && npm run build
+# Copy compiled frontend assets from builder stage
+COPY --from=builder /app/src/client/dist ./src/client/dist
 
-# Create data directory for SQLite volume mount
-RUN mkdir -p /app/data && chown -R appuser:appgroup /app/data
+# Ensure destination path for the database has the correct constraints
+RUN mkdir -p /app/src/db && chown -R appuser:appgroup /app/src
 
-# Switch to non-root user
 USER appuser
 
-# Expose the backend API port
 EXPOSE 7432
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -qO- http://localhost:7432/healthz || exit 1
 
-# Start the application
+# Boot the Express API/Static Server
 CMD ["node", "src/server/index.js"]
