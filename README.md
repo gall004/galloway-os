@@ -83,11 +83,18 @@ The SQLite database persists in the `./data/` directory. You can move, back up, 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/healthz` | Health check (verifies DB connectivity) |
-| `GET` | `/api/tasks` | Retrieve all tasks (ordered by order_index) |
-| `POST` | `/api/tasks` | Create a new task |
+| `GET` | `/api/tasks` | Retrieve all tasks with joined names |
+| `POST` | `/api/tasks` | Create a new task (accepts FK IDs) |
 | `PUT` | `/api/tasks/reorder` | Bulk-update order_index for drag-and-drop |
-| `PUT` | `/api/tasks/:id` | Update a task |
+| `PUT` | `/api/tasks/:id` | Update a task (accepts FK IDs) |
 | `DELETE` | `/api/tasks/:id` | Delete a task |
+| `GET/POST` | `/api/customers` | List / Create customers |
+| `PUT/DELETE` | `/api/customers/:id` | Update / Delete a customer |
+| `GET/POST` | `/api/projects` | List / Create projects (includes customer_id) |
+| `PUT/DELETE` | `/api/projects/:id` | Update / Delete a project |
+| `GET/POST` | `/api/workstreams` | List / Create workstreams |
+| `GET/POST` | `/api/statuses` | List / Create statuses |
+| `GET/POST` | `/api/priorities` | List / Create priorities |
 
 ## Testing
 

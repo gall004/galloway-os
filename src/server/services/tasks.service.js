@@ -1,91 +1,73 @@
 const { getDatabase } = require('../models/database');
 const logger = require('../logger');
 
-const VALID_PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
-const VALID_STATUSES = ['Backlog', 'Next Up', 'In Progress', 'Delegated/Waiting', 'Done'];
-const VALID_WORKSTREAMS = ['None', 'Mark Eichten', 'Garrett Stuart', 'Caleb Johnson'];
-
-/**
- * @description Validate task fields against allowed enum values.
- * @param {Object} fields - The fields to validate.
- * @returns {{ valid: boolean, message: string }} Validation result.
- */
-function validateTaskFields(fields) {
-  if (fields.priority && !VALID_PRIORITIES.includes(fields.priority)) {
-    return { valid: false, message: `Invalid priority. Must be one of: ${VALID_PRIORITIES.join(', ')}` };
-  }
-  if (fields.status && !VALID_STATUSES.includes(fields.status)) {
-    return { valid: false, message: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}` };
-  }
-  if (fields.workstream && !VALID_WORKSTREAMS.includes(fields.workstream)) {
-    return { valid: false, message: `Invalid workstream. Must be one of: ${VALID_WORKSTREAMS.join(', ')}` };
-  }
-  return { valid: true, message: '' };
-}
+const TASKS_SELECT = `
+  SELECT tasks.*,
+    p.name AS priority, s.name AS status, w.name AS workstream,
+    c.name AS customer, pr.name AS project
+  FROM tasks
+  LEFT JOIN priorities p ON tasks.priority_id = p.id
+  LEFT JOIN statuses s ON tasks.status_id = s.id
+  LEFT JOIN workstreams w ON tasks.workstream_id = w.id
+  LEFT JOIN customers c ON tasks.customer_id = c.id
+  LEFT JOIN projects pr ON tasks.project_id = pr.id
+`;
 
 /**
  * @description Create a new task in the database.
- * @param {Object} taskData - Task fields from request body.
- * @returns {Object} The created task row.
+ * @param {Object} data - Task fields (accepts FK IDs).
+ * @returns {Object} The created task with joined names.
  * @throws {Error} If validation fails.
  */
-function createTask(taskData) {
-  const { title, description, date_due, priority, status, associated_project, associated_customer, delegated_to, workstream } = taskData;
+function createTask(data) {
+  const db = getDatabase();
 
-  const validation = validateTaskFields({ priority, status, workstream });
-  if (!validation.valid) {
-    const err = new Error(validation.message);
-    err.code = 'VALIDATION_ERROR';
-    throw err;
+  if (data.project_id && data.project_id !== 1) {
+    const proj = db.prepare('SELECT customer_id FROM projects WHERE id = ?').get(data.project_id);
+    if (proj && proj.customer_id !== 1) {
+      data.customer_id = proj.customer_id;
+    }
   }
 
-  const db = getDatabase();
   const stmt = db.prepare(`
-    INSERT INTO tasks (title, description, date_due, priority, status, associated_project, associated_customer, delegated_to, workstream)
+    INSERT INTO tasks (title, description, date_due, priority_id, status_id, project_id, customer_id, delegated_to, workstream_id)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const result = stmt.run(
-    title,
-    description || null,
-    date_due || null,
-    priority || 'Medium',
-    status || 'Backlog',
-    associated_project || null,
-    associated_customer || null,
-    delegated_to || null,
-    workstream || 'None',
+    data.title,
+    data.description || null,
+    data.date_due || null,
+    data.priority_id || 3,
+    data.status_id || 2,
+    data.project_id || 1,
+    data.customer_id || 1,
+    data.delegated_to || null,
+    data.workstream_id || 1,
   );
 
-  const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(result.lastInsertRowid);
+  const task = db.prepare(`${TASKS_SELECT} WHERE tasks.id = ?`).get(result.lastInsertRowid);
   logger.info({ taskId: task.id }, 'Task created');
   return task;
 }
 
 /**
- * @description Retrieve all tasks from the database, ordered by order_index.
- * @returns {Array<Object>} Array of task rows.
+ * @description Retrieve all tasks with joined lookup names.
+ * @returns {Array<Object>}
  */
 function getAllTasks() {
   const db = getDatabase();
-  return db.prepare('SELECT * FROM tasks ORDER BY order_index ASC, date_created DESC').all();
+  return db.prepare(`${TASKS_SELECT} ORDER BY tasks.order_index ASC, tasks.date_created DESC`).all();
 }
 
 /**
  * @description Update an existing task by ID.
- * @param {number} id - The task ID.
- * @param {Object} updates - Fields to update.
- * @returns {Object} The updated task row.
- * @throws {Error} If task not found or validation fails.
+ * @param {number} id - Task ID.
+ * @param {Object} updates - Fields to update (FK IDs or scalar fields).
+ * @returns {Object} The updated task with joined names.
+ * @throws {Error} If not found.
  */
 function updateTask(id, updates) {
-  const validation = validateTaskFields(updates);
-  if (!validation.valid) {
-    const err = new Error(validation.message);
-    err.code = 'VALIDATION_ERROR';
-    throw err;
-  }
-
   const db = getDatabase();
   const existing = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
 
@@ -95,7 +77,14 @@ function updateTask(id, updates) {
     throw err;
   }
 
-  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'priority', 'status', 'associated_project', 'associated_customer', 'delegated_to', 'workstream', 'order_index'];
+  if (updates.project_id && updates.project_id !== 1) {
+    const proj = db.prepare('SELECT customer_id FROM projects WHERE id = ?').get(updates.project_id);
+    if (proj && proj.customer_id !== 1 && !updates.customer_id) {
+      updates.customer_id = proj.customer_id;
+    }
+  }
+
+  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'priority_id', 'status_id', 'project_id', 'customer_id', 'delegated_to', 'workstream_id', 'order_index'];
   const setClauses = [];
   const values = [];
 
@@ -111,15 +100,15 @@ function updateTask(id, updates) {
     db.prepare(`UPDATE tasks SET ${setClauses.join(', ')} WHERE id = ?`).run(...values);
   }
 
-  const updated = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id);
+  const updated = db.prepare(`${TASKS_SELECT} WHERE tasks.id = ?`).get(id);
   logger.info({ taskId: id }, 'Task updated');
   return updated;
 }
 
 /**
  * @description Delete a task by ID.
- * @param {number} id - The task ID.
- * @throws {Error} If task not found.
+ * @param {number} id
+ * @throws {Error} If not found.
  */
 function deleteTask(id) {
   const db = getDatabase();
@@ -135,8 +124,8 @@ function deleteTask(id) {
 }
 
 /**
- * @description Bulk-update order_index for multiple tasks (drag-and-drop reorder).
- * @param {Array<{id: number, order_index: number}>} items - Array of id + order_index pairs.
+ * @description Bulk-update order_index for drag-and-drop reorder.
+ * @param {Array<{id: number, order_index: number}>} items
  */
 function reorderTasks(items) {
   const db = getDatabase();

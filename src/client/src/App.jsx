@@ -1,20 +1,25 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Toaster } from '@/components/ui/sonner'
 import AppHeader from '@/components/AppHeader'
 import KanbanBoard from '@/components/KanbanBoard'
 import RetroactiveDashboard from '@/components/RetroactiveDashboard'
+import SettingsView from '@/components/SettingsView'
 
-function App() {
+/**
+ * @description Root application component with routing and Sonner toaster.
+ */
+export default function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background text-foreground">
         <AppHeader />
         <Routes>
           <Route path="/" element={<KanbanBoard />} />
           <Route path="/dashboard" element={<RetroactiveDashboard />} />
+          <Route path="/settings" element={<SettingsView />} />
         </Routes>
       </div>
+      <Toaster richColors position="bottom-right" />
     </BrowserRouter>
   )
 }
-
-export default App

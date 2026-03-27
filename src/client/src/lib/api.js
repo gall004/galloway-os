@@ -1,83 +1,33 @@
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7432';
 
 /**
- * @description Fetch all tasks from the backend API.
- * @returns {Promise<Array>} Array of task objects.
+ * @description Generic fetch helper with error handling.
+ * @param {string} url
+ * @param {Object} [options]
+ * @returns {Promise<any>}
  */
-export async function fetchTasks() {
-  const res = await fetch(`${API_BASE}/api/tasks`);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch tasks: ${res.status}`);
-  }
-  return res.json();
-}
-
-/**
- * @description Create a new task via the backend API.
- * @param {Object} taskData - Task fields.
- * @returns {Promise<Object>} The created task.
- */
-export async function createTask(taskData) {
-  const res = await fetch(`${API_BASE}/api/tasks`, {
-    method: 'POST',
+async function apiFetch(url, options = {}) {
+  const res = await fetch(`${API_BASE}${url}`, {
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(taskData),
+    ...options,
   });
   if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.message || 'Failed to create task');
+    const err = await res.json().catch(() => ({ message: `HTTP ${res.status}` }));
+    throw new Error(err.message || `Request failed: ${res.status}`);
   }
+  if (res.status === 204) return;
   return res.json();
 }
 
-/**
- * @description Update an existing task via the backend API.
- * @param {number} id - Task ID.
- * @param {Object} updates - Fields to update.
- * @returns {Promise<Object>} The updated task.
- */
-export async function updateTask(id, updates) {
-  const res = await fetch(`${API_BASE}/api/tasks/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(updates),
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.message || 'Failed to update task');
-  }
-  return res.json();
-}
+// --- Tasks ---
+export const fetchTasks = () => apiFetch('/api/tasks');
+export const createTask = (data) => apiFetch('/api/tasks', { method: 'POST', body: JSON.stringify(data) });
+export const updateTask = (id, data) => apiFetch(`/api/tasks/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+export const deleteTask = (id) => apiFetch(`/api/tasks/${id}`, { method: 'DELETE' });
+export const reorderTasks = (items) => apiFetch('/api/tasks/reorder', { method: 'PUT', body: JSON.stringify(items) });
 
-/**
- * @description Delete a task via the backend API.
- * @param {number} id - Task ID.
- * @returns {Promise<void>}
- */
-export async function deleteTask(id) {
-  const res = await fetch(`${API_BASE}/api/tasks/${id}`, {
-    method: 'DELETE',
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.message || 'Failed to delete task');
-  }
-}
-
-/**
- * @description Bulk-reorder tasks via the backend API.
- * @param {Array<{id: number, order_index: number}>} items - Array of id + order_index.
- * @returns {Promise<Object>} Success response.
- */
-export async function reorderTasks(items) {
-  const res = await fetch(`${API_BASE}/api/tasks/reorder`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(items),
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.message || 'Failed to reorder tasks');
-  }
-  return res.json();
-}
+// --- Config (generic) ---
+export const fetchConfig = (entity) => apiFetch(`/api/${entity}`);
+export const createConfig = (entity, data) => apiFetch(`/api/${entity}`, { method: 'POST', body: JSON.stringify(data) });
+export const updateConfig = (entity, id, data) => apiFetch(`/api/${entity}/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+export const deleteConfig = (entity, id) => apiFetch(`/api/${entity}/${id}`, { method: 'DELETE' });
