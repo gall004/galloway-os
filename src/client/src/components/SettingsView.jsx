@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import ConfigTable from '@/components/ConfigTable'
 
 const TABS = [
+  { key: 'statuses', label: 'Status', readOnly: true, nameField: 'name' },
   { key: 'customers', label: 'Customer' },
   { key: 'projects', label: 'Project', parentEntity: 'customers', parentLabel: 'Customer' },
   { key: 'priorities', label: 'Priority' },
@@ -12,7 +13,7 @@ const TABS = [
  * @description Settings view — tabbed config CRUD management.
  */
 export default function SettingsView() {
-  const [activeTab, setActiveTab] = useState('customers')
+  const [activeTab, setActiveTab] = useState('statuses')
   const tab = TABS.find((t) => t.key === activeTab)
 
   return (
@@ -37,6 +38,8 @@ export default function SettingsView() {
           label={tab.label}
           parentEntity={tab.parentEntity}
           parentLabel={tab.parentLabel}
+          readOnly={tab.readOnly}
+          nameField={tab.nameField}
         />
       )}
     </div>

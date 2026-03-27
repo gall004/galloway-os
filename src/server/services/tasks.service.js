@@ -1,33 +1,44 @@
 const { getDatabase } = require('../models/database');
 const logger = require('../logger');
 
-const VALID_STATUSES = ['Active', 'Delegated/Waiting', 'Done'];
-
 const TASKS_SELECT = `
   SELECT tasks.*,
     p.name AS priority,
+    s.label AS status_label,
     c.name AS customer, pr.name AS project
   FROM tasks
   LEFT JOIN priorities p ON tasks.priority_id = p.id
+  LEFT JOIN statuses s ON tasks.status_name = s.name
   LEFT JOIN customers c ON tasks.customer_id = c.id
   LEFT JOIN projects pr ON tasks.project_id = pr.id
 `;
 
 /**
+ * @description Validate status_name against the statuses reference table.
+ * @param {Object} db - Database instance.
+ * @param {string} statusName - The status key to validate.
+ * @throws {Error} If status not found.
+ */
+function validateStatus(db, statusName) {
+  const row = db.prepare('SELECT name FROM statuses WHERE name = ?').get(statusName);
+  if (!row) {
+    const err = new Error(`Invalid status_name '${statusName}'. Must be a valid status key.`);
+    err.code = 'VALIDATION_ERROR';
+    throw err;
+  }
+}
+
+/**
  * @description Create a new task in the database.
- * @param {Object} data - Task fields (status as TEXT, FK IDs for priority/project/customer).
+ * @param {Object} data - Task fields (status_name key, FK IDs for priority/project/customer).
  * @returns {Object} The created task with joined names.
  * @throws {Error} If validation fails.
  */
 function createTask(data) {
   const db = getDatabase();
-  const status = data.status || 'Active';
+  const statusName = data.status_name || 'active';
 
-  if (!VALID_STATUSES.includes(status)) {
-    const err = new Error(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`);
-    err.code = 'VALIDATION_ERROR';
-    throw err;
-  }
+  validateStatus(db, statusName);
 
   if (data.project_id && data.project_id !== 1) {
     const proj = db.prepare('SELECT customer_id FROM projects WHERE id = ?').get(data.project_id);
@@ -37,7 +48,7 @@ function createTask(data) {
   }
 
   const stmt = db.prepare(`
-    INSERT INTO tasks (title, description, date_due, status, priority_id, project_id, customer_id, delegated_to)
+    INSERT INTO tasks (title, description, date_due, status_name, priority_id, project_id, customer_id, delegated_to)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
@@ -45,7 +56,7 @@ function createTask(data) {
     data.title,
     data.description || null,
     data.date_due || null,
-    status,
+    statusName,
     data.priority_id || 3,
     data.project_id || 1,
     data.customer_id || 1,
@@ -71,7 +82,7 @@ function getAllTasks() {
  * @param {number} id - Task ID.
  * @param {Object} updates - Fields to update.
  * @returns {Object} The updated task with joined names.
- * @throws {Error} If not found or invalid status.
+ * @throws {Error} If not found or invalid.
  */
 function updateTask(id, updates) {
   const db = getDatabase();
@@ -83,10 +94,8 @@ function updateTask(id, updates) {
     throw err;
   }
 
-  if (updates.status && !VALID_STATUSES.includes(updates.status)) {
-    const err = new Error(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`);
-    err.code = 'VALIDATION_ERROR';
-    throw err;
+  if (updates.status_name) {
+    validateStatus(db, updates.status_name);
   }
 
   if (updates.project_id && updates.project_id !== 1) {
@@ -96,7 +105,7 @@ function updateTask(id, updates) {
     }
   }
 
-  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'status', 'priority_id', 'project_id', 'customer_id', 'delegated_to', 'order_index'];
+  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'status_name', 'priority_id', 'project_id', 'customer_id', 'delegated_to', 'order_index'];
   const setClauses = [];
   const values = [];
 
@@ -153,4 +162,4 @@ function reorderTasks(items) {
   logger.info({ count: items.length }, 'Tasks reordered');
 }
 
-module.exports = { createTask, getAllTasks, updateTask, deleteTask, reorderTasks, VALID_STATUSES };
+module.exports = { createTask, getAllTasks, updateTask, deleteTask, reorderTasks };

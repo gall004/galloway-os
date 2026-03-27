@@ -4,6 +4,7 @@ const logger = require('./logger');
 const healthRoutes = require('./routes/health.routes');
 const taskRoutes = require('./routes/tasks.routes');
 const configRoutes = require('./routes/config.routes');
+const statusesRoutes = require('./routes/statuses.routes');
 
 /**
  * @description Create and configure the Express application.
@@ -19,6 +20,7 @@ function createApp() {
   app.use(healthRoutes);
   app.use(taskRoutes);
   app.use(configRoutes);
+  app.use(statusesRoutes);
   app.use((err, _req, res, _next) => {
     logger.error({ err: err.message, stack: err.stack }, 'Unhandled error');
     res.status(500).json({
