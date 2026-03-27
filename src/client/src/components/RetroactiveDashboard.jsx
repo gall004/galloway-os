@@ -18,7 +18,6 @@ export default function RetroactiveDashboard() {
   const [sortField, setSortField] = useState('date_completed')
   const [sortDir, setSortDir] = useState('desc')
   const [filterProject, setFilterProject] = useState('_all')
-  const [filterWorkstream, setFilterWorkstream] = useState('All')
   const [search, setSearch] = useState('')
 
   const load = useCallback(async () => {
@@ -38,14 +37,9 @@ export default function RetroactiveDashboard() {
     return [...new Set(doneTasks.map((t) => t.project).filter((p) => p && p !== 'N/A'))].sort()
   }, [doneTasks])
 
-  const workstreams = useMemo(() => {
-    return [...new Set(doneTasks.map((t) => t.workstream).filter((w) => w && w !== 'N/A'))].sort()
-  }, [doneTasks])
-
   const filtered = useMemo(() => {
     let result = [...doneTasks]
     if (filterProject !== '_all') result = result.filter((t) => t.project === filterProject)
-    if (filterWorkstream !== 'All') result = result.filter((t) => t.workstream === filterWorkstream)
     if (search) result = result.filter((t) => t.title.toLowerCase().includes(search.toLowerCase()))
     result.sort((a, b) => {
       const aVal = a[sortField] || ''
@@ -53,7 +47,7 @@ export default function RetroactiveDashboard() {
       return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
     })
     return result
-  }, [doneTasks, filterProject, filterWorkstream, search, sortField, sortDir])
+  }, [doneTasks, filterProject, search, sortField, sortDir])
 
   const toggleSort = (field) => {
     if (sortField === field) setSortDir((d) => d === 'asc' ? 'desc' : 'asc')
@@ -79,13 +73,6 @@ export default function RetroactiveDashboard() {
     <div className="p-4 space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
         <h2 className="text-lg font-semibold text-foreground mr-auto">Completed ({filtered.length})</h2>
-        <Select value={filterWorkstream} onValueChange={setFilterWorkstream}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Workstream" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All">All Workstreams</SelectItem>
-            {workstreams.map((w) => <SelectItem key={w} value={w}>{w}</SelectItem>)}
-          </SelectContent>
-        </Select>
         <Select value={filterProject} onValueChange={setFilterProject}>
           <SelectTrigger className="w-[180px]"><SelectValue placeholder="Project" /></SelectTrigger>
           <SelectContent>
@@ -103,20 +90,18 @@ export default function RetroactiveDashboard() {
               <TableHead>Priority</TableHead>
               <TableHead><Button variant="ghost" size="sm" className="px-0 font-medium" onClick={() => toggleSort('date_completed')}>Completed {sortIcon('date_completed')}</Button></TableHead>
               <TableHead><Button variant="ghost" size="sm" className="px-0 font-medium" onClick={() => toggleSort('project')}>Project {sortIcon('project')}</Button></TableHead>
-              <TableHead><Button variant="ghost" size="sm" className="px-0 font-medium" onClick={() => toggleSort('workstream')}>Workstream {sortIcon('workstream')}</Button></TableHead>
               <TableHead className="w-24 text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground italic">No completed tasks.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground italic">No completed tasks.</TableCell></TableRow>
             ) : filtered.map((task) => (
               <TableRow key={task.id}>
                 <TableCell className="font-medium">{task.title}{task.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{task.description}</p>}</TableCell>
                 <TableCell><Badge variant="outline" className={`text-[10px] ${PRIORITY_STYLES[task.priority] || ''}`}>{task.priority}</Badge></TableCell>
                 <TableCell className="text-sm">{formatDate(task.date_completed)}</TableCell>
                 <TableCell className="text-sm">{task.project && task.project !== 'N/A' ? task.project : '—'}</TableCell>
-                <TableCell className="text-sm">{task.workstream && task.workstream !== 'N/A' ? task.workstream : '—'}</TableCell>
                 <TableCell className="text-right"><Button variant="ghost" size="sm" onClick={() => handleReopen(task)} title="Reopen">↩️</Button></TableCell>
               </TableRow>
             ))}

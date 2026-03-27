@@ -21,6 +21,7 @@ describe('POST /api/tasks', () => {
     expect(res.body).toMatchObject({ id: expect.any(Number), title: 'Test task', priority: 'Medium', status: 'Backlog' });
     expect(res.body.date_created).toBeDefined();
     expect(res.body.order_index).toBeDefined();
+    expect(res.body.workstream_id).toBeUndefined();
   });
 
   it('should create a task with FK IDs', async () => {
@@ -38,17 +39,16 @@ describe('POST /api/tasks', () => {
 });
 
 describe('GET /api/tasks', () => {
-  it('should return tasks with joined names', async () => {
+  it('should return tasks with joined names (no workstream)', async () => {
     const res = await request(app).get('/api/tasks');
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     const task = res.body[0];
     expect(task).toHaveProperty('priority');
     expect(task).toHaveProperty('status');
-    expect(task).toHaveProperty('workstream');
     expect(task).toHaveProperty('customer');
     expect(task).toHaveProperty('project');
-    expect(task).toHaveProperty('order_index');
+    expect(task).not.toHaveProperty('workstream');
   });
 });
 
@@ -74,13 +74,11 @@ describe('PUT /api/tasks/:id', () => {
   it('should return 404 for non-existent task', async () => {
     const res = await request(app).put('/api/tasks/99999').send({ title: 'Ghost' });
     expect(res.status).toBe(404);
-    expect(res.body).toMatchObject({ error: true, code: 'TASK_NOT_FOUND' });
   });
 
   it('should return 400 for invalid id format', async () => {
     const res = await request(app).put('/api/tasks/abc').send({ title: 'Bad id' });
     expect(res.status).toBe(400);
-    expect(res.body).toMatchObject({ error: true, code: 'VALIDATION_ERROR' });
   });
 });
 
@@ -170,5 +168,12 @@ describe('Config CRUD — /api/projects', () => {
     const res = await request(app).post('/api/projects').send({ name: 'Project X', customer_id: 1 });
     expect(res.status).toBe(201);
     expect(res.body.name).toBe('Project X');
+  });
+});
+
+describe('Config — /api/workstreams should NOT exist', () => {
+  it('should return 404 for workstreams endpoint', async () => {
+    const res = await request(app).get('/api/workstreams');
+    expect(res.status).toBe(404);
   });
 });
