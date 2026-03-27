@@ -12,8 +12,8 @@ services:
     environment:
       - PORT=7432
       - NODE_ENV=production
-      # Explicitly route the SQLite DB strictly to the mounted volume per Phase 16 specs
-      - DATABASE_PATH=/app/src/db/galloway-os.sqlite
+      # Environment Segregation DB config natively dropping to src/db volume
+      - DB_FILE=prod.sqlite
       - LOG_LEVEL=info
     volumes:
       # Mount explicitly strictly to src/db for complete architectural data isolation

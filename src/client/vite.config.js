@@ -10,6 +10,12 @@ const __dirname = path.dirname(__filename)
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    proxy: {
+      '/api': 'http://localhost:3000',
+      '/healthz': 'http://localhost:3000'
+    }
+  },
   plugins: [
     react(),
     tailwindcss(),
