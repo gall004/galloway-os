@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   galloway-os:
     build:
@@ -8,7 +6,7 @@ services:
     container_name: galloway-os
     restart: unless-stopped
     ports:
-      - "${PORT:-7432}:7432"
+      - "7432:7432"
     environment:
       - PORT=7432
       - NODE_ENV=production

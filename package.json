@@ -8,7 +8,7 @@
     "start": "node src/server/index.js",
     "dev": "concurrently --names server,client --prefix-colors blue,magenta \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "nodemon --watch src/server --watch src/db src/server/index.js",
-    "dev:client": "cd src/client && npx vite --port 7433",
+    "dev:client": "cd src/client && npx vite",
     "test": "jest --forceExit --detectOpenHandles",
     "test:unit": "jest tests/unit --forceExit",
     "test:integration": "jest tests/integration --forceExit --detectOpenHandles",
