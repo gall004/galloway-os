@@ -83,11 +83,14 @@ The SQLite database persists in the `./data/` directory. You can move, back up, 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/healthz` | Health check (verifies DB connectivity) |
-| `GET` | `/api/tasks` | Retrieve all tasks with joined names |
-| `POST` | `/api/tasks` | Create a new task (status: Active/Delegated/Waiting/Done) |
+| `GET` | `/api/tasks` | Retrieve all tasks with joined names and status_label |
+| `POST` | `/api/tasks` | Create a new task (status_name: active/delegated/done) |
 | `PUT` | `/api/tasks/reorder` | Bulk-update order_index for drag-and-drop |
-| `PUT` | `/api/tasks/:id` | Update a task (status as string, FK IDs for priority/project/customer) |
+| `PUT` | `/api/tasks/:id` | Update a task (status_name key, FK IDs for priority/project/customer) |
 | `DELETE` | `/api/tasks/:id` | Delete a task |
+| `GET` | `/api/statuses` | List all statuses (name key + label) |
+| `GET` | `/api/statuses/:name` | Get a single status by name key |
+| `PUT` | `/api/statuses/:name` | Update display label only (name is immutable) |
 | `GET/POST` | `/api/customers` | List / Create customers |
 | `PUT/DELETE` | `/api/customers/:id` | Update / Delete a customer |
 | `GET/POST` | `/api/projects` | List / Create projects (includes customer_id) |

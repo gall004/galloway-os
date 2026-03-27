@@ -11,7 +11,7 @@ import { fetchTasks, updateTask, createTask, deleteTask, reorderTasks, fetchConf
 import { COLUMNS } from '@/lib/constants'
 
 /**
- * @description KanbanBoard — resizable board with TEXT status, vertical sorting.
+ * @description KanbanBoard — resizable board routing by status_name, displaying status_label.
  */
 export default function KanbanBoard() {
   const [tasks, setTasks] = useState([])
@@ -26,26 +26,31 @@ export default function KanbanBoard() {
 
   const loadAll = useCallback(async () => {
     try {
-      const [t, priorities, customers, projects] = await Promise.all([
-        fetchTasks(), fetchConfig('priorities'), fetchConfig('customers'), fetchConfig('projects'),
+      const [t, priorities, customers, projects, statuses] = await Promise.all([
+        fetchTasks(), fetchConfig('priorities'), fetchConfig('customers'), fetchConfig('projects'), fetchConfig('statuses'),
       ])
       setTasks(t)
-      setConfig({ priorities, customers, projects })
+      setConfig({ priorities, customers, projects, statuses })
       setLoading(false)
     } catch (err) { setError(err.message); setLoading(false) }
   }, [])
 
   useEffect(() => { loadAll() }, [loadAll])
 
+  const getColumnLabel = useCallback((colKey) => {
+    const status = config.statuses?.find((s) => s.name === colKey)
+    return status?.label || COLUMNS.find((c) => c.key === colKey)?.label || colKey
+  }, [config.statuses])
+
   const getColumnForTask = useCallback((task) => {
-    for (const col of COLUMNS) { if (col.statusNames.includes(task.status)) return col.key }
+    for (const col of COLUMNS) { if (col.statusNames.includes(task.status_name)) return col.key }
     return null
   }, [])
 
   const getTasksForColumn = useCallback((colKey) => {
     const col = COLUMNS.find((c) => c.key === colKey)
     if (!col) return []
-    return tasks.filter((t) => col.statusNames.includes(t.status) && t.status !== 'Done')
+    return tasks.filter((t) => col.statusNames.includes(t.status_name) && t.status_name !== 'done')
   }, [tasks])
 
   const handleDragStart = (event) => setActiveTask(event.active.data.current?.task || null)
@@ -79,20 +84,19 @@ export default function KanbanBoard() {
       })
       try { await reorderTasks(updates) } catch { loadAll() }
     } else {
-      const targetColDef = COLUMNS.find((c) => c.key === targetCol)
-      const newStatus = targetColDef?.statusNames[0]
-      if (!newStatus) return
+      const newStatusName = targetCol
       const prevTasks = [...tasks]
-      setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status: newStatus } : t))
-      try { await updateTask(task.id, { status: newStatus }); toast.success('Task moved') }
+      const newLabel = config.statuses?.find((s) => s.name === newStatusName)?.label || newStatusName
+      setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status_name: newStatusName, status_label: newLabel } : t))
+      try { await updateTask(task.id, { status_name: newStatusName }); toast.success('Task moved') }
       catch { setTasks(prevTasks); toast.error('Failed to move task') }
     }
-  }, [tasks, loadAll, getColumnForTask, getTasksForColumn])
+  }, [tasks, loadAll, getColumnForTask, getTasksForColumn, config.statuses])
 
   const handleComplete = useCallback(async (task) => {
     const prevTasks = [...tasks]
-    setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status: 'Done', date_completed: new Date().toISOString() } : t))
-    try { await updateTask(task.id, { status: 'Done', date_completed: new Date().toISOString() }); toast.success('Task completed') }
+    setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status_name: 'done', status_label: 'Done', date_completed: new Date().toISOString() } : t))
+    try { await updateTask(task.id, { status_name: 'done', date_completed: new Date().toISOString() }); toast.success('Task completed') }
     catch { setTasks(prevTasks); toast.error('Failed to complete task') }
   }, [tasks])
 
@@ -132,14 +136,14 @@ export default function KanbanBoard() {
   return (
     <>
       <div className="flex items-center justify-between px-4 py-2">
-        <span className="text-xs text-muted-foreground">{tasks.filter((t) => t.status !== 'Done').length} active tasks</span>
+        <span className="text-xs text-muted-foreground">{tasks.filter((t) => t.status_name !== 'done').length} active tasks</span>
         <Button size="sm" onClick={openCreate}>+ New Task</Button>
       </div>
       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <ResizablePanelGroup direction="horizontal" className="px-4 pb-4 min-h-[calc(100vh-120px)]">
           <ResizablePanel defaultSize={75} minSize={20}>
             {(() => { const col = COLUMNS[0]; const colTasks = getTasksForColumn(col.key); return (
-              <KanbanColumn columnKey={col.key} label={col.label} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)}>
+              <KanbanColumn columnKey={col.key} label={getColumnLabel(col.key)} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)}>
                 {colTasks.map((task) => <TaskCard key={task.id} task={task} onClick={openEdit} onComplete={handleComplete} onDelete={handleDelete} />)}
               </KanbanColumn>
             ) })()}
@@ -147,7 +151,7 @@ export default function KanbanBoard() {
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={25} minSize={15}>
             {(() => { const col = COLUMNS[1]; const colTasks = getTasksForColumn(col.key); return (
-              <KanbanColumn columnKey={col.key} label={col.label} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)}>
+              <KanbanColumn columnKey={col.key} label={getColumnLabel(col.key)} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)}>
                 {colTasks.map((task) => <TaskCard key={task.id} task={task} onClick={openEdit} onComplete={handleComplete} onDelete={handleDelete} />)}
               </KanbanColumn>
             ) })()}

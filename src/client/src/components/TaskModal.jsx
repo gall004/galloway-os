@@ -9,13 +9,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
-import { STATUSES } from '@/lib/constants'
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional().default(''),
   date_due: z.string().optional().default(''),
-  status: z.string().default('Active'),
+  status_name: z.string().default('active'),
   priority_id: z.string().default('3'),
   project_id: z.string().default('1'),
   customer_id: z.string().default('1'),
@@ -23,23 +22,23 @@ const taskSchema = z.object({
 })
 
 /**
- * @description TaskModal — premium create/edit task dialog with zod validation.
+ * @description TaskModal — create/edit task with zod validation. Sends status_name, displays status_label.
  * @param {{ open, onOpenChange, task, onSave, onDelete, config }} props
  */
 export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, config }) {
   const form = useForm({
     resolver: zodResolver(taskSchema),
-    defaultValues: { title: '', description: '', date_due: '', status: 'Active', priority_id: '3', project_id: '1', customer_id: '1', delegated_to: '' },
+    defaultValues: { title: '', description: '', date_due: '', status_name: 'active', priority_id: '3', project_id: '1', customer_id: '1', delegated_to: '' },
   })
 
   useEffect(() => {
     if (open) {
       form.reset(task ? {
         title: task.title || '', description: task.description || '', date_due: task.date_due || '',
-        status: task.status || 'Active', priority_id: String(task.priority_id || 3),
+        status_name: task.status_name || 'active', priority_id: String(task.priority_id || 3),
         project_id: String(task.project_id || 1), customer_id: String(task.customer_id || 1),
         delegated_to: task.delegated_to || '',
-      } : { title: '', description: '', date_due: '', status: 'Active', priority_id: '3', project_id: '1', customer_id: '1', delegated_to: '' })
+      } : { title: '', description: '', date_due: '', status_name: 'active', priority_id: '3', project_id: '1', customer_id: '1', delegated_to: '' })
     }
   }, [open, task, form])
 
@@ -93,12 +92,12 @@ export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, 
                   <FormDescription>Urgency level.</FormDescription>
                 </FormItem>
               )} />
-              <FormField control={form.control} name="status" render={({ field }) => (
+              <FormField control={form.control} name="status_name" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status</FormLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger></FormControl>
-                    <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                    <SelectContent>{config.statuses?.map((s) => <SelectItem key={s.name} value={s.name}>{s.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </FormItem>
               )} />

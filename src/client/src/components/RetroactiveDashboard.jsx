@@ -9,7 +9,7 @@ import { fetchTasks, updateTask } from '@/lib/api'
 import { PRIORITY_STYLES } from '@/lib/constants'
 
 /**
- * @description RetroactiveDashboard — completed tasks table with Reopen action (TEXT status).
+ * @description RetroactiveDashboard — completed tasks table with Reopen action (status_name).
  */
 export default function RetroactiveDashboard() {
   const [allTasks, setAllTasks] = useState([])
@@ -29,7 +29,7 @@ export default function RetroactiveDashboard() {
 
   useEffect(() => { load() }, [load])
 
-  const doneTasks = useMemo(() => allTasks.filter((t) => t.status === 'Done'), [allTasks])
+  const doneTasks = useMemo(() => allTasks.filter((t) => t.status_name === 'done'), [allTasks])
 
   const projects = useMemo(() => {
     return [...new Set(doneTasks.map((t) => t.project).filter((p) => p && p !== 'N/A'))].sort()
@@ -57,7 +57,7 @@ export default function RetroactiveDashboard() {
 
   const handleReopen = async (task) => {
     try {
-      const updated = await updateTask(task.id, { status: 'Active', date_completed: null })
+      const updated = await updateTask(task.id, { status_name: 'active', date_completed: null })
       setAllTasks((prev) => prev.map((t) => t.id === updated.id ? updated : t))
       toast.success('Task reopened')
     } catch (e) { toast.error(e.message) }
