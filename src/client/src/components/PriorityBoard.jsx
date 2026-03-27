@@ -151,7 +151,7 @@ export default function PriorityBoard() {
           <ResizablePanel defaultSize={75} minSize={20}>
             {(() => { const col = COLUMNS[0]; const colTasks = getTasksForColumn(col.key); return (
               <PriorityColumn columnKey={col.key} label={getColumnLabel(col.key)} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)} onInsertTask={openInsert}>
-                {colTasks.map((task) => <TaskCard key={task.id} task={task} onClick={openEdit} onComplete={handleComplete} onDelete={handleDelete} />)}
+                {colTasks.map((task) => <TaskCard key={task.id} task={task} onClick={openEdit} onComplete={handleComplete} onDelete={handleDelete} onInsert={openInsert} />)}
               </PriorityColumn>
             ) })()}
           </ResizablePanel>
@@ -159,7 +159,7 @@ export default function PriorityBoard() {
           <ResizablePanel defaultSize={25} minSize={15}>
             {(() => { const col = COLUMNS[1]; const colTasks = getTasksForColumn(col.key); return (
               <PriorityColumn columnKey={col.key} label={getColumnLabel(col.key)} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)} onInsertTask={openInsert}>
-                {colTasks.map((task) => <TaskCard key={task.id} task={task} onClick={openEdit} onComplete={handleComplete} onDelete={handleDelete} />)}
+                {colTasks.map((task) => <TaskCard key={task.id} task={task} onClick={openEdit} onComplete={handleComplete} onDelete={handleDelete} onInsert={openInsert} />)}
               </PriorityColumn>
             ) })()}
           </ResizablePanel>

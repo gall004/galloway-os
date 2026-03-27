@@ -12,8 +12,8 @@ export default function PriorityColumn({ columnKey, label, count, taskIds, child
     data: { columnKey },
   })
 
-  const handleInsertAtTop = () => {
-    onInsertTask?.({ status_name: columnKey, order_index: 0 })
+  const handleInsertAtEnd = () => {
+    onInsertTask?.({ status_name: columnKey, order_index: count })
   }
 
   return (
@@ -44,8 +44,8 @@ export default function PriorityColumn({ columnKey, label, count, taskIds, child
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
-        <ContextMenuItem onClick={handleInsertAtTop}>
-          ＋ Insert Task Here
+        <ContextMenuItem onClick={handleInsertAtEnd}>
+          ＋ Insert Task at Bottom
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
