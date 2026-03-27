@@ -9,8 +9,8 @@ galloway-os is a lightweight, full-stack Node.js application paired with SQLite 
 | Layer | Technology |
 |-------|-----------|
 | **Frontend** | React + Vite + Tailwind CSS v4 + ShadCN |
-| **Backend** | Node.js + Express.js (port `7432`) |
-| **Database** | SQLite (single file, volume-mounted) |
+| **Backend** | Node.js + Express.js (dev: `3000`, prod: `7432`) |
+| **Database** | SQLite (single file native inside `src/db/`) |
 | **Container** | Docker + docker-compose |
 | **CI** | GitHub Actions |
 
@@ -39,9 +39,9 @@ galloway-os is a lightweight, full-stack Node.js application paired with SQLite 
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PORT` | Backend API server port | `7432` |
+| `PORT` | Local backend API server port | `3000` |
 | `NODE_ENV` | Environment mode (`development` \| `production`) | `development` |
-| `DATABASE_PATH` | Path to SQLite database file | `./data/galloway-os.sqlite` |
+| `DB_FILE` | Filename of SQLite database (resolves inside `src/db/`) | `dev.sqlite` |
 | `LOG_LEVEL` | Logging level (`error` \| `warn` \| `info` \| `debug`) | `info` |
 
 ## Running the Application
@@ -73,10 +73,10 @@ npm install && cd src/client && npm install && cd ../..
 npm run dev
 ```
 
-- Backend API: `http://localhost:7432` (auto-restarts on file changes via nodemon)
-- Frontend Dev Server: `http://localhost:7433` (hot module replacement via Vite)
+- Backend API: `http://localhost:3000` (auto-restarts via nodemon)
+- Frontend Dev Server: `http://localhost:5173` (hot module replacement via Vite, natively proxies `/api` calls backward to `3000`)
 
-The SQLite database persists in the `./data/` directory. You can move, back up, or restore this directory freely.
+The SQLite databases persist in the `./src/db/` directory securely isolated per environment (`dev.sqlite` vs `prod.sqlite`).
 
 ## API Endpoints
 
@@ -127,7 +127,7 @@ galloway-os/
 │   └── workflows/                 # Step-by-step operational SOPs
 ├── .github/workflows/             # GitHub Actions CI pipeline
 ├── src/
-│   ├── server/                    # Express.js backend (port 7432)
+│   ├── server/                    # Express.js backend
 │   │   ├── routes/                # API route handlers (thin transport)
 │   │   ├── services/              # Business logic layer
 │   │   ├── models/                # SQLite data access
