@@ -4,14 +4,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
+import CustomerCombobox from '@/components/CustomerCombobox'
 import { fetchConfig, createConfig, updateConfig, deleteConfig } from '@/lib/api'
 
 /**
- * @description Reusable CRUD table for a config entity. Supports readOnly mode (no add/delete).
- * @param {{ entity, label, parentEntity?, parentLabel?, readOnly?, nameField? }} props
+ * @description Reusable CRUD table for config entities. Uses CustomerCombobox for parent FK.
+ * @param {{ entity, label, pluralLabel?, parentEntity?, parentLabel?, readOnly?, nameField? }} props
  */
 export default function ConfigTable({ entity, label, pluralLabel, parentEntity, parentLabel, readOnly = false, nameField = 'name' }) {
   const [items, setItems] = useState([])
@@ -19,7 +19,7 @@ export default function ConfigTable({ entity, label, pluralLabel, parentEntity, 
   const [modalOpen, setModalOpen] = useState(false)
   const [editItem, setEditItem] = useState(null)
   const [formValue, setFormValue] = useState('')
-  const [parentId, setParentId] = useState('')
+  const [parentId, setParentId] = useState('1')
 
   const load = useCallback(() => {
     fetchConfig(entity).then(setItems).catch((e) => toast.error(e.message))
@@ -32,7 +32,7 @@ export default function ConfigTable({ entity, label, pluralLabel, parentEntity, 
   const openEdit = (item) => {
     setEditItem(item)
     setFormValue(readOnly ? (item.label || '') : (item.name || ''))
-    setParentId(String(item.customer_id || ''))
+    setParentId(String(item.customer_id || '1'))
     setModalOpen(true)
   }
 
@@ -117,12 +117,12 @@ export default function ConfigTable({ entity, label, pluralLabel, parentEntity, 
             {parentEntity && !readOnly && (
               <div className="space-y-2">
                 <Label>{parentLabel}</Label>
-                <Select value={parentId} onValueChange={setParentId}>
-                  <SelectTrigger className="w-full"><SelectValue placeholder={`Select ${parentLabel}`} /></SelectTrigger>
-                  <SelectContent>
-                    {parents.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <CustomerCombobox
+                  value={parentId}
+                  onChange={setParentId}
+                  customers={parents}
+                  onCustomersChange={setParents}
+                />
               </div>
             )}
           </div>

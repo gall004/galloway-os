@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -7,10 +7,9 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, For
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { Button } from '@/components/ui/button'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
+import ProjectCombobox from '@/components/ProjectCombobox'
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -22,12 +21,10 @@ const taskSchema = z.object({
 })
 
 /**
- * @description TaskModal — create/edit with Project Combobox. Customer inferred by backend.
- * @param {{ open, onOpenChange, task, onSave, onDelete, config, insertDefaults? }} props
+ * @description TaskModal — create/edit with ProjectCombobox (inline creation support).
+ * @param {{ open, onOpenChange, task, onSave, onDelete, config, onConfigChange, insertDefaults? }} props
  */
-export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, config, insertDefaults }) {
-  const [projectOpen, setProjectOpen] = useState(false)
-
+export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, config, onConfigChange, insertDefaults }) {
   const form = useForm({
     resolver: zodResolver(taskSchema),
     defaultValues: { title: '', description: '', date_due: '', status_name: 'active', project_id: '1', delegated_to: '' },
@@ -47,24 +44,6 @@ export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, 
       })
     }
   }, [open, task, form, insertDefaults])
-
-  const projectOptions = useMemo(() => {
-    const customers = config.customers || []
-    return (config.projects || []).map((p) => {
-      const customer = customers.find((c) => c.id === p.customer_id)
-      const customerName = customer?.name && customer.name !== 'N/A' ? customer.name : null
-      return {
-        value: String(p.id),
-        label: customerName ? `${p.name} — ${customerName}` : p.name,
-        searchText: customerName ? `${p.name} ${customerName}` : p.name,
-      }
-    })
-  }, [config.projects, config.customers])
-
-  const selectedProjectLabel = useMemo(() => {
-    const val = form.watch('project_id')
-    return projectOptions.find((o) => o.value === val)?.label || 'Select project…'
-  }, [form.watch('project_id'), projectOptions])
 
   const handleSubmit = (data) => {
     const payload = { ...data, project_id: Number(data.project_id) }
@@ -119,36 +98,17 @@ export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, 
               <FormField control={form.control} name="project_id" render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Project</FormLabel>
-                  <Popover open={projectOpen} onOpenChange={setProjectOpen}>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button variant="outline" role="combobox" aria-expanded={projectOpen} className="w-full justify-between font-normal">
-                          <span className="truncate">{selectedProjectLabel}</span>
-                          <span className="ml-2 shrink-0 opacity-50">⌕</span>
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Search projects or customers…" />
-                        <CommandList>
-                          <CommandEmpty>No project found.</CommandEmpty>
-                          <CommandGroup>
-                            {projectOptions.map((opt) => (
-                              <CommandItem
-                                key={opt.value}
-                                value={opt.searchText}
-                                onSelect={() => { field.onChange(opt.value); setProjectOpen(false) }}
-                              >
-                                <span className={field.value === opt.value ? 'font-semibold' : ''}>{opt.label}</span>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormDescription>Search by project or customer name.</FormDescription>
+                  <FormControl>
+                    <ProjectCombobox
+                      value={field.value}
+                      onChange={field.onChange}
+                      projects={config.projects || []}
+                      customers={config.customers || []}
+                      onProjectsChange={(p) => onConfigChange?.({ ...config, projects: p })}
+                      onCustomersChange={(c) => onConfigChange?.({ ...config, customers: c })}
+                    />
+                  </FormControl>
+                  <FormDescription>Search or create a project.</FormDescription>
                 </FormItem>
               )} />
               <FormField control={form.control} name="delegated_to" render={({ field }) => (
