@@ -95,7 +95,13 @@ export default function PriorityBoard() {
       
       if (overTaskData) {
         const found = colTasks.findIndex((t) => t.id === overTaskData.id)
-        if (found !== -1) newIndex = found
+        if (found !== -1) {
+          const isBelowOverItem =
+            over &&
+            event.active.rect.current.translated &&
+            event.active.rect.current.translated.top > over.rect.top + over.rect.height / 2
+          newIndex = isBelowOverItem ? found + 1 : found
+        }
       }
 
       const newColTasks = [...colTasks]
@@ -173,7 +179,7 @@ export default function PriorityBoard() {
         <Button size="sm" onClick={openCreate}>+ New Task</Button>
       </div>
       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <ResizablePanelGroup direction="horizontal" className="px-4 pb-4 min-h-[calc(100vh-120px)]">
+        <ResizablePanelGroup direction="horizontal" className="px-4 pb-4 h-[calc(100vh-120px)]">
           <ResizablePanel defaultSize={75} minSize={20}>
             {(() => { const col = COLUMNS[0]; const colTasks = getTasksForColumn(col.key); return (
               <PriorityColumn columnKey={col.key} label={getColumnLabel(col.key)} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)} onInsertTask={openInsert}>
