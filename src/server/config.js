@@ -7,13 +7,13 @@ const path = require('path');
  */
 const config = {
   /** @type {number} Express server port */
-  port: parseInt(process.env.PORT, 10) || 7432,
+  port: parseInt(process.env.PORT, 10) || 3000,
 
   /** @type {string} Node environment */
   nodeEnv: process.env.NODE_ENV || 'development',
 
   /** @type {string} Absolute path to the SQLite database file */
-  databasePath: path.resolve(process.env.DATABASE_PATH || './data/galloway-os.sqlite'),
+  databasePath: path.resolve(__dirname, '../db', process.env.DB_FILE || 'dev.sqlite'),
 
   /** @type {string} Log level for Pino logger */
   logLevel: process.env.LOG_LEVEL || 'info',

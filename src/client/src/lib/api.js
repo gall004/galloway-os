@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:7432';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 /**
  * @description Generic fetch helper with error handling.
