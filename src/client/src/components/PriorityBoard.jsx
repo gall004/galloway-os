@@ -43,10 +43,7 @@ export default function PriorityBoard() {
     return status?.label || COLUMNS.find((c) => c.key === colKey)?.label || colKey
   }, [config.statuses])
 
-  const getColumnForTask = useCallback((task) => {
-    for (const col of COLUMNS) { if (col.statusNames.includes(task.status_name)) return col.key }
-    return null
-  }, [])
+
 
   const getTasksForColumn = useCallback((colKey) => {
     const col = COLUMNS.find((c) => c.key === colKey)
@@ -56,75 +53,117 @@ export default function PriorityBoard() {
 
   const handleDragStart = (event) => setActiveTask(event.active.data.current?.task || null)
 
-  const handleDragEnd = useCallback(async (event) => {
-    setActiveTask(null)
+  const handleDragOver = useCallback((event) => {
     const { active, over } = event
     if (!over) return
-    const task = active.data.current?.task
-    if (!task) return
 
+    const activeId = active.id.toString().replace('task-', '')
     const overId = over.id.toString()
-    const overColumnKey = over.data.current?.columnKey
-    const overTask = over.data.current?.task
-    const sourceCol = getColumnForTask(task)
-    let targetCol = overColumnKey || (overTask ? getColumnForTask(overTask) : null)
-    if (!targetCol && overId.startsWith('column-')) targetCol = overId.replace('column-', '')
-    if (!targetCol) return
+    
+    const activeTask = tasks.find(t => t.id.toString() === activeId)
+    if (!activeTask) return
+    const activeContainer = activeTask.status_name
 
-    if (sourceCol === targetCol) {
-      const colTasks = getTasksForColumn(targetCol)
-      const oldIndex = colTasks.findIndex((t) => t.id === task.id)
-      const overTaskData = overTask || colTasks.find((t) => `task-${t.id}` === overId)
-      const newIndex = overTaskData ? colTasks.findIndex((t) => t.id === overTaskData.id) : colTasks.length
-      if (oldIndex === newIndex || oldIndex === -1) return
-      const reordered = arrayMove(colTasks, oldIndex, newIndex)
-      const updates = reordered.map((t, i) => ({ id: t.id, order_index: i }))
-      setTasks((prev) => {
-        const rest = prev.filter((t) => !reordered.find((r) => r.id === t.id))
-        return [...rest, ...reordered.map((t, i) => ({ ...t, order_index: i }))].sort((a, b) => a.order_index - b.order_index)
-      })
-      try { await reorderTasks(updates) } catch { loadAll() }
-    } else {
-      const newStatusName = targetCol
-      const prevTasks = [...tasks]
-      const newLabel = config.statuses?.find((s) => s.name === newStatusName)?.label || newStatusName
+    let overContainer = null
+    if (overId.startsWith('column-')) overContainer = overId.replace('column-', '')
+    else overContainer = tasks.find(t => `task-${t.id}` === overId)?.status_name
+
+    if (!overContainer || activeContainer === overContainer) return
+
+    setTasks((prev) => {
+      const activeItems = prev.filter(t => t.status_name === activeContainer && t.status_name !== 'done')
+      const overItems = prev.filter(t => t.status_name === overContainer && t.status_name !== 'done')
       
-      const colTasks = getTasksForColumn(targetCol)
-      let newIndex = colTasks.length
-      const overTaskData = overTask || colTasks.find((t) => `task-${t.id}` === overId)
-      
-      if (overTaskData) {
-        const found = colTasks.findIndex((t) => t.id === overTaskData.id)
-        if (found !== -1) {
+      const newActiveTask = { ...activeTask, status_name: overContainer, status_label: config.statuses?.find(s => s.name === overContainer)?.label || overContainer }
+
+      let overIndex = overItems.length
+      if (!overId.startsWith('column-')) {
+        const overTaskId = overId.replace('task-', '')
+        const foundIndex = overItems.findIndex(t => t.id.toString() === overTaskId)
+        if (foundIndex !== -1) {
           const isBelowOverItem =
-            over &&
-            event.active.rect.current.translated &&
-            event.active.rect.current.translated.top > over.rect.top + over.rect.height / 2
-          newIndex = isBelowOverItem ? found + 1 : found
+            over && active.rect.current.translated &&
+            active.rect.current.translated.top > over.rect.top + over.rect.height / 2
+          overIndex = isBelowOverItem ? foundIndex + 1 : foundIndex
         }
       }
 
-      const newColTasks = [...colTasks]
-      newColTasks.splice(newIndex, 0, { ...task, status_name: newStatusName, status_label: newLabel })
+      const newOverItems = [...overItems]
+      newOverItems.splice(overIndex, 0, newActiveTask)
       
-      const targetUpdates = newColTasks.map((t, i) => ({ id: t.id, order_index: i }))
+      const sortedOverItems = newOverItems.map((t, i) => ({ ...t, order_index: i }))
+      const sortedActiveItems = activeItems.filter(t => t.id.toString() !== activeId).map((t, i) => ({ ...t, order_index: i }))
+      const otherItems = prev.filter(t => t.id.toString() !== activeId && t.status_name !== activeContainer && t.status_name !== overContainer && t.status_name !== 'done')
+      const doneItems = prev.filter(t => t.status_name === 'done')
 
-      setTasks((prev) => {
-        const withoutTask = prev.filter((t) => t.id !== task.id)
-        const otherTasks = withoutTask.filter((t) => t.status_name !== newStatusName)
-        return [...otherTasks, ...newColTasks.map((t, i) => ({ ...t, order_index: i }))].sort((a, b) => a.order_index - b.order_index)
-      })
+      return [...otherItems, ...doneItems, ...sortedActiveItems, ...sortedOverItems].sort((a,b) => a.order_index - b.order_index)
+    })
+  }, [tasks, config.statuses])
 
-      try {
-        await updateTask(task.id, { status_name: newStatusName, order_index: newIndex })
-        await reorderTasks(targetUpdates)
-        toast.success('Task moved')
-      } catch {
-        setTasks(prevTasks)
-        toast.error('Failed to move task')
+  const handleDragEnd = useCallback(async (event) => {
+    setActiveTask(null)
+    const { active, over } = event
+    if (!over) {
+      loadAll() 
+      return
+    }
+
+    const activeId = active.id.toString().replace('task-', '')
+    const originalTask = active.data.current?.task
+    if (!originalTask) return
+
+    const currentTask = tasks.find(t => t.id.toString() === activeId)
+    if (!currentTask) return
+    const finalContainer = currentTask.status_name
+
+    const colTasks = tasks.filter(t => t.status_name === finalContainer && t.status_name !== 'done').sort((a,b) => a.order_index - b.order_index)
+    const oldIndex = colTasks.findIndex(t => t.id.toString() === activeId)
+    
+    const overId = over.id.toString()
+    let newIndex = colTasks.length - 1
+    
+    if (!overId.startsWith('column-')) {
+      const overTaskId = overId.replace('task-', '')
+      const found = colTasks.findIndex(t => t.id.toString() === overTaskId)
+      if (found !== -1) {
+        const isBelowOverItem = over && active.rect.current.translated && active.rect.current.translated.top > over.rect.top + over.rect.height / 2
+        newIndex = isBelowOverItem ? found + 1 : found
       }
     }
-  }, [tasks, loadAll, getColumnForTask, getTasksForColumn, config.statuses])
+
+    if (newIndex > colTasks.length - 1) newIndex = colTasks.length - 1
+    if (oldIndex === -1 || newIndex === -1) {
+      loadAll()
+      return
+    }
+
+    let targetUpdates = null
+    
+    if (oldIndex !== newIndex) {
+      const reordered = arrayMove(colTasks, oldIndex, newIndex)
+      targetUpdates = reordered.map((t, i) => ({ id: t.id, order_index: i }))
+      
+      setTasks(prev => {
+        const others = prev.filter(t => t.status_name !== finalContainer && t.status_name !== 'done')
+        const doneItems = prev.filter(t => t.status_name === 'done')
+        return [...others, ...doneItems, ...reordered.map((t, i) => ({ ...t, order_index: i }))].sort((a,b) => a.order_index - b.order_index)
+      })
+    } else {
+      targetUpdates = colTasks.map((t, i) => ({ id: t.id, order_index: i }))
+    }
+
+    try {
+      if (originalTask.status_name !== finalContainer) {
+        await updateTask(originalTask.id, { status_name: finalContainer, order_index: newIndex })
+        toast.success('Task moved')
+      }
+      // Guarantee order_index sequential syncs even on complex cross container landings
+      await reorderTasks(targetUpdates)
+    } catch {
+      loadAll()
+      toast.error('Failed to sync changes')
+    }
+  }, [tasks, loadAll])
 
   const handleComplete = useCallback(async (task) => {
     const prevTasks = [...tasks]
@@ -178,7 +217,7 @@ export default function PriorityBoard() {
         <span className="text-xs text-muted-foreground">{tasks.filter((t) => t.status_name !== 'done').length} active tasks</span>
         <Button size="sm" onClick={openCreate}>+ New Task</Button>
       </div>
-      <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
         <ResizablePanelGroup direction="horizontal" className="px-4 pb-4 h-[calc(100vh-120px)]">
           <ResizablePanel defaultSize={75} minSize={20}>
             {(() => { const col = COLUMNS[0]; const colTasks = getTasksForColumn(col.key); return (
