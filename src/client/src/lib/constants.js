@@ -9,10 +9,3 @@ export const PRIORITY_STYLES = {
   High: 'bg-priority-high text-priority-high-foreground',
   Critical: 'bg-priority-critical text-priority-critical-foreground',
 }
-
-export const WORKSTREAM_STYLES = {
-  'N/A': '',
-  'Mark Eichten': 'bg-workstream-a text-workstream-a-foreground',
-  'Garrett Stuart': 'bg-workstream-b text-workstream-b-foreground',
-  'Caleb Johnson': 'bg-workstream-c text-workstream-c-foreground',
-}

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestCorners } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 import { toast } from 'sonner'
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import TaskCard from '@/components/TaskCard'
 import KanbanColumn from '@/components/KanbanColumn'
 import TaskModal from '@/components/TaskModal'
@@ -10,7 +11,7 @@ import { fetchTasks, updateTask, createTask, deleteTask, reorderTasks, fetchConf
 import { COLUMNS } from '@/lib/constants'
 
 /**
- * @description KanbanBoard — 2-column sortable board with config-driven FK dropdowns.
+ * @description KanbanBoard — 2-column resizable board with vertical sorting.
  */
 export default function KanbanBoard() {
   const [tasks, setTasks] = useState([])
@@ -25,12 +26,12 @@ export default function KanbanBoard() {
 
   const loadAll = useCallback(async () => {
     try {
-      const [t, priorities, statuses, workstreams, customers, projects] = await Promise.all([
+      const [t, priorities, statuses, customers, projects] = await Promise.all([
         fetchTasks(), fetchConfig('priorities'), fetchConfig('statuses'),
-        fetchConfig('workstreams'), fetchConfig('customers'), fetchConfig('projects'),
+        fetchConfig('customers'), fetchConfig('projects'),
       ])
       setTasks(t)
-      setConfig({ priorities, statuses, workstreams, customers, projects })
+      setConfig({ priorities, statuses, customers, projects })
       setLoading(false)
     } catch (err) { setError(err.message); setLoading(false) }
   }, [])
@@ -139,16 +140,23 @@ export default function KanbanBoard() {
         <Button size="sm" onClick={openCreate}>+ New Task</Button>
       </div>
       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="grid grid-cols-2 gap-4 px-4 pb-4 min-h-[calc(100vh-120px)]">
-          {COLUMNS.map((col) => {
-            const colTasks = getTasksForColumn(col.key)
-            return (
-              <KanbanColumn key={col.key} columnKey={col.key} label={col.label} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)}>
+        <ResizablePanelGroup direction="horizontal" className="px-4 pb-4 min-h-[calc(100vh-120px)]">
+          <ResizablePanel defaultSize={75} minSize={20}>
+            {(() => { const col = COLUMNS[0]; const colTasks = getTasksForColumn(col.key); return (
+              <KanbanColumn columnKey={col.key} label={col.label} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)}>
                 {colTasks.map((task) => <TaskCard key={task.id} task={task} onClick={openEdit} onComplete={handleComplete} onDelete={handleDelete} />)}
               </KanbanColumn>
-            )
-          })}
-        </div>
+            ) })()}
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={25} minSize={15}>
+            {(() => { const col = COLUMNS[1]; const colTasks = getTasksForColumn(col.key); return (
+              <KanbanColumn columnKey={col.key} label={col.label} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)}>
+                {colTasks.map((task) => <TaskCard key={task.id} task={task} onClick={openEdit} onComplete={handleComplete} onDelete={handleDelete} />)}
+              </KanbanColumn>
+            ) })()}
+          </ResizablePanel>
+        </ResizablePanelGroup>
         <DragOverlay dropAnimation={null}>{activeTask ? <div className="z-50"><TaskCard task={activeTask} overlay /></div> : null}</DragOverlay>
       </DndContext>
       <TaskModal open={modalOpen} onOpenChange={setModalOpen} task={editingTask} onSave={handleSaveTask} onDelete={handleDelete} config={config} />

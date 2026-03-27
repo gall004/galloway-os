@@ -3,12 +3,11 @@ const logger = require('../logger');
 
 const TASKS_SELECT = `
   SELECT tasks.*,
-    p.name AS priority, s.name AS status, w.name AS workstream,
+    p.name AS priority, s.name AS status,
     c.name AS customer, pr.name AS project
   FROM tasks
   LEFT JOIN priorities p ON tasks.priority_id = p.id
   LEFT JOIN statuses s ON tasks.status_id = s.id
-  LEFT JOIN workstreams w ON tasks.workstream_id = w.id
   LEFT JOIN customers c ON tasks.customer_id = c.id
   LEFT JOIN projects pr ON tasks.project_id = pr.id
 `;
@@ -30,8 +29,8 @@ function createTask(data) {
   }
 
   const stmt = db.prepare(`
-    INSERT INTO tasks (title, description, date_due, priority_id, status_id, project_id, customer_id, delegated_to, workstream_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO tasks (title, description, date_due, priority_id, status_id, project_id, customer_id, delegated_to)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const result = stmt.run(
@@ -43,7 +42,6 @@ function createTask(data) {
     data.project_id || 1,
     data.customer_id || 1,
     data.delegated_to || null,
-    data.workstream_id || 1,
   );
 
   const task = db.prepare(`${TASKS_SELECT} WHERE tasks.id = ?`).get(result.lastInsertRowid);
@@ -84,7 +82,7 @@ function updateTask(id, updates) {
     }
   }
 
-  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'priority_id', 'status_id', 'project_id', 'customer_id', 'delegated_to', 'workstream_id', 'order_index'];
+  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'priority_id', 'status_id', 'project_id', 'customer_id', 'delegated_to', 'order_index'];
   const setClauses = [];
   const values = [];
 

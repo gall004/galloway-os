@@ -92,7 +92,6 @@ The SQLite database persists in the `./data/` directory. You can move, back up, 
 | `PUT/DELETE` | `/api/customers/:id` | Update / Delete a customer |
 | `GET/POST` | `/api/projects` | List / Create projects (includes customer_id) |
 | `PUT/DELETE` | `/api/projects/:id` | Update / Delete a project |
-| `GET/POST` | `/api/workstreams` | List / Create workstreams |
 | `GET/POST` | `/api/statuses` | List / Create statuses |
 | `GET/POST` | `/api/priorities` | List / Create priorities |
 
