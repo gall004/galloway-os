@@ -15,32 +15,36 @@ const taskSchema = z.object({
   description: z.string().optional().default(''),
   date_due: z.string().optional().default(''),
   status_name: z.string().default('active'),
-  priority_id: z.string().default('3'),
   project_id: z.string().default('1'),
   customer_id: z.string().default('1'),
   delegated_to: z.string().optional().default(''),
 })
 
 /**
- * @description TaskModal — create/edit task with zod validation. Sends status_name, displays status_label.
- * @param {{ open, onOpenChange, task, onSave, onDelete, config }} props
+ * @description TaskModal — create/edit task with zod validation. No priority field.
+ * Accepts insertDefaults for context-menu insertion (pre-fills status_name + order_index).
+ * @param {{ open, onOpenChange, task, onSave, onDelete, config, insertDefaults? }} props
  */
-export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, config }) {
+export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, config, insertDefaults }) {
   const form = useForm({
     resolver: zodResolver(taskSchema),
-    defaultValues: { title: '', description: '', date_due: '', status_name: 'active', priority_id: '3', project_id: '1', customer_id: '1', delegated_to: '' },
+    defaultValues: { title: '', description: '', date_due: '', status_name: 'active', project_id: '1', customer_id: '1', delegated_to: '' },
   })
 
   useEffect(() => {
     if (open) {
       form.reset(task ? {
         title: task.title || '', description: task.description || '', date_due: task.date_due || '',
-        status_name: task.status_name || 'active', priority_id: String(task.priority_id || 3),
+        status_name: task.status_name || 'active',
         project_id: String(task.project_id || 1), customer_id: String(task.customer_id || 1),
         delegated_to: task.delegated_to || '',
-      } : { title: '', description: '', date_due: '', status_name: 'active', priority_id: '3', project_id: '1', customer_id: '1', delegated_to: '' })
+      } : {
+        title: '', description: '', date_due: '',
+        status_name: insertDefaults?.status_name || 'active',
+        project_id: '1', customer_id: '1', delegated_to: '',
+      })
     }
-  }, [open, task, form])
+  }, [open, task, form, insertDefaults])
 
   const handleProjectChange = (val, onChange) => {
     onChange(val)
@@ -51,7 +55,11 @@ export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, 
   }
 
   const handleSubmit = (data) => {
-    onSave({ ...data, priority_id: Number(data.priority_id), project_id: Number(data.project_id), customer_id: Number(data.customer_id) })
+    const payload = { ...data, project_id: Number(data.project_id), customer_id: Number(data.customer_id) }
+    if (insertDefaults?.order_index !== undefined && !task) {
+      payload.order_index = insertDefaults.order_index
+    }
+    onSave(payload)
   }
 
   return (
@@ -63,40 +71,26 @@ export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, 
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
-            <div className="max-w-md">
-              <FormField control={form.control} name="title" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl><Input placeholder="e.g., Q3 Sales Deck" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-            </div>
-            <div className="max-w-lg">
-              <FormField control={form.control} name="description" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl><Textarea placeholder="Add context, links, or notes…" rows={3} {...field} /></FormControl>
-                  <FormDescription>Optional details to help track this task.</FormDescription>
-                </FormItem>
-              )} />
-            </div>
-            <div className="grid grid-cols-3 gap-6">
-              <FormField control={form.control} name="priority_id" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Priority</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger></FormControl>
-                    <SelectContent>{config.priorities?.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                  <FormDescription>Urgency level.</FormDescription>
-                </FormItem>
-              )} />
+            <FormField control={form.control} name="title" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Title</FormLabel>
+                <FormControl><Input className="w-full" placeholder="e.g., Q3 Sales Deck" {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="description" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl><Textarea className="w-full" placeholder="Add context, links, or notes…" rows={3} {...field} /></FormControl>
+                <FormDescription>Optional details to help track this task.</FormDescription>
+              </FormItem>
+            )} />
+            <div className="grid grid-cols-2 gap-6">
               <FormField control={form.control} name="status_name" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status</FormLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger></FormControl>
+                    <FormControl><SelectTrigger className="w-full"><SelectValue placeholder="Select…" /></SelectTrigger></FormControl>
                     <SelectContent>{config.statuses?.map((s) => <SelectItem key={s.name} value={s.name}>{s.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </FormItem>
@@ -104,7 +98,7 @@ export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, 
               <FormField control={form.control} name="date_due" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Due Date</FormLabel>
-                  <FormControl><Input type="date" {...field} /></FormControl>
+                  <FormControl><Input className="w-full" type="date" {...field} /></FormControl>
                   <FormDescription>When it's due.</FormDescription>
                 </FormItem>
               )} />
@@ -114,7 +108,7 @@ export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, 
                 <FormItem>
                   <FormLabel>Project</FormLabel>
                   <Select value={field.value} onValueChange={(v) => handleProjectChange(v, field.onChange)}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger></FormControl>
+                    <FormControl><SelectTrigger className="w-full"><SelectValue placeholder="Select…" /></SelectTrigger></FormControl>
                     <SelectContent>{config.projects?.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}</SelectContent>
                   </Select>
                   <FormDescription>Auto-assigns customer.</FormDescription>
@@ -124,7 +118,7 @@ export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, 
                 <FormItem>
                   <FormLabel>Customer</FormLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger></FormControl>
+                    <FormControl><SelectTrigger className="w-full"><SelectValue placeholder="Select…" /></SelectTrigger></FormControl>
                     <SelectContent>{config.customers?.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
                   </Select>
                 </FormItem>
@@ -132,7 +126,7 @@ export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, 
               <FormField control={form.control} name="delegated_to" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Delegated To</FormLabel>
-                  <FormControl><Input placeholder="e.g., Jane Smith" {...field} /></FormControl>
+                  <FormControl><Input className="w-full" placeholder="e.g., Jane Smith" {...field} /></FormControl>
                   <FormDescription>Person responsible.</FormDescription>
                 </FormItem>
               )} />

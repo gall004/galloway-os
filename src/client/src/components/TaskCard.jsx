@@ -4,10 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
-import { PRIORITY_STYLES } from '@/lib/constants'
 
 /**
- * @description TaskCard — sortable card with complete, edit, and delete actions.
+ * @description TaskCard — sortable card with complete, edit, and delete actions. No priority badge.
  * @param {{ task: Object, onClick: Function, onComplete: Function, onDelete: Function, overlay?: boolean }} props
  */
 export default function TaskCard({ task, onClick, onComplete, onDelete, overlay = false }) {
@@ -40,7 +39,6 @@ export default function TaskCard({ task, onClick, onComplete, onDelete, overlay 
       <CardContent className="px-3 pb-3 pt-0 space-y-2">
         {task.description && <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>}
         <div className="flex flex-wrap gap-1.5">
-          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${PRIORITY_STYLES[task.priority] || ''}`}>{task.priority}</Badge>
           {task.delegated_to && <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-delegated text-delegated-foreground">→ {task.delegated_to}</Badge>}
         </div>
         <div className="flex items-center justify-between text-[10px] text-muted-foreground">

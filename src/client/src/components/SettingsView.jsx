@@ -2,15 +2,20 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import ConfigTable from '@/components/ConfigTable'
 
+const TAB_LABELS = {
+  statuses: 'Statuses',
+  customers: 'Customers',
+  projects: 'Projects',
+}
+
 const TABS = [
-  { key: 'statuses', label: 'Status', readOnly: true, nameField: 'name' },
-  { key: 'customers', label: 'Customer' },
-  { key: 'projects', label: 'Project', parentEntity: 'customers', parentLabel: 'Customer' },
-  { key: 'priorities', label: 'Priority' },
+  { key: 'statuses', label: 'Status', pluralLabel: 'Statuses', readOnly: true, nameField: 'name' },
+  { key: 'customers', label: 'Customer', pluralLabel: 'Customers' },
+  { key: 'projects', label: 'Project', pluralLabel: 'Projects', parentEntity: 'customers', parentLabel: 'Customer' },
 ]
 
 /**
- * @description Settings view — tabbed config CRUD management.
+ * @description Settings view — tabbed config CRUD management. No Priorities tab.
  */
 export default function SettingsView() {
   const [activeTab, setActiveTab] = useState('statuses')
@@ -27,7 +32,7 @@ export default function SettingsView() {
             size="sm"
             onClick={() => setActiveTab(t.key)}
           >
-            {t.label}s
+            {TAB_LABELS[t.key]}
           </Button>
         ))}
       </div>
@@ -36,6 +41,7 @@ export default function SettingsView() {
           key={tab.key}
           entity={tab.key}
           label={tab.label}
+          pluralLabel={tab.pluralLabel}
           parentEntity={tab.parentEntity}
           parentLabel={tab.parentLabel}
           readOnly={tab.readOnly}
