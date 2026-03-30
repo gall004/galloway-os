@@ -7,11 +7,11 @@ import { Button } from '@/components/ui/button'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
-import { MoreHorizontal, Edit2, CheckCircle2, Trash2, Clock } from 'lucide-react'
+import { MoreHorizontal, Edit2, CheckCircle2, Trash2, Clock, Target } from 'lucide-react'
 
 /**
  * @description TaskCard — Massive UI Overhaul: Condensed padding, focal title typography, and dropdown-menus.
- * @param {{ task: Object, onClick: Function, onComplete: Function, onDelete: Function, onInsert: Function, overlay?: boolean }} props
+ * @param {{ task: Object, onClick: Function, onComplete: Function, onDelete: Function, onInsert: Function, onToggleFocus: Function, overlay?: boolean }} props
  */
 /**
  * @description Calculate days since task was delegated. Pure utility — isolated from React render.
@@ -23,7 +23,7 @@ function getDelegationDays(task) {
   return Math.floor((Date.now() - new Date(task.date_delegated).getTime()) / 86400000)
 }
 
-export default function TaskCard({ task, onClick, onComplete, onDelete, onInsert, overlay = false }) {
+export default function TaskCard({ task, onClick, onComplete, onDelete, onInsert, onToggleFocus, overlay = false }) {
   const [showDelete, setShowDelete] = useState(false)
   const {
     attributes, listeners, setNodeRef, transform, transition, isDragging,
@@ -47,8 +47,10 @@ export default function TaskCard({ task, onClick, onComplete, onDelete, onInsert
       ? 'ring-2 ring-amber-500/60 border-amber-500/40'
       : ''
 
+  const focusClass = task.is_focused ? 'ring-2 ring-primary border-primary shadow-[0_0_15px_rgba(var(--primary),0.3)]' : ''
+
   const cardContent = (
-    <Card className={`transition-all hover:shadow-md ${slaBorderClass} ${overlay ? 'shadow-xl ring-2 ring-ring scale-105' : 'cursor-grab active:cursor-grabbing'}`}>
+    <Card className={`transition-all hover:shadow-md ${task.is_focused ? focusClass : slaBorderClass} ${overlay ? 'shadow-xl ring-2 ring-ring scale-105 bg-background relative z-50' : 'cursor-grab active:cursor-grabbing bg-card relative z-10'}`}>
       <div className="p-2.5 flex flex-col gap-1.5">
         <div className="flex items-start justify-between gap-2">
           <h4 className="text-[15px] font-semibold tracking-tight leading-snug flex-1 cursor-pointer hover:text-primary transition-colors text-foreground" onClick={(e) => { e.stopPropagation(); onClick?.(task) }}>
@@ -67,6 +69,11 @@ export default function TaskCard({ task, onClick, onComplete, onDelete, onInsert
               <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onClick?.(task) }} className="cursor-pointer">
                 <Edit2 className="w-4 h-4 mr-2" /> Edit Task
               </DropdownMenuItem>
+              {task.status_name === 'active' && (
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onToggleFocus?.(task) }} className="cursor-pointer">
+                  <Target className="w-4 h-4 mr-2" /> {task.is_focused ? 'Unpin from Focus' : 'Pin to Focus'}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => setShowDelete(true)} className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer">
                 <Trash2 className="w-4 h-4 mr-2" /> Delete

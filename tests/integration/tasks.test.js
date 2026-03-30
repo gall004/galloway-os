@@ -121,6 +121,45 @@ describe('DELETE /api/tasks/:id', () => {
   });
 });
 
+describe('Focus Mode (Rule of Three)', () => {
+  const taskIds = [];
+
+  beforeAll(async () => {
+    // Clear out any existing focused tasks from previous suites just in case
+    // Create 3 focused tasks
+    for (let i = 0; i < 3; i++) {
+      const res = await request(app).post('/api/tasks').send({ title: `Focus ${i}`, is_focused: true });
+      taskIds.push(res.body.id);
+    }
+  });
+
+  it('should allow up to 3 focused tasks', async () => {
+    const res = await request(app).get('/api/tasks');
+    const focusedTasks = res.body.filter(t => t.is_focused === 1);
+    expect(focusedTasks.length).toBe(3);
+  });
+
+  it('should return 400 when trying to focus a 4th task', async () => {
+    const res = await request(app).post('/api/tasks').send({ title: 'Focus 4', is_focused: true });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe(true);
+    expect(res.body.code).toBe('VALIDATION_ERROR');
+    expect(res.body.message).toMatch(/Maximum of 3 focus tasks allowed/i);
+  });
+
+  it('should auto-clear is_focused if moved out of active', async () => {
+    const res = await request(app).put(`/api/tasks/${taskIds[0]}`).send({ status_name: 'delegated' });
+    expect(res.status).toBe(200);
+    expect(res.body.is_focused).toBe(0);
+  });
+
+  it('should ignore is_focused=true if creating non-active task', async () => {
+    const res = await request(app).post('/api/tasks').send({ title: 'Non-active focused', status_name: 'delegated', is_focused: true });
+    expect(res.status).toBe(201);
+    expect(res.body.is_focused).toBe(0);
+  });
+});
+
 describe('Statuses API (restricted)', () => {
   it('GET /api/statuses — should list 3 statuses', async () => {
     const res = await request(app).get('/api/statuses');

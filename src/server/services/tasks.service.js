@@ -56,14 +56,28 @@ function createTask(data) {
   }
 
   const orderIndex = data.order_index !== null && data.order_index !== undefined ? data.order_index : 0;
+  let isFocused = data.is_focused ? 1 : 0;
+
+  if (isFocused === 1 && statusName !== 'active') {
+    isFocused = 0;
+  }
+
+  if (isFocused === 1) {
+    const focusCount = db.prepare("SELECT COUNT(*) AS c FROM tasks WHERE is_focused = 1 AND status_name = 'active'").get().c;
+    if (focusCount >= 3) {
+      const err = new Error('Maximum of 3 focus tasks allowed. Unpin one first.');
+      err.code = 'VALIDATION_ERROR';
+      throw err;
+    }
+  }
 
   if (data.order_index !== null && data.order_index !== undefined) {
     shiftOrderIndexes(db, statusName, orderIndex);
   }
 
   const stmt = db.prepare(`
-    INSERT INTO tasks (title, description, date_due, status_name, project_id, customer_id, delegated_to, order_index)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO tasks (title, description, date_due, status_name, project_id, customer_id, delegated_to, order_index, is_focused)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const result = stmt.run(
@@ -75,6 +89,7 @@ function createTask(data) {
     data.customer_id || 1,
     data.delegated_to || null,
     orderIndex,
+    isFocused
   );
 
   const task = db.prepare(`${TASKS_SELECT} WHERE tasks.id = ?`).get(result.lastInsertRowid);
@@ -130,7 +145,27 @@ function updateTask(id, updates) {
     }
   }
 
-  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'date_delegated', 'status_name', 'project_id', 'customer_id', 'delegated_to', 'order_index', 'impact_statement'];
+  const finalStatus = updates.status_name || existing.status_name;
+  if (finalStatus !== 'active') {
+    updates.is_focused = 0;
+  }
+
+  const isBecomingFocused = (updates.is_focused === 1 || updates.is_focused === true) && existing.is_focused === 0;
+
+  if (isBecomingFocused && finalStatus === 'active') {
+    const focusCount = db.prepare("SELECT COUNT(*) AS c FROM tasks WHERE is_focused = 1 AND status_name = 'active'").get().c;
+    if (focusCount >= 3) {
+      const err = new Error('Maximum of 3 focus tasks allowed. Unpin one first.');
+      err.code = 'VALIDATION_ERROR';
+      throw err;
+    }
+  }
+
+  if (updates.is_focused !== undefined) {
+    updates.is_focused = updates.is_focused ? 1 : 0;
+  }
+
+  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'date_delegated', 'status_name', 'project_id', 'customer_id', 'delegated_to', 'order_index', 'impact_statement', 'is_focused'];
   const setClauses = [];
   const values = [];
 
