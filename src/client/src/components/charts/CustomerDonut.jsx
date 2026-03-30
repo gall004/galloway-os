@@ -51,10 +51,10 @@ export default function CustomerDonut({ data }) {
             </Pie>
             <Tooltip
               contentStyle={{
-                backgroundColor: 'oklch(var(--popover))',
-                border: '1px solid oklch(var(--border))',
+                backgroundColor: 'var(--popover)',
+                border: '1px solid var(--border)',
                 borderRadius: '8px',
-                color: 'oklch(var(--popover-foreground))',
+                color: 'var(--popover-foreground)',
                 fontSize: '12px',
               }}
               formatter={(value, name) => [`${value} task${value !== 1 ? 's' : ''}`, name]}
