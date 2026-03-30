@@ -12,7 +12,7 @@ function getMetrics() {
     SELECT c.name AS customer, COUNT(*) AS count
     FROM tasks
     LEFT JOIN customers c ON tasks.customer_id = c.id
-    WHERE tasks.status_name != 'done'
+    WHERE tasks.status_name NOT IN ('done', 'inbox')
     GROUP BY c.name
     ORDER BY count DESC
   `).all();
@@ -32,7 +32,7 @@ function getMetrics() {
   const statusCounts = db.prepare(`
     SELECT status_name, COUNT(*) AS count
     FROM tasks
-    WHERE status_name != 'done'
+    WHERE status_name NOT IN ('done', 'inbox')
     GROUP BY status_name
   `).all();
 

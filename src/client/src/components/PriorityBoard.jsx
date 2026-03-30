@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestCorners } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 import { toast } from 'sonner'
@@ -12,6 +12,7 @@ import ZenModeView from '@/components/ZenModeView'
 import { Target } from 'lucide-react'
 import { fetchTasks, updateTask, createTask, deleteTask, reorderTasks, fetchConfig } from '@/lib/api'
 import { COLUMNS } from '@/lib/constants'
+import InboxQuickAdd from '@/components/InboxQuickAdd'
 
 /**
  * @description PriorityBoard — resizable board with context-menu insertion support.
@@ -270,21 +271,41 @@ export default function PriorityBoard() {
           />
         ) : (
           <ResizablePanelGroup direction="horizontal" className="px-4 pb-4 h-[calc(100vh-120px)]">
-          <ResizablePanel defaultSize={75} minSize={20}>
-            {(() => { const col = COLUMNS[0]; const colTasks = getTasksForColumn(col.key); return (
-              <PriorityColumn columnKey={col.key} label={getColumnLabel(col.key)} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)} onInsertTask={openInsert}>
-                {colTasks.map((task) => <TaskCard key={task.id} task={task} onClick={openEdit} onComplete={handleComplete} onDelete={handleDelete} onInsert={openInsert} onToggleFocus={handleToggleFocus} />)}
-              </PriorityColumn>
-            ) })()}
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={25} minSize={15}>
-            {(() => { const col = COLUMNS[1]; const colTasks = getTasksForColumn(col.key); return (
-              <PriorityColumn columnKey={col.key} label={getColumnLabel(col.key)} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)} onInsertTask={openInsert}>
-                {colTasks.map((task) => <TaskCard key={task.id} task={task} onClick={openEdit} onComplete={handleComplete} onDelete={handleDelete} onInsert={openInsert} onToggleFocus={handleToggleFocus} />)}
-              </PriorityColumn>
-            ) })()}
-          </ResizablePanel>
+            {COLUMNS.map((col, idx) => {
+              const colTasks = getTasksForColumn(col.key);
+              const isInbox = col.key === 'inbox';
+              return (
+                <React.Fragment key={col.key}>
+                  <ResizablePanel defaultSize={isInbox ? 20 : col.key === 'active' ? 60 : 20} minSize={15}>
+                    <PriorityColumn
+                      columnKey={col.key}
+                      label={getColumnLabel(col.key)}
+                      count={colTasks.length}
+                      taskIds={colTasks.map((t) => `task-${t.id}`)}
+                      onInsertTask={openInsert}
+                    >
+                      {isInbox && (
+                        <InboxQuickAdd 
+                          onSave={(title) => handleSaveTask({ title, status_name: 'inbox', order_index: 0 })} 
+                        />
+                      )}
+                      {colTasks.map((task) => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          onClick={openEdit}
+                          onComplete={handleComplete}
+                          onDelete={handleDelete}
+                          onInsert={openInsert}
+                          onToggleFocus={handleToggleFocus}
+                        />
+                      ))}
+                    </PriorityColumn>
+                  </ResizablePanel>
+                  {idx < COLUMNS.length - 1 && <ResizableHandle withHandle />}
+                </React.Fragment>
+              );
+            })}
           </ResizablePanelGroup>
         )}
         {!isZenModeEnabled && (

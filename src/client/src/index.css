@@ -49,6 +49,7 @@
 
     --color-delegated: var(--delegated);
     --color-delegated-foreground: var(--delegated-foreground);
+    --color-column-inbox: var(--column-inbox);
     --color-column-my-tasks: var(--column-my-tasks);
     --color-column-delegated: var(--column-delegated);
     --color-success: var(--success);
@@ -91,6 +92,7 @@
 
     --delegated: oklch(0.93 0.05 55);
     --delegated-foreground: oklch(0.45 0.14 55);
+    --column-inbox: oklch(0.85 0.02 250);
     --column-my-tasks: oklch(0.55 0.12 250);
     --column-delegated: oklch(0.55 0.14 55);
     --success: oklch(0.55 0.15 150);
@@ -132,6 +134,7 @@
 
     --delegated: oklch(0.32 0.07 55);
     --delegated-foreground: oklch(0.85 0.10 55);
+    --column-inbox: oklch(0.45 0.02 250);
     --column-my-tasks: oklch(0.65 0.12 250);
     --column-delegated: oklch(0.65 0.14 55);
     --success: oklch(0.55 0.15 150);
