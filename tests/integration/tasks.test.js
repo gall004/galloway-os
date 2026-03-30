@@ -161,10 +161,10 @@ describe('Focus Mode (Rule of Three)', () => {
 });
 
 describe('Statuses API (restricted)', () => {
-  it('GET /api/statuses — should list 3 statuses', async () => {
+  it('GET /api/statuses — should list 4 statuses', async () => {
     const res = await request(app).get('/api/statuses');
     expect(res.status).toBe(200);
-    expect(res.body).toHaveLength(3);
+    expect(res.body).toHaveLength(4);
   });
 
   it('PUT /api/statuses/:name — should update label', async () => {
