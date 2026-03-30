@@ -29,7 +29,8 @@ description: Safe Git Workflow & Branch Protection
   2. **No Hardcoded Secrets:** You have not hardcoded any API keys, database paths, port numbers, or environment-specific URLs anywhere in the codebase.
   3. **No Commented-Out Code:** Blocks of commented-out code have been removed. Use version control to preserve history, not comments.
   4. **No Disabled Linters:** You have not used `// eslint-disable-next-line` without explicit documented justification approved by the user.
-  5. **No Build Artifacts:** No `node_modules/`, `dist/`, `.env.local`, or SQLite journal files (`*.sqlite-wal`, `*.sqlite-shm`) in the working tree.
+  5. **Lint Passes:** You have run `npm run lint` and confirmed zero errors. This matches what CI runs — if lint fails locally, it will fail in the GitHub Action. This step is **non-negotiable**.
+  6. **No Build Artifacts:** No `node_modules/`, `dist/`, `dev-dist/`, `.env.local`, or SQLite journal files (`*.sqlite-wal`, `*.sqlite-shm`) in the working tree.
 
 ## 6. Human-in-the-Loop Code Review & Handoff
 * **The Hard Stop:** When you have completed a feature on a feature branch and passed the Pre-Flight Checklist, YOU MUST NOT merge the branch into `main` automatically.
