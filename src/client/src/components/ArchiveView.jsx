@@ -20,7 +20,7 @@ import { MoreHorizontal, RotateCcw, Edit2, Trash2 } from 'lucide-react'
 /**
  * @description Completed tasks ledger with overflow-safe table and dropdown actions.
  */
-export default function RetroactiveDashboard() {
+export default function ArchiveView() {
   const [data, setData] = useState([])
   const [config, setConfig] = useState({})
   const [loading, setLoading] = useState(true)
@@ -163,7 +163,7 @@ export default function RetroactiveDashboard() {
   return (
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-foreground">Completed Tasks ({data.length})</h2>
+        <h2 className="text-lg font-semibold text-foreground">Archive ({data.length})</h2>
         <Input
           placeholder="Filter by title, customer, or project…"
           value={globalFilter ?? ''}

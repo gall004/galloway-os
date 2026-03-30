@@ -11,6 +11,7 @@ export default function AppHeader() {
   const links = [
     { to: '/', label: 'Priority' },
     { to: '/dashboard', label: 'Dashboard' },
+    { to: '/archive', label: 'Archive' },
     { to: '/settings', label: 'Settings' },
   ]
 

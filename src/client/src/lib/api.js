@@ -28,6 +28,9 @@ export const updateTask = (id, data) => apiFetch(`/api/tasks/${id}`, { method: '
 export const deleteTask = (id) => apiFetch(`/api/tasks/${id}`, { method: 'DELETE' });
 export const reorderTasks = (items) => apiFetch('/api/tasks/reorder', { method: 'PUT', body: JSON.stringify(items) });
 
+// --- Metrics ---
+export const fetchMetrics = () => apiFetch('/api/metrics');
+
 // --- Config (generic) ---
 export const fetchConfig = (entity) => apiFetch(`/api/${entity}`);
 export const createConfig = (entity, data) => apiFetch(`/api/${entity}`, { method: 'POST', body: JSON.stringify(data) });

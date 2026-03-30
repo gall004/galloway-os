@@ -115,6 +115,12 @@ function updateTask(id, updates) {
     } else if (existing.status_name === 'done') {
       updates.date_completed = null;
     }
+
+    if (updates.status_name === 'delegated' && existing.status_name !== 'delegated') {
+      updates.date_delegated = new Date().toISOString();
+    } else if (existing.status_name === 'delegated' && updates.status_name === 'active') {
+      updates.date_delegated = null;
+    }
   }
 
   if (updates.project_id && updates.project_id !== 1) {
@@ -124,7 +130,7 @@ function updateTask(id, updates) {
     }
   }
 
-  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'status_name', 'project_id', 'customer_id', 'delegated_to', 'order_index', 'impact_statement'];
+  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'date_delegated', 'status_name', 'project_id', 'customer_id', 'delegated_to', 'order_index', 'impact_statement'];
   const setClauses = [];
   const values = [];
 

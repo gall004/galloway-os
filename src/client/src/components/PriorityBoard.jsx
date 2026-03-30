@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestCorners } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 import { toast } from 'sonner'
@@ -25,6 +25,7 @@ export default function PriorityBoard() {
   const [activeTask, setActiveTask] = useState(null)
   const [impactOpen, setImpactOpen] = useState(false)
   const [completingTask, setCompletingTask] = useState(null)
+  const dragStartStatus = useRef(null)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
@@ -54,7 +55,11 @@ export default function PriorityBoard() {
     return tasks.filter((t) => col.statusNames.includes(t.status_name) && t.status_name !== 'done')
   }, [tasks])
 
-  const handleDragStart = (event) => setActiveTask(event.active.data.current?.task || null)
+  const handleDragStart = (event) => {
+    const task = event.active.data.current?.task || null
+    dragStartStatus.current = task?.status_name || null
+    setActiveTask(task)
+  }
 
   const handleDragOver = useCallback((event) => {
     const { active, over } = event
@@ -156,7 +161,7 @@ export default function PriorityBoard() {
     }
 
     try {
-      if (originalTask.status_name !== finalContainer) {
+      if (dragStartStatus.current && dragStartStatus.current !== finalContainer) {
         await updateTask(originalTask.id, { status_name: finalContainer, order_index: newIndex })
         toast.success('Task moved')
       }
