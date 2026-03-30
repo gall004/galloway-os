@@ -272,7 +272,7 @@ export default function PriorityBoard() {
         ) : (
           <>
             {/* Desktop View */}
-            <ResizablePanelGroup direction="horizontal" className="hidden! md:flex! px-4 pb-4 h-[calc(100vh-120px)]">
+            <ResizablePanelGroup direction="horizontal" className="hidden! md:flex! px-4 pb-4 h-[calc(100vh-120px)] max-h-[calc(100vh-120px)] overflow-hidden">
               {COLUMNS.map((col, idx) => {
                 const colTasks = getTasksForColumn(col.key);
                 const isInbox = col.key === 'inbox';
