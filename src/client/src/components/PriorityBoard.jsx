@@ -3,6 +3,14 @@ import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestC
 import { arrayMove } from '@dnd-kit/sortable'
 import { toast } from 'sonner'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  useCarousel,
+} from "@/components/ui/carousel"
 import TaskCard from '@/components/TaskCard'
 import PriorityColumn from '@/components/PriorityColumn'
 import TaskModal from '@/components/TaskModal'
@@ -13,6 +21,41 @@ import { Target } from 'lucide-react'
 import { fetchTasks, updateTask, createTask, deleteTask, reorderTasks, fetchConfig } from '@/lib/api'
 import { COLUMNS } from '@/lib/constants'
 import InboxQuickAdd from '@/components/InboxQuickAdd'
+
+function CarouselTabs({ getColumnLabel }) {
+  const { api } = useCarousel()
+  const [selectedIndex, setSelectedIndex] = React.useState(0)
+
+  useEffect(() => {
+    if (!api) return
+
+    const onSelect = () => setSelectedIndex(api.selectedScrollSnap())
+    api.on("select", onSelect)
+    api.on("reInit", onSelect)
+    
+    // Cleanup
+    return () => {
+      api.off("select", onSelect)
+      api.off("reInit", onSelect)
+    }
+  }, [api])
+
+  return (
+    <div className="flex justify-center gap-2 mb-4 px-4 pt-2">
+      {COLUMNS.map((col, index) => (
+        <Button
+          key={col.key}
+          variant={selectedIndex === index ? "default" : "secondary"}
+          size="sm"
+          onClick={() => api?.scrollTo(index)}
+          className="text-xs px-4 h-8 rounded-full shadow-sm"
+        >
+          {getColumnLabel(col.key)}
+        </Button>
+      ))}
+    </div>
+  )
+}
 
 /**
  * @description PriorityBoard — resizable board with context-menu insertion support.
@@ -285,12 +328,14 @@ export default function PriorityBoard() {
                         count={colTasks.length}
                         taskIds={colTasks.map((t) => `task-${t.id}`)}
                         onInsertTask={openInsert}
+                        headerSlot={
+                          isInbox && (
+                            <InboxQuickAdd 
+                              onSave={(title) => handleSaveTask({ title, status_name: 'inbox', order_index: 0 })} 
+                            />
+                          )
+                        }
                       >
-                        {isInbox && (
-                          <InboxQuickAdd 
-                            onSave={(title) => handleSaveTask({ title, status_name: 'inbox', order_index: 0 })} 
-                          />
-                        )}
                         {colTasks.map((task) => (
                           <TaskCard
                             key={task.id}
@@ -311,39 +356,50 @@ export default function PriorityBoard() {
             </ResizablePanelGroup>
 
             {/* Mobile View */}
-            <div className="md:hidden flex overflow-x-auto snap-x snap-mandatory gap-4 px-4 pb-4 h-[calc(100vh-120px)]">
-              {COLUMNS.map((col) => {
-                const colTasks = getTasksForColumn(col.key);
-                const isInbox = col.key === 'inbox';
-                return (
-                  <div key={col.key} className="w-[85vw] shrink-0 snap-center h-full flex flex-col min-h-0">
-                    <PriorityColumn
-                      columnKey={col.key}
-                      label={getColumnLabel(col.key)}
-                      count={colTasks.length}
-                      taskIds={colTasks.map((t) => `task-${t.id}`)}
-                      onInsertTask={openInsert}
-                    >
-                      {isInbox && (
-                        <InboxQuickAdd 
-                          onSave={(title) => handleSaveTask({ title, status_name: 'inbox', order_index: 0 })} 
-                        />
-                      )}
-                      {colTasks.map((task) => (
-                        <TaskCard
-                          key={task.id}
-                          task={task}
-                          onClick={openEdit}
-                          onComplete={handleComplete}
-                          onDelete={handleDelete}
-                          onInsert={openInsert}
-                          onToggleFocus={handleToggleFocus}
-                        />
-                      ))}
-                    </PriorityColumn>
-                  </div>
-                );
-              })}
+            <div className="md:hidden px-4 pb-4 h-[calc(100vh-120px)] relative">
+              <Carousel 
+                className="w-full h-full flex flex-col" 
+                opts={{ loop: false, align: "start" }}
+              >
+                <CarouselTabs getColumnLabel={getColumnLabel} />
+                
+                <CarouselContent className="flex-1 min-h-0">
+                  {COLUMNS.map((col) => {
+                    const colTasks = getTasksForColumn(col.key);
+                    const isInbox = col.key === 'inbox';
+                    return (
+                      <CarouselItem key={col.key} className="h-full flex flex-col min-h-0 basis-full px-2">
+                        <PriorityColumn
+                          columnKey={col.key}
+                          label={getColumnLabel(col.key)}
+                          count={colTasks.length}
+                          taskIds={colTasks.map((t) => `task-${t.id}`)}
+                          onInsertTask={openInsert}
+                          headerSlot={
+                            isInbox && (
+                              <InboxQuickAdd 
+                                onSave={(title) => handleSaveTask({ title, status_name: 'inbox', order_index: 0 })} 
+                              />
+                            )
+                          }
+                        >
+                          {colTasks.map((task) => (
+                            <TaskCard
+                              key={task.id}
+                              task={task}
+                              onClick={openEdit}
+                              onComplete={handleComplete}
+                              onDelete={handleDelete}
+                              onInsert={openInsert}
+                              onToggleFocus={handleToggleFocus}
+                            />
+                          ))}
+                        </PriorityColumn>
+                      </CarouselItem>
+                    );
+                  })}
+                </CarouselContent>
+              </Carousel>
             </div>
           </>
         )}
