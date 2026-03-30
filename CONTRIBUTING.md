@@ -32,7 +32,8 @@ Examples:
 1. Push your feature branch to the remote.
 2. Open a PR targeting `main`.
 3. CI must pass (lint, tests, Docker build).
-4. Request review from the project owner.
+4. Responsive Validation: Manually check layout integrity down to 400px viewport (Modals, Tables, Carousel, AppHeader).
+5. Request review from the project owner.
 5. Squash-merge after approval.
 6. Delete the feature branch (remote + local).
 

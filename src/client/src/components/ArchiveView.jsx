@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
 import { toast } from 'sonner'
 import {
   flexRender,
@@ -6,8 +6,10 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  getExpandedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
+import { cn } from '@/lib/utils'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -148,6 +150,7 @@ export default function ArchiveView() {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
     initialState: { pagination: { pageSize: 25 } },
     globalFilterFn: (row, _columnId, filterValue) => {
       const safeLower = (val) => String(val || '').toLowerCase()
@@ -180,7 +183,10 @@ export default function ArchiveView() {
                   <TableHead
                     key={header.id}
                     style={{ width: header.column.getSize() !== 150 ? header.column.getSize() : undefined }}
-                    className={header.id === 'title' ? 'w-full' : 'w-auto'}
+                    className={cn(
+                      header.id === 'title' ? 'w-full' : 'w-auto',
+                      ['customer', 'project', 'date_completed'].includes(header.id) && 'hidden md:table-cell'
+                    )}
                   >
                     {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
@@ -191,13 +197,32 @@ export default function ArchiveView() {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="truncate">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
+                <Fragment key={row.id}>
+                  <TableRow onClick={() => row.toggleExpanded()} className="cursor-pointer md:cursor-default transition-colors hover:bg-muted/50">
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell 
+                        key={cell.id} 
+                        className={cn(
+                          "truncate",
+                          ['customer', 'project', 'date_completed'].includes(cell.column.id) && 'hidden md:table-cell'
+                        )}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  {row.getIsExpanded() && (
+                    <TableRow className="md:hidden bg-muted/20 border-b">
+                      <TableCell colSpan={row.getVisibleCells().length} className="px-5 py-3 border-l-2 border-primary/50">
+                        <div className="flex flex-col gap-1.5 text-sm text-muted-foreground whitespace-normal">
+                          <div className="flex items-start gap-2"><strong className="text-foreground min-w-20">Customer:</strong> <span className="text-wrap break-words">{row.getValue('customer') || '—'}</span></div>
+                          <div className="flex items-start gap-2"><strong className="text-foreground min-w-20">Project:</strong> <span className="text-wrap break-words">{row.getValue('project') || '—'}</span></div>
+                          <div className="flex items-start gap-2"><strong className="text-foreground min-w-20">Completed:</strong> <span>{row.getValue('date_completed') ? new Date(row.getValue('date_completed')).toLocaleDateString() : '—'}</span></div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </Fragment>
               ))
             ) : (
               <TableRow>

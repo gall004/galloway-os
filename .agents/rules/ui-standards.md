@@ -4,9 +4,13 @@ globs: src/client/**/*.tsx, src/client/**/*.ts, src/client/**/*.jsx, src/client/
 description: UI Design Standards, ShadCN Mandate & Responsiveness
 ---
 
-## 1. Responsive Design
-* **Rule:** The Kanban interface must be fully usable on desktop screens (≥1024px). Mobile is secondary but must not be broken.
-* **Enforcement:** Never use hardcoded pixel widths that break layouts. Use fluid containers, `max-width`, flexbox, and CSS Grid for layout. Test at 1024px, 1440px, and 1920px viewports.
+## 1. Global Responsive Design Protocol
+* **Rule:** The entire application must be fully usable as a PWA on mobile screens, tested reliably down to **400px viewports**. Mobile is a primary execution target alongside desktop.
+* **Enforcement:** 
+  * **Layouts:** Never use hardcoded pixel widths that break layouts. Use fluid containers, flexbox wrapping, and CSS Grid responsive breakpoints (`grid-cols-1 md:grid-cols-2`).
+  * **Tables:** Absolutely NO horizontal scrolling. Hide non-essential columns on small screens (`hidden md:table-cell`). If hidden metadata is critical, implement **Expandable Mobile Rows** using TanStack `getExpandedRowModel()` to render a `md:hidden` sub-row underneath the tapped record.
+  * **Modals & Dialogs:** All pop-up modals must include `max-h-[90vh] overflow-y-auto` to protect against the mobile virtual keyboard completely shifting 'Save' action buttons off-screen.
+  * **Navigation Headers:** Top-level navigation must not wrap awkwardly. Implement a Shadcn `<Sheet>` sliding side drawer for mobile navigation, falling back to a standard top-bar on desktop.
 
 ## 2. Design Tokens & Consistency
 * **Rule:** All colors, spacing, typography, and border-radius values must be defined as CSS custom properties (design tokens) in a central stylesheet.

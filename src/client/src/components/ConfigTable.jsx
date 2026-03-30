@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Fragment } from 'react'
 import { toast } from 'sonner'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,7 @@ export default function ConfigTable({ entity, label, pluralLabel, parentEntity, 
   const [editItem, setEditItem] = useState(null)
   const [formValue, setFormValue] = useState('')
   const [parentId, setParentId] = useState('1')
+  const [expandedRow, setExpandedRow] = useState(null)
 
   const load = useCallback(() => {
     fetchConfig(entity).then(setItems).catch((e) => toast.error(e.message))
@@ -74,34 +75,54 @@ export default function ConfigTable({ entity, label, pluralLabel, parentEntity, 
       <Table>
         <TableHeader>
           <TableRow>
-            {!readOnly && <TableHead className="w-12">ID</TableHead>}
-            {readOnly && <TableHead className="w-32">Key</TableHead>}
+            {!readOnly && <TableHead className="w-12 hidden md:table-cell">ID</TableHead>}
+            {readOnly && <TableHead className="w-32 hidden md:table-cell">Key</TableHead>}
             <TableHead>{readOnly ? 'Display Label' : 'Name'}</TableHead>
-            {parentEntity && <TableHead>{parentLabel}</TableHead>}
+            {parentEntity && <TableHead className="hidden md:table-cell">{parentLabel}</TableHead>}
             <TableHead className="w-28 text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {items.map((item) => (
-            <TableRow key={readOnly ? item[nameField] : item.id}>
-              {!readOnly && <TableCell className="text-muted-foreground">{item.id}</TableCell>}
-              {readOnly && <TableCell className="text-muted-foreground font-mono text-xs">{item[nameField]}</TableCell>}
-              <TableCell>{readOnly ? item.label : item.name}</TableCell>
-              {parentEntity && <TableCell>{item.customer_name || '—'}</TableCell>}
-              <TableCell className="text-right space-x-1">
-                {item.id !== 1 && (
-                  <>
-                    <Button variant="ghost" size="sm" onClick={() => openEdit(item)}>✏️</Button>
-                    {!readOnly && (
-                      <DeleteConfirmDialog title={`Delete ${label}?`} description={`This will permanently delete "${item.name}". This cannot be undone.`} onConfirm={() => handleDelete(item)}>
-                        <Button variant="ghost" size="sm">🗑️</Button>
-                      </DeleteConfirmDialog>
+          {items.map((item) => {
+            const itemIdentifier = readOnly ? item[nameField] : item.id
+            const isExpanded = expandedRow === itemIdentifier
+            return (
+              <Fragment key={itemIdentifier}>
+                <TableRow 
+                  onClick={() => setExpandedRow(isExpanded ? null : itemIdentifier)}
+                  className="cursor-pointer md:cursor-default transition-colors hover:bg-muted/50"
+                >
+                  {!readOnly && <TableCell className="text-muted-foreground hidden md:table-cell">{item.id}</TableCell>}
+                  {readOnly && <TableCell className="text-muted-foreground font-mono text-xs hidden md:table-cell">{item[nameField]}</TableCell>}
+                  <TableCell className="font-medium truncate">{readOnly ? item.label : item.name}</TableCell>
+                  {parentEntity && <TableCell className="hidden md:table-cell truncate">{item.customer_name || '—'}</TableCell>}
+                  <TableCell className="text-right space-x-1 whitespace-nowrap">
+                    {item.id !== 1 && (
+                      <>
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item) }}>✏️</Button>
+                        {!readOnly && (
+                          <DeleteConfirmDialog title={`Delete ${label}?`} description={`This will permanently delete "${item.name}". This cannot be undone.`} onConfirm={() => handleDelete(item)}>
+                            <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>🗑️</Button>
+                          </DeleteConfirmDialog>
+                        )}
+                      </>
                     )}
-                  </>
+                  </TableCell>
+                </TableRow>
+                {isExpanded && (
+                  <TableRow className="md:hidden bg-muted/20 border-b">
+                    <TableCell colSpan={readOnly ? 3 : parentEntity ? 4 : 3} className="px-5 py-3 border-l-2 border-primary/50">
+                      <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+                        {!readOnly && <div className="flex gap-2"><strong className="text-foreground min-w-16">ID:</strong> <span>{item.id}</span></div>}
+                        {readOnly && <div className="flex gap-2"><strong className="text-foreground min-w-16">Key:</strong> <span className="font-mono">{item[nameField]}</span></div>}
+                        {parentEntity && <div className="flex gap-2"><strong className="text-foreground min-w-16">{parentLabel}:</strong> <span className="text-wrap break-words">{item.customer_name || '—'}</span></div>}
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 )}
-              </TableCell>
-            </TableRow>
-          ))}
+              </Fragment>
+            )
+          })}
         </TableBody>
       </Table>
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
