@@ -6,6 +6,7 @@ const healthRoutes = require('./routes/health.routes');
 const taskRoutes = require('./routes/tasks.routes');
 const configRoutes = require('./routes/config.routes');
 const statusesRoutes = require('./routes/statuses.routes');
+const metricsRoutes = require('./routes/metrics.routes');
 
 /**
  * @description Create and configure the Express application.
@@ -22,6 +23,7 @@ function createApp() {
   app.use(taskRoutes);
   app.use(configRoutes);
   app.use(statusesRoutes);
+  app.use(metricsRoutes);
 
   // Serve static assets from the React PWA build
   app.use(express.static(path.join(__dirname, '../client/dist')));
