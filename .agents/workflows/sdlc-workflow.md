@@ -94,7 +94,12 @@ Before merging any branch, verify:
 Before every commit, verify no generated build artifacts exist in the working tree:
 - `node_modules/` — npm packages
 - `dist/` — Build output
+- `dev-dist/` — Vite PWA dev artifacts
 - `*.sqlite-wal`, `*.sqlite-shm` — SQLite journal files
+
+### Pre-Commit Lint Gate
+Before every commit, run `npm run lint` and verify zero errors. This matches
+what CI runs — if lint fails locally, it will fail in the GitHub Action.
 
 ### Git Workflow Alignment
 The SDLC loop (Steps 1–5) satisfies the "Human-in-the-Loop Code Review & Handoff"
