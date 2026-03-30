@@ -1,9 +1,9 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Menu } from 'lucide-react'
+import { Menu, AppWindow, Inbox, Settings, Layers } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import ThemeToggle from '@/components/ThemeToggle'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader, SheetDescription } from '@/components/ui/sheet'
 
 /**
  * @description AppHeader — navigation bar with theme toggle.
@@ -12,10 +12,10 @@ export default function AppHeader() {
   const { pathname } = useLocation()
 
   const links = [
-    { to: '/', label: 'Priority' },
-    { to: '/dashboard', label: 'Dashboard' },
-    { to: '/archive', label: 'Archive' },
-    { to: '/settings', label: 'Settings' },
+    { to: '/', label: 'Priority', icon: Inbox },
+    { to: '/dashboard', label: 'Dashboard', icon: AppWindow },
+    { to: '/archive', label: 'Archive', icon: Layers },
+    { to: '/settings', label: 'Settings', icon: Settings },
   ]
 
   return (
@@ -30,22 +30,27 @@ export default function AppHeader() {
         <SheetContent side="left" className="w-[300px] sm:w-[400px]">
           <SheetHeader className="mb-6 text-left">
             <SheetTitle className="font-heading font-bold tracking-tight">galloway-os</SheetTitle>
+            <SheetDescription className="sr-only">Navigation Menu</SheetDescription>
           </SheetHeader>
-          <nav className="flex flex-col gap-2">
-            {links.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={cn(
-                  'px-4 py-3 text-sm rounded-md transition-colors',
-                  pathname === link.to
-                    ? 'bg-primary text-primary-foreground font-medium'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
+          <nav className="flex flex-col gap-1 mt-2">
+            {links.map((link) => {
+              const Icon = link.icon
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={cn(
+                    'flex items-center gap-3 px-4 py-3 text-base rounded-lg transition-colors',
+                    pathname === link.to
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  )}
+                >
+                  <Icon className="w-5 h-5 shrink-0" />
+                  {link.label}
+                </Link>
+              )
+            })}
           </nav>
         </SheetContent>
       </Sheet>
