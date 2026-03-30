@@ -78,7 +78,7 @@ export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, 
                 <FormDescription>Optional details to help track this task.</FormDescription>
               </FormItem>
             )} />
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               <FormField control={form.control} name="status_name" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status</FormLabel>
@@ -96,7 +96,7 @@ export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, 
                 </FormItem>
               )} />
             </div>
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               <FormField control={form.control} name="project_id" render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Project</FormLabel>

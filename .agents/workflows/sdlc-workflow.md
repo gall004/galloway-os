@@ -17,7 +17,7 @@ description: Multi-persona SDLC lifecycle for galloway-os development
 | Persona | Focus | Escalates to User |
 |--|--|--|
 | **@ProductManager** | User stories, acceptance criteria, README/docs | Ambiguous requirements, scope questions |
-| **@QA_Engineer** | Edge cases, security, test suites (Jest/Supertest) | Test approval at 🛑 pause |
+| **@QA_Engineer** | Edge cases, security, test suites (Jest/Supertest), UI Responsiveness (down to 400px) | Test approval at 🛑 pause |
 | **@LeadDeveloper** | Node.js backend, frontend, Docker, SQLite | Breaking changes, new dependencies, significant trade-offs |
 
 ## Standard Operating Procedure
@@ -97,9 +97,11 @@ Before every commit, verify no generated build artifacts exist in the working tr
 - `dev-dist/` — Vite PWA dev artifacts
 - `*.sqlite-wal`, `*.sqlite-shm` — SQLite journal files
 
-### Pre-Commit Lint Gate
+### Pre-Commit Lint Gate & Visual Verification
 Before every commit, run `npm run lint` and verify zero errors. This matches
 what CI runs — if lint fails locally, it will fail in the GitHub Action.
+Additionally, you must execute a visual QA verification for responsive breakpoints
+(minimum 400px width), ensuring no horizontal table scrolling, cutoff modals, or broken headers.
 
 ### Git Workflow Alignment
 The SDLC loop (Steps 1–5) satisfies the "Human-in-the-Loop Code Review & Handoff"
