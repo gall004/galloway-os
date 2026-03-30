@@ -4,9 +4,9 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } 
 
 /**
  * @description PriorityColumn — droppable + sortable container with right-click context menu.
- * @param {{ columnKey, label, count, taskIds, children, onInsertTask }} props
+ * @param {{ columnKey, label, count, taskIds, children, headerSlot, onInsertTask }} props
  */
-export default function PriorityColumn({ columnKey, label, count, taskIds, children, onInsertTask }) {
+export default function PriorityColumn({ columnKey, label, count, taskIds, children, headerSlot, onInsertTask }) {
   const { isOver, setNodeRef } = useDroppable({
     id: `column-${columnKey}`,
     data: { columnKey },
@@ -33,6 +33,11 @@ export default function PriorityColumn({ columnKey, label, count, taskIds, child
               {count}
             </span>
           </div>
+          {headerSlot && (
+            <div className="px-2 pb-2">
+              {headerSlot}
+            </div>
+          )}
           <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
             <div className="flex-1 overflow-y-auto px-2 pb-2 pt-1 min-h-[120px]">
               {children}
