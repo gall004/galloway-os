@@ -124,7 +124,7 @@ function updateTask(id, updates) {
     }
   }
 
-  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'status_name', 'project_id', 'customer_id', 'delegated_to', 'order_index'];
+  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'status_name', 'project_id', 'customer_id', 'delegated_to', 'order_index', 'impact_statement'];
   const setClauses = [];
   const values = [];
 

@@ -11,20 +11,32 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { fetchTasks, updateTask, deleteTask } from '@/lib/api'
+import { fetchTasks, updateTask, deleteTask, fetchConfig } from '@/lib/api'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
+import TaskModal from '@/components/TaskModal'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { MoreHorizontal, RotateCcw, Edit2, Trash2 } from 'lucide-react'
 
+/**
+ * @description Completed tasks ledger with overflow-safe table and dropdown actions.
+ */
 export default function RetroactiveDashboard() {
   const [data, setData] = useState([])
+  const [config, setConfig] = useState({})
   const [loading, setLoading] = useState(true)
   const [sorting, setSorting] = useState([{ id: 'date_completed', desc: true }])
   const [globalFilter, setGlobalFilter] = useState('')
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingTask, setEditingTask] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   const load = useCallback(async () => {
     try {
-      const allTasks = await fetchTasks()
-      // Only show completed tasks
+      const [allTasks, customers, projects, statuses] = await Promise.all([
+        fetchTasks(), fetchConfig('customers'), fetchConfig('projects'), fetchConfig('statuses'),
+      ])
       setData(allTasks.filter((t) => t.status_name === 'done'))
+      setConfig({ customers, projects, statuses })
       setLoading(false)
     } catch { setLoading(false) }
   }, [])
@@ -33,7 +45,7 @@ export default function RetroactiveDashboard() {
 
   const handleReopen = async (task) => {
     try {
-      await updateTask(task.id, { status_name: 'active' }) // date_completed cleared by backend
+      await updateTask(task.id, { status_name: 'active' })
       setData((prev) => prev.filter((t) => t.id !== task.id))
       toast.success('Task reopened')
     } catch (e) { toast.error(e.message) }
@@ -47,49 +59,82 @@ export default function RetroactiveDashboard() {
     } catch (e) { toast.error(e.message) }
   }
 
+  const handleEdit = (task) => {
+    setEditingTask(task)
+    setModalOpen(true)
+  }
+
+  const handleSaveTask = async (taskData) => {
+    try {
+      const updated = await updateTask(editingTask.id, taskData)
+      setData((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+      toast.success('Task updated')
+      setModalOpen(false)
+      setEditingTask(null)
+    } catch (e) { toast.error(e.message) }
+  }
+
   const columns = useMemo(() => [
     {
       accessorKey: 'title',
-      header: 'Title',
+      header: 'Task',
       cell: ({ row }) => (
-        <div className="font-medium">
-          {row.original.title}
-          {row.original.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{row.original.description}</p>}
+        <div className="min-w-0">
+          <p className="font-medium text-sm truncate">{row.original.title}</p>
+          {row.original.description && <p className="text-xs text-muted-foreground truncate mt-0.5">{row.original.description}</p>}
+          {row.original.impact_statement && <p className="text-xs text-primary/80 italic truncate mt-0.5">↳ {row.original.impact_statement}</p>}
         </div>
       ),
       filterFn: 'includesString',
     },
     {
       accessorKey: 'customer',
-      header: ({ column }) => <Button variant="ghost" className="px-0 font-medium" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>Customer {column.getIsSorted() === 'asc' ? '↑' : column.getIsSorted() === 'desc' ? '↓' : '↕'}</Button>,
-      cell: ({ row }) => row.getValue('customer') || '—',
+      header: ({ column }) => <Button variant="ghost" className="px-0 font-medium whitespace-nowrap" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>Customer {column.getIsSorted() === 'asc' ? '↑' : column.getIsSorted() === 'desc' ? '↓' : '↕'}</Button>,
+      cell: ({ row }) => <span className="whitespace-nowrap">{row.getValue('customer') || '—'}</span>,
       filterFn: 'includesString',
+      size: 120,
     },
     {
       accessorKey: 'project',
-      header: ({ column }) => <Button variant="ghost" className="px-0 font-medium" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>Project {column.getIsSorted() === 'asc' ? '↑' : column.getIsSorted() === 'desc' ? '↓' : '↕'}</Button>,
-      cell: ({ row }) => row.getValue('project') || '—',
+      header: ({ column }) => <Button variant="ghost" className="px-0 font-medium whitespace-nowrap" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>Project {column.getIsSorted() === 'asc' ? '↑' : column.getIsSorted() === 'desc' ? '↓' : '↕'}</Button>,
+      cell: ({ row }) => <span className="whitespace-nowrap">{row.getValue('project') || '—'}</span>,
       filterFn: 'includesString',
+      size: 140,
     },
     {
       accessorKey: 'date_completed',
-      header: ({ column }) => <Button variant="ghost" className="px-0 font-medium" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>Completed {column.getIsSorted() === 'asc' ? '↑' : column.getIsSorted() === 'desc' ? '↓' : '↕'}</Button>,
+      header: ({ column }) => <Button variant="ghost" className="px-0 font-medium whitespace-nowrap" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>Completed {column.getIsSorted() === 'asc' ? '↑' : column.getIsSorted() === 'desc' ? '↓' : '↕'}</Button>,
       cell: ({ row }) => {
         const val = row.getValue('date_completed')
-        return val ? new Date(val).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'
+        return <span className="whitespace-nowrap">{val ? new Date(val).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'}</span>
       },
+      size: 120,
     },
     {
       id: 'actions',
-      header: () => <div className="text-right">Actions</div>,
+      header: () => <span className="sr-only">Actions</span>,
       cell: ({ row }) => (
-        <div className="text-right space-x-2">
-          <Button variant="ghost" size="sm" onClick={() => handleReopen(row.original)} title="Reopen Task">↩️</Button>
-          <DeleteConfirmDialog title="Delete task?" description={`This will permanently delete "${row.original.title}". This cannot be undone.`} onConfirm={() => handleDelete(row.original)}>
-            <Button variant="ghost" size="sm" title="Delete Task">🗑️</Button>
-          </DeleteConfirmDialog>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground/60 hover:text-foreground">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem onSelect={() => handleEdit(row.original)} className="cursor-pointer">
+              <Edit2 className="w-4 h-4 mr-2" /> Edit Task
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => handleReopen(row.original)} className="cursor-pointer">
+              <RotateCcw className="w-4 h-4 mr-2" /> Reopen Task
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => setDeleteTarget(row.original)} className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer">
+              <Trash2 className="w-4 h-4 mr-2" /> Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ),
+      size: 48,
     },
   ], [])
 
@@ -104,7 +149,7 @@ export default function RetroactiveDashboard() {
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: { pagination: { pageSize: 25 } },
-    globalFilterFn: (row, columnId, filterValue) => {
+    globalFilterFn: (row, _columnId, filterValue) => {
       const safeLower = (val) => String(val || '').toLowerCase()
       const term = filterValue.toLowerCase()
       return safeLower(row.original.title).includes(term) ||
@@ -126,13 +171,17 @@ export default function RetroactiveDashboard() {
           className="max-w-xs"
         />
       </div>
-      <div className="rounded-md border bg-card">
-        <Table>
+      <div className="rounded-md border bg-card overflow-hidden">
+        <Table className="table-fixed w-full">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead
+                    key={header.id}
+                    style={{ width: header.column.getSize() !== 150 ? header.column.getSize() : undefined }}
+                    className={header.id === 'title' ? 'w-full' : 'w-auto'}
+                  >
                     {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
@@ -144,7 +193,7 @@ export default function RetroactiveDashboard() {
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="truncate">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -176,6 +225,9 @@ export default function RetroactiveDashboard() {
           </Button>
         </div>
       </div>
+
+      <TaskModal open={modalOpen} onOpenChange={setModalOpen} task={editingTask} onSave={handleSaveTask} onDelete={handleDelete} config={config} onConfigChange={setConfig} />
+      <DeleteConfirmDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }} title="Delete task?" description={`Permanently delete "${deleteTarget?.title}"?`} onConfirm={() => { handleDelete(deleteTarget); setDeleteTarget(null) }} />
     </div>
   )
 }

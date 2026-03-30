@@ -6,6 +6,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import TaskCard from '@/components/TaskCard'
 import PriorityColumn from '@/components/PriorityColumn'
 import TaskModal from '@/components/TaskModal'
+import ImpactCaptureModal from '@/components/ImpactCaptureModal'
 import { Button } from '@/components/ui/button'
 import { fetchTasks, updateTask, createTask, deleteTask, reorderTasks, fetchConfig } from '@/lib/api'
 import { COLUMNS } from '@/lib/constants'
@@ -22,6 +23,8 @@ export default function PriorityBoard() {
   const [editingTask, setEditingTask] = useState(null)
   const [insertDefaults, setInsertDefaults] = useState(null)
   const [activeTask, setActiveTask] = useState(null)
+  const [impactOpen, setImpactOpen] = useState(false)
+  const [completingTask, setCompletingTask] = useState(null)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
@@ -165,11 +168,21 @@ export default function PriorityBoard() {
     }
   }, [tasks, loadAll])
 
-  const handleComplete = useCallback(async (task) => {
+  const handleComplete = useCallback((task) => {
+    setCompletingTask(task)
+    setImpactOpen(true)
+  }, [])
+
+  const handleConfirmComplete = useCallback(async (task, impactStatement) => {
     const prevTasks = [...tasks]
-    setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status_name: 'done', status_label: 'Done', date_completed: new Date().toISOString() } : t))
-    try { await updateTask(task.id, { status_name: 'done', date_completed: new Date().toISOString() }); toast.success('Task completed') }
-    catch { setTasks(prevTasks); toast.error('Failed to complete task') }
+    setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status_name: 'done', status_label: 'Done', date_completed: new Date().toISOString(), impact_statement: impactStatement } : t))
+    try {
+      await updateTask(task.id, { status_name: 'done', date_completed: new Date().toISOString(), impact_statement: impactStatement })
+      toast.success('Task completed')
+    } catch {
+      setTasks(prevTasks)
+      toast.error('Failed to complete task')
+    }
   }, [tasks])
 
   const handleDelete = useCallback(async (task) => {
@@ -238,6 +251,7 @@ export default function PriorityBoard() {
         <DragOverlay dropAnimation={null}>{activeTask ? <div className="z-50 opacity-95 rotate-2 cursor-grabbing shadow-2xl"><TaskCard task={activeTask} overlay /></div> : null}</DragOverlay>
       </DndContext>
       <TaskModal open={modalOpen} onOpenChange={setModalOpen} task={editingTask} onSave={handleSaveTask} onDelete={handleDelete} config={config} onConfigChange={setConfig} insertDefaults={insertDefaults} />
+      <ImpactCaptureModal open={impactOpen} onOpenChange={setImpactOpen} task={completingTask} onConfirm={handleConfirmComplete} />
     </>
   )
 }
