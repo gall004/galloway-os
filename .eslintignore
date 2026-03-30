@@ -1,0 +1,7 @@
+# Build artifacts
+dist/
+dev-dist/
+build/
+
+# Dependencies
+node_modules/
