@@ -8,6 +8,8 @@ import PriorityColumn from '@/components/PriorityColumn'
 import TaskModal from '@/components/TaskModal'
 import ImpactCaptureModal from '@/components/ImpactCaptureModal'
 import { Button } from '@/components/ui/button'
+import ZenModeView from '@/components/ZenModeView'
+import { Target } from 'lucide-react'
 import { fetchTasks, updateTask, createTask, deleteTask, reorderTasks, fetchConfig } from '@/lib/api'
 import { COLUMNS } from '@/lib/constants'
 
@@ -25,6 +27,7 @@ export default function PriorityBoard() {
   const [activeTask, setActiveTask] = useState(null)
   const [impactOpen, setImpactOpen] = useState(false)
   const [completingTask, setCompletingTask] = useState(null)
+  const [isZenModeEnabled, setIsZenModeEnabled] = useState(false)
   const dragStartStatus = useRef(null)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
@@ -221,6 +224,16 @@ export default function PriorityBoard() {
     setModalOpen(true)
   }, [])
 
+  const handleToggleFocus = useCallback(async (task) => {
+    try {
+      const updated = await updateTask(task.id, { is_focused: !task.is_focused })
+      setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+      toast.success(updated.is_focused ? 'Pinned to focus' : 'Unpinned from focus')
+    } catch (e) {
+      toast.error(e.message || 'Failed to toggle focus')
+    }
+  }, [])
+
   if (loading) return <div className="flex items-center justify-center min-h-[50vh]"><p className="text-muted-foreground animate-pulse">Loading tasks…</p></div>
   if (error) return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">
@@ -233,14 +246,34 @@ export default function PriorityBoard() {
     <>
       <div className="flex items-center justify-between px-4 py-2">
         <span className="text-xs text-muted-foreground">{tasks.filter((t) => t.status_name !== 'done').length} active tasks</span>
-        <Button size="sm" onClick={openCreate}>+ New Task</Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant={isZenModeEnabled ? "default" : "secondary"} 
+            size="sm" 
+            onClick={() => setIsZenModeEnabled(!isZenModeEnabled)}
+            className={isZenModeEnabled ? "" : "bg-primary/10 text-primary hover:bg-primary/20"}
+          >
+            <Target className="w-4 h-4 mr-2" />
+            {isZenModeEnabled ? 'Exit Focus Mode' : 'Enter Focus Mode'}
+          </Button>
+          <Button size="sm" onClick={openCreate}>+ New Task</Button>
+        </div>
       </div>
       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
-        <ResizablePanelGroup direction="horizontal" className="px-4 pb-4 h-[calc(100vh-120px)]">
+        {isZenModeEnabled ? (
+          <ZenModeView
+            tasks={tasks}
+            onClick={openEdit}
+            onComplete={handleComplete}
+            onDelete={handleDelete}
+            onToggleFocus={handleToggleFocus}
+          />
+        ) : (
+          <ResizablePanelGroup direction="horizontal" className="px-4 pb-4 h-[calc(100vh-120px)]">
           <ResizablePanel defaultSize={75} minSize={20}>
             {(() => { const col = COLUMNS[0]; const colTasks = getTasksForColumn(col.key); return (
               <PriorityColumn columnKey={col.key} label={getColumnLabel(col.key)} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)} onInsertTask={openInsert}>
-                {colTasks.map((task) => <TaskCard key={task.id} task={task} onClick={openEdit} onComplete={handleComplete} onDelete={handleDelete} onInsert={openInsert} />)}
+                {colTasks.map((task) => <TaskCard key={task.id} task={task} onClick={openEdit} onComplete={handleComplete} onDelete={handleDelete} onInsert={openInsert} onToggleFocus={handleToggleFocus} />)}
               </PriorityColumn>
             ) })()}
           </ResizablePanel>
@@ -248,12 +281,15 @@ export default function PriorityBoard() {
           <ResizablePanel defaultSize={25} minSize={15}>
             {(() => { const col = COLUMNS[1]; const colTasks = getTasksForColumn(col.key); return (
               <PriorityColumn columnKey={col.key} label={getColumnLabel(col.key)} count={colTasks.length} taskIds={colTasks.map((t) => `task-${t.id}`)} onInsertTask={openInsert}>
-                {colTasks.map((task) => <TaskCard key={task.id} task={task} onClick={openEdit} onComplete={handleComplete} onDelete={handleDelete} onInsert={openInsert} />)}
+                {colTasks.map((task) => <TaskCard key={task.id} task={task} onClick={openEdit} onComplete={handleComplete} onDelete={handleDelete} onInsert={openInsert} onToggleFocus={handleToggleFocus} />)}
               </PriorityColumn>
             ) })()}
           </ResizablePanel>
-        </ResizablePanelGroup>
-        <DragOverlay dropAnimation={null}>{activeTask ? <div className="z-50 opacity-95 rotate-2 cursor-grabbing shadow-2xl"><TaskCard task={activeTask} overlay /></div> : null}</DragOverlay>
+          </ResizablePanelGroup>
+        )}
+        {!isZenModeEnabled && (
+          <DragOverlay dropAnimation={null}>{activeTask ? <div className="z-50 opacity-95 rotate-2 cursor-grabbing shadow-2xl"><TaskCard task={activeTask} overlay /></div> : null}</DragOverlay>
+        )}
       </DndContext>
       <TaskModal open={modalOpen} onOpenChange={setModalOpen} task={editingTask} onSave={handleSaveTask} onDelete={handleDelete} config={config} onConfigChange={setConfig} insertDefaults={insertDefaults} />
       <ImpactCaptureModal open={impactOpen} onOpenChange={setImpactOpen} task={completingTask} onConfirm={handleConfirmComplete} />
