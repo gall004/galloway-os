@@ -36,3 +36,6 @@ export const fetchConfig = (entity) => apiFetch(`/api/${entity}`);
 export const createConfig = (entity, data) => apiFetch(`/api/${entity}`, { method: 'POST', body: JSON.stringify(data) });
 export const updateConfig = (entity, id, data) => apiFetch(`/api/${entity}/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 export const deleteConfig = (entity, id) => apiFetch(`/api/${entity}/${id}`, { method: 'DELETE' });
+
+// --- Reports ---
+export const fetchWeeklyReport = (days = 7) => apiFetch(`/api/reports/weekly?days=${days}`);
