@@ -5,6 +5,7 @@ import CustomerDonut from '@/components/charts/CustomerDonut'
 import VelocityBar from '@/components/charts/VelocityBar'
 import StatusGauge from '@/components/charts/StatusGauge'
 import MetricCard from '@/components/charts/MetricCard'
+import ReportGenerator from '@/components/ReportGenerator'
 
 /**
  * @description Analytics dashboard with charts, gauges, and operational metrics.
@@ -44,7 +45,10 @@ export default function AnalyticsDashboard() {
 
   return (
     <div className="p-4 space-y-4 max-w-6xl mx-auto">
-      <h2 className="text-lg font-semibold text-foreground">Dashboard</h2>
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-lg font-semibold text-foreground">Dashboard</h2>
+        <ReportGenerator />
+      </div>
 
       {/* Top row — KPI cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

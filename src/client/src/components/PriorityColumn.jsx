@@ -32,7 +32,7 @@ export default function PriorityColumn({ columnKey, label, count, taskIds, child
             </span>
           </div>
           <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
-            <div className="flex-1 overflow-y-auto px-2 pb-2 min-h-[120px]">
+            <div className="flex-1 overflow-y-auto px-2 pb-2 pt-1 min-h-[120px]">
               {children}
               {count === 0 && (
                 <p className="text-xs text-muted-foreground text-center py-8 italic">
