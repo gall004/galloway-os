@@ -21,7 +21,7 @@ export default function PriorityColumn({ columnKey, label, count, taskIds, child
       <ContextMenuTrigger asChild>
         <div
           ref={setNodeRef}
-          className={`flex flex-col h-full rounded-lg border-t-4 transition-all duration-200 ${
+          className={`flex flex-col h-full min-h-0 rounded-lg border-t-4 transition-all duration-200 ${
             columnKey === 'active' ? 'border-column-my-tasks' :
             columnKey === 'delegated' ? 'border-column-delegated' :
             'border-column-inbox'

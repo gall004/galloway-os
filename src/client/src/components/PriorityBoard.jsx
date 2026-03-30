@@ -270,13 +270,53 @@ export default function PriorityBoard() {
             onToggleFocus={handleToggleFocus}
           />
         ) : (
-          <ResizablePanelGroup direction="horizontal" className="px-4 pb-4 h-[calc(100vh-120px)]">
-            {COLUMNS.map((col, idx) => {
-              const colTasks = getTasksForColumn(col.key);
-              const isInbox = col.key === 'inbox';
-              return (
-                <React.Fragment key={col.key}>
-                  <ResizablePanel defaultSize={isInbox ? 20 : col.key === 'active' ? 60 : 20} minSize={15}>
+          <>
+            {/* Desktop View */}
+            <ResizablePanelGroup direction="horizontal" className="hidden! md:flex! px-4 pb-4 h-[calc(100vh-120px)]">
+              {COLUMNS.map((col, idx) => {
+                const colTasks = getTasksForColumn(col.key);
+                const isInbox = col.key === 'inbox';
+                return (
+                  <React.Fragment key={col.key}>
+                    <ResizablePanel defaultSize={isInbox ? 20 : col.key === 'active' ? 60 : 20} minSize={15} className="h-full flex flex-col min-h-0">
+                      <PriorityColumn
+                        columnKey={col.key}
+                        label={getColumnLabel(col.key)}
+                        count={colTasks.length}
+                        taskIds={colTasks.map((t) => `task-${t.id}`)}
+                        onInsertTask={openInsert}
+                      >
+                        {isInbox && (
+                          <InboxQuickAdd 
+                            onSave={(title) => handleSaveTask({ title, status_name: 'inbox', order_index: 0 })} 
+                          />
+                        )}
+                        {colTasks.map((task) => (
+                          <TaskCard
+                            key={task.id}
+                            task={task}
+                            onClick={openEdit}
+                            onComplete={handleComplete}
+                            onDelete={handleDelete}
+                            onInsert={openInsert}
+                            onToggleFocus={handleToggleFocus}
+                          />
+                        ))}
+                      </PriorityColumn>
+                    </ResizablePanel>
+                    {idx < COLUMNS.length - 1 && <ResizableHandle withHandle />}
+                  </React.Fragment>
+                );
+              })}
+            </ResizablePanelGroup>
+
+            {/* Mobile View */}
+            <div className="md:hidden flex overflow-x-auto snap-x snap-mandatory gap-4 px-4 pb-4 h-[calc(100vh-120px)]">
+              {COLUMNS.map((col) => {
+                const colTasks = getTasksForColumn(col.key);
+                const isInbox = col.key === 'inbox';
+                return (
+                  <div key={col.key} className="w-[85vw] shrink-0 snap-center h-full flex flex-col min-h-0">
                     <PriorityColumn
                       columnKey={col.key}
                       label={getColumnLabel(col.key)}
@@ -301,12 +341,11 @@ export default function PriorityBoard() {
                         />
                       ))}
                     </PriorityColumn>
-                  </ResizablePanel>
-                  {idx < COLUMNS.length - 1 && <ResizableHandle withHandle />}
-                </React.Fragment>
-              );
-            })}
-          </ResizablePanelGroup>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
         {!isZenModeEnabled && (
           <DragOverlay dropAnimation={null}>{activeTask ? <div className="z-50 opacity-95 rotate-2 cursor-grabbing shadow-2xl"><TaskCard task={activeTask} overlay /></div> : null}</DragOverlay>
