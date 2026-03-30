@@ -215,8 +215,8 @@ export default function ArchiveView() {
                     <TableRow className="md:hidden bg-muted/20 border-b">
                       <TableCell colSpan={row.getVisibleCells().length} className="px-5 py-3 border-l-2 border-primary/50">
                         <div className="flex flex-col gap-1.5 text-sm text-muted-foreground whitespace-normal">
-                          <div className="flex items-start gap-2"><strong className="text-foreground min-w-20">Customer:</strong> <span className="text-wrap break-words">{row.getValue('customer') || '—'}</span></div>
-                          <div className="flex items-start gap-2"><strong className="text-foreground min-w-20">Project:</strong> <span className="text-wrap break-words">{row.getValue('project') || '—'}</span></div>
+                          <div className="flex items-start gap-2"><strong className="text-foreground min-w-20">Customer:</strong> <span className="text-wrap">{(row.getValue('customer') || '—')}</span></div>
+                          <div className="flex items-start gap-2"><strong className="text-foreground min-w-20">Project:</strong> <span className="text-wrap">{(row.getValue('project') || '—')}</span></div>
                           <div className="flex items-start gap-2"><strong className="text-foreground min-w-20">Completed:</strong> <span>{row.getValue('date_completed') ? new Date(row.getValue('date_completed')).toLocaleDateString() : '—'}</span></div>
                         </div>
                       </TableCell>

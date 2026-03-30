@@ -3,7 +3,7 @@ import { Menu, AppWindow, Inbox, Settings, Layers } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import ThemeToggle from '@/components/ThemeToggle'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader, SheetDescription } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader, SheetDescription, SheetClose } from '@/components/ui/sheet'
 
 /**
  * @description AppHeader — navigation bar with theme toggle.
@@ -36,19 +36,20 @@ export default function AppHeader() {
             {links.map((link) => {
               const Icon = link.icon
               return (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className={cn(
-                    'flex items-center gap-3 px-4 py-3 text-base rounded-lg transition-colors',
-                    pathname === link.to
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                  )}
-                >
-                  <Icon className="w-5 h-5 shrink-0" />
-                  {link.label}
-                </Link>
+                <SheetClose asChild key={link.to}>
+                  <Link
+                    to={link.to}
+                    className={cn(
+                      'flex items-center gap-3 px-4 py-3 text-base rounded-lg transition-colors',
+                      pathname === link.to
+                        ? 'bg-primary/10 text-primary font-medium'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    )}
+                  >
+                    <Icon className="w-5 h-5 shrink-0" />
+                    {link.label}
+                  </Link>
+                </SheetClose>
               )
             })}
           </nav>

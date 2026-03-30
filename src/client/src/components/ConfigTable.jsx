@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
 import CustomerCombobox from '@/components/CustomerCombobox'
+import { Edit2, Trash2 } from 'lucide-react'
 import { fetchConfig, createConfig, updateConfig, deleteConfig } from '@/lib/api'
 
 /**
@@ -98,14 +99,18 @@ export default function ConfigTable({ entity, label, pluralLabel, parentEntity, 
                   {parentEntity && <TableCell className="hidden md:table-cell truncate">{item.customer_name || '—'}</TableCell>}
                   <TableCell className="text-right space-x-1 whitespace-nowrap">
                     {item.id !== 1 && (
-                      <>
-                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(item) }}>✏️</Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground/60 hover:text-foreground" onClick={(e) => { e.stopPropagation(); openEdit(item) }}>
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
                         {!readOnly && (
                           <DeleteConfirmDialog title={`Delete ${label}?`} description={`This will permanently delete "${item.name}". This cannot be undone.`} onConfirm={() => handleDelete(item)}>
-                            <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>🗑️</Button>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground/60 hover:text-destructive" onClick={(e) => e.stopPropagation()}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </DeleteConfirmDialog>
                         )}
-                      </>
+                      </div>
                     )}
                   </TableCell>
                 </TableRow>
@@ -115,7 +120,7 @@ export default function ConfigTable({ entity, label, pluralLabel, parentEntity, 
                       <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
                         {!readOnly && <div className="flex gap-2"><strong className="text-foreground min-w-16">ID:</strong> <span>{item.id}</span></div>}
                         {readOnly && <div className="flex gap-2"><strong className="text-foreground min-w-16">Key:</strong> <span className="font-mono">{item[nameField]}</span></div>}
-                        {parentEntity && <div className="flex gap-2"><strong className="text-foreground min-w-16">{parentLabel}:</strong> <span className="text-wrap break-words">{item.customer_name || '—'}</span></div>}
+                        {parentEntity && <div className="flex gap-2"><strong className="text-foreground min-w-16">{parentLabel}:</strong> <span className="text-wrap">{(item.customer_name || '—')}</span></div>}
                       </div>
                     </TableCell>
                   </TableRow>
