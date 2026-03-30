@@ -50,7 +50,7 @@ export default function TaskCard({ task, onClick, onComplete, onDelete, onInsert
   const focusClass = task.is_focused ? 'ring-2 ring-primary border-primary shadow-[0_0_15px_rgba(var(--primary),0.3)]' : ''
 
   const cardContent = (
-    <Card className={`transition-all hover:shadow-md ${task.is_focused ? focusClass : slaBorderClass} ${overlay ? 'shadow-xl ring-2 ring-ring scale-105 bg-background relative z-50' : 'cursor-grab active:cursor-grabbing bg-card relative z-10'}`}>
+    <Card className={`border transition-all hover:shadow-md ${task.is_focused ? focusClass : (slaBorderClass || 'border-border/50 hover:border-border/80')} ${overlay ? 'shadow-xl ring-2 ring-ring scale-105 bg-background relative z-50' : 'cursor-grab active:cursor-grabbing bg-card relative z-10'}`}>
       <div className="p-2.5 flex flex-col gap-1.5">
         <div className="flex items-start justify-between gap-2">
           <h4 className="text-[15px] font-semibold tracking-tight leading-snug flex-1 cursor-pointer hover:text-primary transition-colors text-foreground" onClick={(e) => { e.stopPropagation(); onClick?.(task) }}>
