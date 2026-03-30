@@ -18,6 +18,7 @@ const taskSchema = z.object({
   status_name: z.string().default('active'),
   project_id: z.string().default('1'),
   delegated_to: z.string().optional().default(''),
+  impact_statement: z.string().optional().default(''),
 })
 
 /**
@@ -27,7 +28,7 @@ const taskSchema = z.object({
 export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, config, onConfigChange, insertDefaults }) {
   const form = useForm({
     resolver: zodResolver(taskSchema),
-    defaultValues: { title: '', description: '', date_due: '', status_name: 'active', project_id: '1', delegated_to: '' },
+    defaultValues: { title: '', description: '', date_due: '', status_name: 'active', project_id: '1', delegated_to: '', impact_statement: '' },
   })
 
   useEffect(() => {
@@ -37,10 +38,11 @@ export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, 
         status_name: task.status_name || 'active',
         project_id: String(task.project_id || 1),
         delegated_to: task.delegated_to || '',
+        impact_statement: task.impact_statement || '',
       } : {
         title: '', description: '', date_due: '',
         status_name: insertDefaults?.status_name || 'active',
-        project_id: '1', delegated_to: '',
+        project_id: '1', delegated_to: '', impact_statement: '',
       })
     }
   }, [open, task, form, insertDefaults])
@@ -119,6 +121,15 @@ export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, 
                 </FormItem>
               )} />
             </div>
+            {form.watch('status_name') === 'done' && (
+              <FormField control={form.control} name="impact_statement" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>What Was Done</FormLabel>
+                  <FormControl><Textarea className="w-full" placeholder="Key outcomes, takeaways, or impact…" rows={3} {...field} /></FormControl>
+                  <FormDescription>Captured at completion — edit anytime.</FormDescription>
+                </FormItem>
+              )} />
+            )}
             <DialogFooter className="pt-4 flex items-center justify-between gap-2">
               {task && (
                 <DeleteConfirmDialog title="Delete task?" description={`This will permanently delete "${task.title}". This cannot be undone.`} onConfirm={() => { onDelete?.(task); onOpenChange(false) }}>
