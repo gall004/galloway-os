@@ -3,12 +3,14 @@ import { Button } from '@/components/ui/button'
 import ConfigTable from '@/components/ConfigTable'
 import RecurringSettings from '@/components/RecurringSettings'
 import WorkflowSettings from '@/components/WorkflowSettings'
+import AppearanceSettings from '@/components/AppearanceSettings'
 
 const TAB_LABELS = {
   workflow: 'Workflow',
   customers: 'Customers',
   projects: 'Projects',
   recurring: 'Recurring Tasks',
+  appearance: 'Appearance',
 }
 
 const TABS = [
@@ -16,10 +18,11 @@ const TABS = [
   { key: 'customers', label: 'Customer', pluralLabel: 'Customers' },
   { key: 'projects', label: 'Project', pluralLabel: 'Projects', parentEntity: 'customers', parentLabel: 'Customer' },
   { key: 'recurring', label: 'Recurring', pluralLabel: 'Recurring Tasks' },
+  { key: 'appearance', label: 'Appearance', pluralLabel: 'Appearance' },
 ]
 
 /**
- * @description Settings view — tabbed config CRUD management with Workflow engine tab.
+ * @description Settings view — tabbed config management with Workflow, data, recurring, and appearance tabs.
  */
 export default function SettingsView() {
   const [activeTab, setActiveTab] = useState('workflow')
@@ -44,6 +47,8 @@ export default function SettingsView() {
         <WorkflowSettings key="workflow" />
       ) : tab?.key === 'recurring' ? (
         <RecurringSettings key="recurring" />
+      ) : tab?.key === 'appearance' ? (
+        <AppearanceSettings key="appearance" />
       ) : tab ? (
         <ConfigTable
           key={tab.key}

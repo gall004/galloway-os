@@ -322,7 +322,7 @@ export default function PriorityBoard() {
               <CarouselTabs columns={columns} getColumnLabel={getColumnLabel} />
               
               <CarouselContent className="flex-1 min-h-0">
-                {columns.map((col) => {
+                {columns.map((col, idx) => {
                   const colTasks = getTasksForColumn(col.name);
                   const isInbox = col.system_name === 'inbox';
                   return (
@@ -333,6 +333,7 @@ export default function PriorityBoard() {
                         count={colTasks.length}
                         taskIds={colTasks.map((t) => `task-${t.id}`)}
                         onInsertTask={openInsert}
+                        colorIndex={idx}
                         headerSlot={
                           isInbox && (
                             <InboxQuickAdd 
@@ -375,6 +376,7 @@ export default function PriorityBoard() {
                       count={colTasks.length}
                       taskIds={colTasks.map((t) => `task-${t.id}`)}
                       onInsertTask={openInsert}
+                      colorIndex={idx}
                       headerSlot={
                         isInbox && (
                           <InboxQuickAdd 

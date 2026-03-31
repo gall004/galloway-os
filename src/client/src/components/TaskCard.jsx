@@ -6,13 +6,12 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  DropdownMenuSeparator, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuShortcut,
+} from '@/components/ui/dropdown-menu'
 import { MoreHorizontal, Edit2, CheckCircle2, Trash2, Clock, Target, ArrowUpToLine, ArrowDownToLine } from 'lucide-react'
 
-/**
- * @description TaskCard — Massive UI Overhaul: Condensed padding, focal title typography, and dropdown-menus.
- * @param {{ task: Object, onClick: Function, onComplete: Function, onDelete: Function, onInsert: Function, onToggleFocus: Function, overlay?: boolean }} props
- */
 /**
  * @description Calculate days since task was delegated. Pure utility — isolated from React render.
  * @param {Object} task - Task object with status_name and date_delegated.
@@ -23,6 +22,10 @@ function getDelegationDays(task) {
   return Math.floor((Date.now() - new Date(task.date_delegated).getTime()) / 86400000)
 }
 
+/**
+ * @description TaskCard — rich sortable card with grouped dropdown menus and micro-animations.
+ * @param {{ task: Object, onClick: Function, onComplete: Function, onDelete: Function, onInsert: Function, onToggleFocus: Function, overlay?: boolean }} props
+ */
 export default function TaskCard({ task, onClick, onComplete, onDelete, onInsert, onToggleFocus, overlay = false }) {
   const [showDelete, setShowDelete] = useState(false)
   const {
@@ -50,7 +53,7 @@ export default function TaskCard({ task, onClick, onComplete, onDelete, onInsert
   const focusClass = task.is_focused ? 'ring-2 ring-primary border-primary shadow-[0_0_15px_rgba(var(--primary),0.3)]' : ''
 
   const cardContent = (
-    <Card className={`border transition-all hover:shadow-md ${task.is_focused ? focusClass : (slaBorderClass || 'border-border/50 hover:border-border/80')} ${overlay ? 'shadow-xl ring-2 ring-ring scale-105 bg-background relative z-50' : 'cursor-grab active:cursor-grabbing bg-card relative z-10'}`}>
+    <Card className={`border transition-all duration-200 hover:shadow-md hover:scale-[1.01] ${task.is_focused ? focusClass : (slaBorderClass || 'border-border/50 hover:border-border/80')} ${overlay ? 'shadow-xl ring-2 ring-ring scale-[1.03] bg-background relative z-50 rotate-1' : 'cursor-grab active:cursor-grabbing bg-card relative z-10'}`}>
       <div className="p-2.5 flex flex-col gap-1.5">
         <div className="flex items-start justify-between gap-2">
           <h4 className="text-[15px] font-semibold tracking-tight leading-snug flex-1 cursor-pointer hover:text-primary transition-colors text-foreground" onClick={(e) => { e.stopPropagation(); onClick?.(task) }}>
@@ -62,28 +65,44 @@ export default function TaskCard({ task, onClick, onComplete, onDelete, onInsert
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-36">
-              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onComplete?.(task) }} className="cursor-pointer">
-                <CheckCircle2 className="w-4 h-4 mr-2" /> Mark Done
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onClick?.(task) }} className="cursor-pointer">
-                <Edit2 className="w-4 h-4 mr-2" /> Edit Task
-              </DropdownMenuItem>
-              {task.status_name === 'active' && (
-                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onToggleFocus?.(task) }} className="cursor-pointer">
-                  <Target className="w-4 h-4 mr-2" /> {task.is_focused ? 'Unpin from Focus' : 'Pin to Focus'}
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="text-xs text-muted-foreground/80">Task Actions</DropdownMenuLabel>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onClick?.(task) }} className="cursor-pointer">
+                  <Edit2 className="w-4 h-4 mr-2" />
+                  <span>Edit Task</span>
+                  <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>
                 </DropdownMenuItem>
-              )}
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onComplete?.(task) }} className="cursor-pointer">
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  <span>Mark Done</span>
+                  <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
+                </DropdownMenuItem>
+                {task.status_name === 'active' && (
+                  <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onToggleFocus?.(task) }} className="cursor-pointer">
+                    <Target className="w-4 h-4 mr-2" />
+                    <span>{task.is_focused ? 'Unpin from Focus' : 'Pin to Focus'}</span>
+                    <DropdownMenuShortcut>⌘F</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onInsert?.({ status_name: task.status_name, order_index: task.order_index }) }} className="cursor-pointer">
-                <ArrowUpToLine className="w-4 h-4 mr-2" /> Insert Task Above
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onInsert?.({ status_name: task.status_name, order_index: task.order_index + 1 }) }} className="cursor-pointer">
-                <ArrowDownToLine className="w-4 h-4 mr-2" /> Insert Task Below
-              </DropdownMenuItem>
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="text-xs text-muted-foreground/80">Insert</DropdownMenuLabel>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onInsert?.({ status_name: task.status_name, order_index: task.order_index }) }} className="cursor-pointer">
+                  <ArrowUpToLine className="w-4 h-4 mr-2" />
+                  <span>Insert Above</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onInsert?.({ status_name: task.status_name, order_index: task.order_index + 1 }) }} className="cursor-pointer">
+                  <ArrowDownToLine className="w-4 h-4 mr-2" />
+                  <span>Insert Below</span>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => setShowDelete(true)} className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer">
-                <Trash2 className="w-4 h-4 mr-2" /> Delete
+                <Trash2 className="w-4 h-4 mr-2" />
+                <span>Delete</span>
+                <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
