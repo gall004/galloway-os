@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
 import ProjectCombobox from '@/components/ProjectCombobox'
+import { fetchSettings } from '@/lib/api'
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -26,6 +27,12 @@ const taskSchema = z.object({
  * @param {{ open, onOpenChange, task, onSave, onDelete, config, onConfigChange, insertDefaults? }} props
  */
 export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, config, onConfigChange, insertDefaults }) {
+  const [settings, setSettings] = useState(null)
+
+  useEffect(() => {
+    fetchSettings().then(setSettings).catch(console.error)
+  }, [])
+
   const form = useForm({
     resolver: zodResolver(taskSchema),
     defaultValues: { title: '', description: '', date_due: '', status_name: 'active', project_id: '1', delegated_to: '', impact_statement: '' },
@@ -79,15 +86,24 @@ export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, 
               </FormItem>
             )} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-              <FormField control={form.control} name="status_name" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl><SelectTrigger className="w-full"><SelectValue placeholder="Select…" /></SelectTrigger></FormControl>
-                    <SelectContent>{config.statuses?.map((s) => <SelectItem key={s.name} value={s.name}>{s.label}</SelectItem>)}</SelectContent>
-                  </Select>
-                </FormItem>
-              )} />
+              <FormField control={form.control} name="status_name" render={({ field }) => {
+                const availableStatuses = config.statuses?.filter((s) => {
+                  if (s.system_name === 'inbox' && settings && !settings.inbox_mode) return false
+                  if (s.system_name === 'delegated' && settings && !settings.manager_mode) return false
+                  return true
+                }) || []
+                return (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl><SelectTrigger className="w-full"><SelectValue placeholder="Select…" /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        {availableStatuses.map((s) => <SelectItem key={s.name} value={s.name}>{s.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )
+              }} />
               <FormField control={form.control} name="date_due" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Due Date</FormLabel>

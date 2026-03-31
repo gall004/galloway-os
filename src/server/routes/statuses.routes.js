@@ -1,11 +1,11 @@
 const express = require('express');
-const { getAllStatuses, getStatus, updateStatusLabel } = require('../services/statuses.service');
+const { getAllStatuses, getStatus, createStatus, updateStatusLabel, deleteStatus, reorderStatuses } = require('../services/statuses.service');
 const logger = require('../logger');
 
 const router = express.Router();
 
 /**
- * @description GET /api/statuses — List all statuses.
+ * @description GET /api/statuses — List all statuses with governance metadata.
  */
 router.get('/api/statuses', (_req, res) => {
   try { res.json(getAllStatuses()); }
@@ -27,29 +27,57 @@ router.get('/api/statuses/:name', (req, res) => {
 });
 
 /**
- * @description PUT /api/statuses/:name — Update label only. Name is immutable.
+ * @description POST /api/statuses — Create a custom status column.
+ */
+router.post('/api/statuses', (req, res) => {
+  try {
+    res.status(201).json(createStatus(req.body));
+  } catch (err) {
+    const statusMap = { VALIDATION_ERROR: 400 };
+    const status = statusMap[err.code] || (err.message?.includes('UNIQUE') ? 409 : 500);
+    res.status(status).json({ error: true, message: err.message, code: err.code || 'INTERNAL_ERROR' });
+  }
+});
+
+/**
+ * @description PUT /api/statuses/reorder — Reorder board columns.
+ * Body: [{ name: string, display_order: number }]
+ */
+router.put('/api/statuses/reorder', (req, res) => {
+  try {
+    reorderStatuses(req.body);
+    res.json(getAllStatuses());
+  } catch (err) {
+    const status = err.code === 'VALIDATION_ERROR' ? 400 : 500;
+    res.status(status).json({ error: true, message: err.message, code: err.code || 'INTERNAL_ERROR' });
+  }
+});
+
+/**
+ * @description PUT /api/statuses/:name — Update label only. Respects is_renamable governance.
  */
 router.put('/api/statuses/:name', (req, res) => {
   try { res.json(updateStatusLabel(req.params.name, req.body)); }
   catch (err) {
-    const statusMap = { NOT_FOUND: 404, VALIDATION_ERROR: 400 };
+    const statusMap = { NOT_FOUND: 404, VALIDATION_ERROR: 400, FORBIDDEN: 403 };
     const status = statusMap[err.code] || 500;
     res.status(status).json({ error: true, message: err.message, code: err.code || 'INTERNAL_ERROR' });
   }
 });
 
 /**
- * @description POST /api/statuses — 405 Method Not Allowed.
+ * @description DELETE /api/statuses/:name — Safe delete with task reassignment.
+ * Body: { fallback_status_name: string } (required if tasks exist in the status).
  */
-router.post('/api/statuses', (_req, res) => {
-  res.status(405).json({ error: true, message: 'Statuses cannot be created. They are system-defined.', code: 'METHOD_NOT_ALLOWED' });
-});
-
-/**
- * @description DELETE /api/statuses/:name — 405 Method Not Allowed.
- */
-router.delete('/api/statuses/:name', (_req, res) => {
-  res.status(405).json({ error: true, message: 'Statuses cannot be deleted. They are system-defined.', code: 'METHOD_NOT_ALLOWED' });
+router.delete('/api/statuses/:name', (req, res) => {
+  try {
+    deleteStatus(req.params.name, req.body?.fallback_status_name);
+    res.status(204).send();
+  } catch (err) {
+    const statusMap = { NOT_FOUND: 404, FORBIDDEN: 403, VALIDATION_ERROR: 400 };
+    const status = statusMap[err.code] || 500;
+    res.status(status).json({ error: true, message: err.message, code: err.code || 'INTERNAL_ERROR' });
+  }
 });
 
 module.exports = router;

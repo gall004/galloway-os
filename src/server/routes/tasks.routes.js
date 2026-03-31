@@ -1,5 +1,5 @@
 const express = require('express');
-const { createTask, getAllTasks, updateTask, deleteTask, reorderTasks } = require('../services/tasks.service');
+const { createTask, getAllTasks, updateTask, deleteTask, reorderTasks, bulkReassignTasks } = require('../services/tasks.service');
 const logger = require('../logger');
 
 const router = express.Router();
@@ -69,6 +69,25 @@ router.put('/api/tasks/reorder', (req, res) => {
   } catch (err) {
     logger.error({ err: err.message }, 'Reorder failed');
     res.status(500).json({ error: true, message: 'Failed to reorder tasks.', code: 'INTERNAL_ERROR' });
+  }
+});
+
+/**
+ * @description PUT /api/tasks/reassign — Bulk reassign tasks between statuses.
+ * Body: { from_status: string, to_status: string }
+ */
+router.put('/api/tasks/reassign', (req, res) => {
+  const { from_status, to_status } = req.body;
+  if (!from_status || !to_status) {
+    return res.status(400).json({ error: true, message: 'from_status and to_status are required.', code: 'VALIDATION_ERROR' });
+  }
+  try {
+    const count = bulkReassignTasks(from_status, to_status);
+    res.json({ success: true, count });
+  } catch (err) {
+    const statusMap = { VALIDATION_ERROR: 400 };
+    const status = statusMap[err.code] || 500;
+    res.status(status).json({ error: true, message: err.message, code: err.code || 'INTERNAL_ERROR' });
   }
 });
 

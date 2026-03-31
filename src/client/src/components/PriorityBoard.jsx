@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestCorners } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 import { toast } from 'sonner'
@@ -7,8 +7,6 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
   useCarousel,
 } from "@/components/ui/carousel"
 import TaskCard from '@/components/TaskCard'
@@ -18,39 +16,32 @@ import ImpactCaptureModal from '@/components/ImpactCaptureModal'
 import { Button } from '@/components/ui/button'
 import ZenModeView from '@/components/ZenModeView'
 import { Target } from 'lucide-react'
-import { fetchTasks, updateTask, createTask, deleteTask, reorderTasks, fetchConfig } from '@/lib/api'
-import { COLUMNS } from '@/lib/constants'
+import { fetchTasks, updateTask, createTask, deleteTask, reorderTasks, fetchConfig, fetchSettings } from '@/lib/api'
 import InboxQuickAdd from '@/components/InboxQuickAdd'
 
-function CarouselTabs({ getColumnLabel }) {
+function CarouselTabs({ columns, getColumnLabel }) {
   const { api } = useCarousel()
   const [selectedIndex, setSelectedIndex] = React.useState(0)
 
   useEffect(() => {
     if (!api) return
-
     const onSelect = () => setSelectedIndex(api.selectedScrollSnap())
     api.on("select", onSelect)
     api.on("reInit", onSelect)
-    
-    // Cleanup
-    return () => {
-      api.off("select", onSelect)
-      api.off("reInit", onSelect)
-    }
+    return () => { api.off("select", onSelect); api.off("reInit", onSelect) }
   }, [api])
 
   return (
     <div className="flex justify-center gap-2 mb-4 px-4 pt-2">
-      {COLUMNS.map((col, index) => (
+      {columns.map((col, index) => (
         <Button
-          key={col.key}
+          key={col.name}
           variant={selectedIndex === index ? "default" : "secondary"}
           size="sm"
           onClick={() => api?.scrollTo(index)}
           className="text-xs px-4 h-8 rounded-full shadow-sm"
         >
-          {getColumnLabel(col.key)}
+          {getColumnLabel(col.name)}
         </Button>
       ))}
     </div>
@@ -58,11 +49,12 @@ function CarouselTabs({ getColumnLabel }) {
 }
 
 /**
- * @description PriorityBoard — resizable board with context-menu insertion support.
+ * @description PriorityBoard — dynamically rendered from API statuses and app_settings.
  */
 export default function PriorityBoard() {
   const [tasks, setTasks] = useState([])
   const [config, setConfig] = useState({})
+  const [settings, setSettings] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -78,28 +70,35 @@ export default function PriorityBoard() {
 
   const loadAll = useCallback(async () => {
     try {
-      const [t, customers, projects, statuses] = await Promise.all([
-        fetchTasks(), fetchConfig('customers'), fetchConfig('projects'), fetchConfig('statuses'),
+      const [t, customers, projects, statuses, appSettings] = await Promise.all([
+        fetchTasks(), fetchConfig('customers'), fetchConfig('projects'), fetchConfig('statuses'), fetchSettings(),
       ])
       setTasks(t)
       setConfig({ customers, projects, statuses })
+      setSettings(appSettings)
       setLoading(false)
     } catch (err) { setError(err.message); setLoading(false) }
   }, [])
 
   useEffect(() => { loadAll() }, [loadAll])
 
-  const getColumnLabel = useCallback((colKey) => {
-    const status = config.statuses?.find((s) => s.name === colKey)
-    return status?.label || COLUMNS.find((c) => c.key === colKey)?.label || colKey
+  const columns = useMemo(() => {
+    if (!config.statuses || !settings) return []
+    return config.statuses.filter((s) => {
+      if (s.name === 'done') return false
+      if (s.system_name === 'inbox' && !settings.inbox_mode) return false
+      if (s.system_name === 'delegated' && !settings.manager_mode) return false
+      return true
+    })
+  }, [config.statuses, settings])
+
+  const getColumnLabel = useCallback((colName) => {
+    const status = config.statuses?.find((s) => s.name === colName)
+    return status?.label || colName
   }, [config.statuses])
 
-
-
-  const getTasksForColumn = useCallback((colKey) => {
-    const col = COLUMNS.find((c) => c.key === colKey)
-    if (!col) return []
-    return tasks.filter((t) => col.statusNames.includes(t.status_name) && t.status_name !== 'done')
+  const getTasksForColumn = useCallback((colName) => {
+    return tasks.filter((t) => t.status_name === colName && t.status_name !== 'done')
   }, [tasks])
 
   const handleDragStart = (event) => {
@@ -115,9 +114,9 @@ export default function PriorityBoard() {
     const activeId = active.id.toString().replace('task-', '')
     const overId = over.id.toString()
     
-    const activeTask = tasks.find(t => t.id.toString() === activeId)
-    if (!activeTask) return
-    const activeContainer = activeTask.status_name
+    const activeTaskItem = tasks.find(t => t.id.toString() === activeId)
+    if (!activeTaskItem) return
+    const activeContainer = activeTaskItem.status_name
 
     let overContainer = null
     if (overId.startsWith('column-')) overContainer = overId.replace('column-', '')
@@ -129,7 +128,7 @@ export default function PriorityBoard() {
       const activeItems = prev.filter(t => t.status_name === activeContainer && t.status_name !== 'done')
       const overItems = prev.filter(t => t.status_name === overContainer && t.status_name !== 'done')
       
-      const newActiveTask = { ...activeTask, status_name: overContainer, status_label: config.statuses?.find(s => s.name === overContainer)?.label || overContainer }
+      const newActiveTask = { ...activeTaskItem, status_name: overContainer, status_label: config.statuses?.find(s => s.name === overContainer)?.label || overContainer }
 
       let overIndex = overItems.length
       if (!overId.startsWith('column-')) {
@@ -212,7 +211,6 @@ export default function PriorityBoard() {
         await updateTask(originalTask.id, { status_name: finalContainer, order_index: newIndex })
         toast.success('Task moved')
       }
-      // Guarantee order_index sequential syncs even on complex cross container landings
       await reorderTasks(targetUpdates)
     } catch {
       loadAll()
@@ -316,15 +314,16 @@ export default function PriorityBoard() {
           <>
             {/* Desktop View */}
             <ResizablePanelGroup direction="horizontal" className="hidden! md:flex! px-4 pb-4 h-[calc(100vh-120px)] max-h-[calc(100vh-120px)] overflow-hidden">
-              {COLUMNS.map((col, idx) => {
-                const colTasks = getTasksForColumn(col.key);
-                const isInbox = col.key === 'inbox';
+              {columns.map((col, idx) => {
+                const colTasks = getTasksForColumn(col.name);
+                const isInbox = col.system_name === 'inbox';
+                const panelSize = isInbox ? 20 : col.system_name === 'active' ? Math.floor(80 / columns.length) : Math.floor(80 / columns.length);
                 return (
-                  <React.Fragment key={col.key}>
-                    <ResizablePanel defaultSize={isInbox ? 20 : col.key === 'active' ? 60 : 20} minSize={15} className="h-full flex flex-col min-h-0">
+                  <React.Fragment key={col.name}>
+                    <ResizablePanel defaultSize={panelSize} minSize={15} className="h-full flex flex-col min-h-0">
                       <PriorityColumn
-                        columnKey={col.key}
-                        label={getColumnLabel(col.key)}
+                        columnKey={col.name}
+                        label={getColumnLabel(col.name)}
                         count={colTasks.length}
                         taskIds={colTasks.map((t) => `task-${t.id}`)}
                         onInsertTask={openInsert}
@@ -349,7 +348,7 @@ export default function PriorityBoard() {
                         ))}
                       </PriorityColumn>
                     </ResizablePanel>
-                    {idx < COLUMNS.length - 1 && <ResizableHandle withHandle />}
+                    {idx < columns.length - 1 && <ResizableHandle withHandle />}
                   </React.Fragment>
                 );
               })}
@@ -361,17 +360,17 @@ export default function PriorityBoard() {
                 className="w-full h-full flex flex-col" 
                 opts={{ loop: false, align: "start" }}
               >
-                <CarouselTabs getColumnLabel={getColumnLabel} />
+                <CarouselTabs columns={columns} getColumnLabel={getColumnLabel} />
                 
                 <CarouselContent className="flex-1 min-h-0">
-                  {COLUMNS.map((col) => {
-                    const colTasks = getTasksForColumn(col.key);
-                    const isInbox = col.key === 'inbox';
+                  {columns.map((col) => {
+                    const colTasks = getTasksForColumn(col.name);
+                    const isInbox = col.system_name === 'inbox';
                     return (
-                      <CarouselItem key={col.key} className="h-full flex flex-col min-h-0 basis-full px-2">
+                      <CarouselItem key={col.name} className="h-full flex flex-col min-h-0 basis-full px-2">
                         <PriorityColumn
-                          columnKey={col.key}
-                          label={getColumnLabel(col.key)}
+                          columnKey={col.name}
+                          label={getColumnLabel(col.name)}
                           count={colTasks.length}
                           taskIds={colTasks.map((t) => `task-${t.id}`)}
                           onInsertTask={openInsert}

@@ -160,7 +160,7 @@ describe('Focus Mode (Rule of Three)', () => {
   });
 });
 
-describe('Statuses API (restricted)', () => {
+describe('Statuses API (governance)', () => {
   it('GET /api/statuses — should list 4 statuses', async () => {
     const res = await request(app).get('/api/statuses');
     expect(res.status).toBe(200);
@@ -173,14 +173,25 @@ describe('Statuses API (restricted)', () => {
     expect(res.body).toMatchObject({ name: 'delegated', label: 'Waiting on Others' });
   });
 
-  it('POST /api/statuses — 405', async () => {
+  it('POST /api/statuses — should create a custom status', async () => {
     const res = await request(app).post('/api/statuses').send({ name: 'new', label: 'New' });
-    expect(res.status).toBe(405);
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({ name: 'new', label: 'New', is_system_locked: 0 });
   });
 
-  it('DELETE /api/statuses/:name — 405', async () => {
+  it('DELETE /api/statuses/:name — 403 for system-locked', async () => {
     const res = await request(app).delete('/api/statuses/active');
-    expect(res.status).toBe(405);
+    expect(res.status).toBe(403);
+  });
+
+  it('DELETE /api/statuses/:name — 204 for custom status', async () => {
+    const res = await request(app).delete('/api/statuses/new');
+    expect(res.status).toBe(204);
+  });
+
+  it('PUT /api/statuses/done — 403 not renamable', async () => {
+    const res = await request(app).put('/api/statuses/done').send({ label: 'Finished' });
+    expect(res.status).toBe(403);
   });
 });
 
