@@ -51,7 +51,7 @@ export default function AnalyticsDashboard() {
   return (
     <div className="w-full flex-1 max-w-[1600px] mx-auto px-4 md:px-6 lg:px-8 py-8 space-y-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold tracking-tight text-foreground">Dashboard</h2>
+        <h2 className="text-2xl font-bold tracking-tight text-foreground">Insights</h2>
         <ReportGenerator />
       </div>
 
