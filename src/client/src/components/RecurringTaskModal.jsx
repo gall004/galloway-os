@@ -183,6 +183,7 @@ export default function RecurringTaskModal({ open, onOpenChange, rule, onSave, c
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="status_name" render={({ field }) => {
                 const availableStatuses = config.statuses?.filter((s) => {
+                  if (s.system_name === 'done') return false
                   if (s.system_name === 'inbox' && settings && !settings.inbox_mode) return false
                   if (s.system_name === 'delegated' && settings && !settings.manager_mode) return false
                   return true
