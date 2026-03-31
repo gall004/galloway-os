@@ -16,6 +16,10 @@ export default function SafeDeleteStatusModal({ open, onOpenChange, status, allS
     setFallback('')
   }
 
+  const totalCount = taskCount + templateCount;
+  const themIt = totalCount === 1 ? 'it' : 'them';
+  const itemItems = totalCount === 1 ? 'item' : 'items';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[420px]">
@@ -25,12 +29,12 @@ export default function SafeDeleteStatusModal({ open, onOpenChange, status, allS
             This column contains {taskCount > 0 && <span><strong>{taskCount}</strong> active {taskCount === 1 ? 'task' : 'tasks'}</span>}
             {taskCount > 0 && templateCount > 0 && ' and '}
             {templateCount > 0 && <span><strong>{templateCount}</strong> recurring {templateCount === 1 ? 'template' : 'templates'}</span>}. 
-            Choose a column to move them to before deleting.
+            Choose a column to move {themIt} to before deleting.
           </DialogDescription>
         </DialogHeader>
         <Select value={fallback} onValueChange={setFallback}>
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Move tasks to…" />
+            <SelectValue placeholder={`Move ${itemItems} to…`} />
           </SelectTrigger>
           <SelectContent>
             {available.map((s) => (
@@ -40,7 +44,7 @@ export default function SafeDeleteStatusModal({ open, onOpenChange, status, allS
         </Select>
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button variant="destructive" disabled={!fallback} onClick={handleConfirm}>Delete &amp; Move Tasks</Button>
+          <Button variant="destructive" disabled={!fallback} onClick={handleConfirm}>Delete &amp; Move {itemItems === 'item' ? 'Item' : 'Items'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
