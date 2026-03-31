@@ -4,6 +4,7 @@ const { createApp } = require('./app');
 const { initializeDatabase } = require('./models/database');
 const { runMigrations } = require('../db/migrate');
 const { evaluateRecurringTasks } = require('./scheduler');
+const cron = require('node-cron');
 
 /**
  * @description Server entry point.
@@ -18,8 +19,15 @@ async function main() {
 
     app.listen(config.port, () => {
       logger.info({ port: config.port, env: config.nodeEnv }, 'galloway-os server started');
+
       evaluateRecurringTasks();
-      setInterval(evaluateRecurringTasks, 60 * 60 * 1000);
+
+      cron.schedule(config.recurringCron, () => {
+        logger.info({ cron: config.recurringCron, tz: config.timezone }, 'Cron tick: evaluating recurring tasks');
+        evaluateRecurringTasks();
+      }, { timezone: config.timezone });
+
+      logger.info({ cron: config.recurringCron, tz: config.timezone }, 'Recurring task cron scheduled');
     });
   } catch (err) {
     logger.error({ err }, 'Failed to start server');
@@ -28,3 +36,4 @@ async function main() {
 }
 
 main();
+
