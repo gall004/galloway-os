@@ -223,17 +223,17 @@ export default function WorkflowSettings() {
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-foreground">Board Columns</h3>
         <p className="text-xs text-muted-foreground">Drag to reorder how columns appear on the Priority Board. Done is always last.</p>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-16"></TableHead>
-              <TableHead>Column Name</TableHead>
-              <TableHead className="hidden md:table-cell">Internal Key</TableHead>
-              <TableHead className="w-24 text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={boardColumns.map(s => s.name)} strategy={verticalListSortingStrategy}>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={boardColumns.map(s => s.name)} strategy={verticalListSortingStrategy}>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-16"></TableHead>
+                  <TableHead>Column Name</TableHead>
+                  <TableHead className="hidden md:table-cell">Internal Key</TableHead>
+                  <TableHead className="w-24 text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
               <TableBody>
                 {boardColumns.map((s) => (
                   <SortableRow
@@ -261,9 +261,9 @@ export default function WorkflowSettings() {
                   <TableCell className="text-right text-xs text-muted-foreground">Always last</TableCell>
                 </TableRow>
               </TableBody>
-            </SortableContext>
-          </DndContext>
-        </Table>
+            </Table>
+          </SortableContext>
+        </DndContext>
 
         {/* Add Custom Column */}
         <div className="flex items-center gap-2">
