@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
  * @param {{ open, onOpenChange, modeName, statusName, allStatuses, taskCount, onConfirm }} props
  */
 export default function SafeDisableModeModal({ open, onOpenChange, modeName, statusName, allStatuses, taskCount, onConfirm }) {
-  const [fallback, setFallback] = useState('')
+  const [fallback, setFallback] = useState('none')
 
   // If we just want them to drop it in Active, or any other core column, actually it's easier to just let them drop it in ANY core column 
   // currently enabled, but 'Active' is the easiest safe haven. Let's just allow all strictly active board columns.
@@ -20,7 +20,7 @@ export default function SafeDisableModeModal({ open, onOpenChange, modeName, sta
   }
 
   const handleCancel = () => {
-    setFallback('')
+    setFallback('none')
     onOpenChange(false)
   }
 
@@ -35,17 +35,18 @@ export default function SafeDisableModeModal({ open, onOpenChange, modeName, sta
         </DialogHeader>
         <Select value={fallback} onValueChange={setFallback}>
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Move tasks to…" />
+            <SelectValue placeholder="Where should they go?" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="none">Don't move, tasks will be hidden</SelectItem>
             {boardColumns.map((s) => (
-              <SelectItem key={s.name} value={s.name}>{s.label}</SelectItem>
+              <SelectItem key={s.name} value={s.name}>Move to {s.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={handleCancel}>Cancel (Keep items hidden)</Button>
-          <Button variant="default" disabled={!fallback} onClick={handleConfirm}>Move Tasks &amp; Disable</Button>
+          <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+          <Button variant="default" onClick={handleConfirm}>Confirm Disable</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

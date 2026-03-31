@@ -142,12 +142,14 @@ export default function WorkflowSettings() {
 
   const handleSafeDisableMode = async (statusName, fallback) => {
     try {
-      await reassignStatusTasks(statusName, fallback);
+      if (fallback !== 'none') {
+        await reassignStatusTasks(statusName, fallback);
+      }
       const updated = await updateSettings({ [disableModeContext.field]: false });
       setSettings(updated);
       setDisableModeContext(null);
       load();
-      toast.success(`Tasks moved and ${disableModeContext.modeName} disabled`);
+      toast.success(fallback === 'none' ? `${disableModeContext.modeName} disabled (tasks hidden)` : `Tasks moved and ${disableModeContext.modeName} disabled`);
     } catch (e) { toast.error(e.message) }
   }
 
