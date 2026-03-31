@@ -5,10 +5,81 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { Edit2, Trash2, Plus, Lock, ShieldCheck, ArrowUp, ArrowDown } from 'lucide-react'
-import { fetchSettings, updateSettings, fetchConfig, createStatus, updateStatus, deleteStatus, reorderStatuses } from '@/lib/api'
+import { Edit2, Trash2, Plus, Lock, ShieldCheck, GripVertical } from 'lucide-react'
+import { fetchSettings, updateSettings, fetchConfig, createStatus, updateStatus, deleteStatus, reorderStatuses, fetchTasks } from '@/lib/api'
 import SafeDeleteStatusModal from '@/components/SafeDeleteStatusModal'
-import { fetchTasks } from '@/lib/api'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+
+function SortableRow({ status, editingName, editLabel, setEditingName, setEditLabel, handleSaveRename, handleDeleteClick }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: status.name })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  return (
+    <TableRow ref={setNodeRef} style={style} className={isDragging ? 'bg-muted/50 relative z-50 shadow-sm' : ''}>
+      <TableCell className="w-16">
+        <Button variant="ghost" size="icon" className="h-6 w-6 cursor-grab active:cursor-grabbing text-muted-foreground hover:bg-transparent" {...attributes} {...listeners}>
+          <GripVertical className="h-4 w-4" />
+        </Button>
+      </TableCell>
+      <TableCell>
+        {editingName === status.name ? (
+          <div className="flex items-center gap-2">
+            <Input className="h-8 text-sm" value={editLabel} onChange={(e) => setEditLabel(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSaveRename(status.name)} />
+            <Button size="sm" variant="outline" className="h-8" onClick={() => handleSaveRename(status.name)}>Save</Button>
+            <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditingName(null)}>✕</Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{status.label}</span>
+            {status.is_system_locked === 1 && <ShieldCheck className="h-3.5 w-3.5 text-muted-foreground" title="System locked" />}
+            {status.is_renamable === 0 && <Lock className="h-3.5 w-3.5 text-muted-foreground" title="Not renamable" />}
+          </div>
+        )}
+      </TableCell>
+      <TableCell className="hidden md:table-cell text-muted-foreground font-mono text-xs">{status.name}</TableCell>
+      <TableCell className="text-right">
+        <div className="flex items-center justify-end gap-1">
+          {status.is_renamable !== 0 && (
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground/60 hover:text-foreground" onClick={() => { setEditingName(status.name); setEditLabel(status.label) }}>
+              <Edit2 className="h-4 w-4" />
+            </Button>
+          )}
+          {status.is_system_locked !== 1 && (
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground/60 hover:text-destructive" onClick={() => handleDeleteClick(status)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </TableCell>
+    </TableRow>
+  )
+}
 
 /**
  * @description WorkflowSettings — App workflow toggles + dynamic status column management.
@@ -24,6 +95,13 @@ export default function WorkflowSettings() {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteTaskCount, setDeleteTaskCount] = useState(0)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   const load = useCallback(async () => {
     try {
@@ -57,6 +135,8 @@ export default function WorkflowSettings() {
 
   const handleSaveRename = async (name) => {
     try {
+      const st = statuses.find(s => s.name === name)
+      if (!st || st.label === editLabel) { setEditingName(null); return }
       await updateStatus(name, { label: editLabel })
       setEditingName(null)
       load()
@@ -92,21 +172,26 @@ export default function WorkflowSettings() {
 
   const boardColumns = statuses.filter((s) => s.system_name !== 'done')
 
-  const handleMove = async (index, direction) => {
-    const swapIndex = index + direction
-    if (swapIndex < 0 || swapIndex >= boardColumns.length) return
+  const handleDragEnd = async (event) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
 
-    const reordered = [...boardColumns]
-    const temp = reordered[index]
-    reordered[index] = reordered[swapIndex]
-    reordered[swapIndex] = temp
+    const oldIndex = boardColumns.findIndex((col) => col.name === active.id)
+    const newIndex = boardColumns.findIndex((col) => col.name === over.id)
+
+    const reordered = arrayMove(boardColumns, oldIndex, newIndex)
+    const newStatuses = [...reordered, statuses.find(s => s.system_name === 'done')]
+    setStatuses(newStatuses) // Optimistic update
 
     const items = reordered.map((s, i) => ({ name: s.name, display_order: i }))
     try {
       const updated = await reorderStatuses(items)
       setStatuses(updated)
       toast.success('Column order updated')
-    } catch (e) { toast.error(e.message) }
+    } catch (e) {
+      toast.error(e.message)
+      load() // Revert on error
+    }
   }
 
   if (loading) return <div className="text-center p-8 text-muted-foreground animate-pulse">Loading settings...</div>
@@ -141,71 +226,43 @@ export default function WorkflowSettings() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-16">Order</TableHead>
+              <TableHead className="w-16">Drag</TableHead>
               <TableHead>Column Name</TableHead>
               <TableHead className="hidden md:table-cell">Internal Key</TableHead>
               <TableHead className="w-24 text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
-            {boardColumns.map((s, idx) => (
-              <TableRow key={s.name}>
-                <TableCell>
-                  <div className="flex items-center gap-0.5">
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground/60 hover:text-foreground" onClick={() => handleMove(idx, -1)} disabled={idx === 0}>
-                      <ArrowUp className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground/60 hover:text-foreground" onClick={() => handleMove(idx, 1)} disabled={idx === boardColumns.length - 1}>
-                      <ArrowDown className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {editingName === s.name ? (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={boardColumns.map(s => s.name)} strategy={verticalListSortingStrategy}>
+              <TableBody>
+                {boardColumns.map((s) => (
+                  <SortableRow
+                    key={s.name}
+                    status={s}
+                    editingName={editingName}
+                    editLabel={editLabel}
+                    setEditingName={setEditingName}
+                    setEditLabel={setEditLabel}
+                    handleSaveRename={handleSaveRename}
+                    handleDeleteClick={handleDeleteClick}
+                  />
+                ))}
+                {/* Done row — informational only */}
+                <TableRow className="opacity-50 pointer-events-none">
+                  <TableCell></TableCell>
+                  <TableCell>
                     <div className="flex items-center gap-2">
-                      <Input className="h-8 text-sm" value={editLabel} onChange={(e) => setEditLabel(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSaveRename(s.name)} />
-                      <Button size="sm" variant="outline" className="h-8" onClick={() => handleSaveRename(s.name)}>Save</Button>
-                      <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditingName(null)}>✕</Button>
+                      <span className="font-medium">Done</span>
+                      <ShieldCheck className="h-3.5 w-3.5 text-muted-foreground" title="System locked" />
+                      <Lock className="h-3.5 w-3.5 text-muted-foreground" title="Not renamable" />
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{s.label}</span>
-                      {s.is_system_locked === 1 && <ShieldCheck className="h-3.5 w-3.5 text-muted-foreground" title="System locked" />}
-                      {s.is_renamable === 0 && <Lock className="h-3.5 w-3.5 text-muted-foreground" title="Not renamable" />}
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell className="hidden md:table-cell text-muted-foreground font-mono text-xs">{s.name}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    {s.is_renamable !== 0 && (
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground/60 hover:text-foreground" onClick={() => { setEditingName(s.name); setEditLabel(s.label) }}>
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {s.is_system_locked !== 1 && (
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground/60 hover:text-destructive" onClick={() => handleDeleteClick(s)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {/* Done row — informational only */}
-            <TableRow className="opacity-50">
-              <TableCell></TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">Done</span>
-                  <ShieldCheck className="h-3.5 w-3.5 text-muted-foreground" title="System locked" />
-                  <Lock className="h-3.5 w-3.5 text-muted-foreground" title="Not renamable" />
-                </div>
-              </TableCell>
-              <TableCell className="hidden md:table-cell text-muted-foreground font-mono text-xs">done</TableCell>
-              <TableCell className="text-right text-xs text-muted-foreground">Always last</TableCell>
-            </TableRow>
-          </TableBody>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell text-muted-foreground font-mono text-xs">done</TableCell>
+                  <TableCell className="text-right text-xs text-muted-foreground">Always last</TableCell>
+                </TableRow>
+              </TableBody>
+            </SortableContext>
+          </DndContext>
         </Table>
 
         {/* Add Custom Column */}
