@@ -330,10 +330,10 @@ export default function WorkflowSettings() {
           open={!!disableModeContext}
           onOpenChange={(v) => !v && setDisableModeContext(null)}
           modeName={disableModeContext.modeName}
-          disabledStatusName={disableModeContext.statusName}
+          statusName={disableModeContext.statusName}
           taskCount={disableModeContext.taskCount}
           templateCount={disableModeContext.templateCount}
-          availableStatuses={statuses}
+          allStatuses={statuses}
           onConfirm={(fallback) => handleSafeDisableMode(disableModeContext.statusName, fallback)}
         />
       )}
