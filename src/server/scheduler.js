@@ -68,7 +68,7 @@ function evaluateRecurringTasks() {
         customer_id: rule.customer_id,
         project_id: rule.project_id,
         delegated_to: rule.delegated_to,
-        status_name: 'active',
+        status_name: rule.status_name,
         is_template: 0,
         source_recurring_task_id: rule.id,
       };
