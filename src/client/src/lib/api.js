@@ -39,3 +39,12 @@ export const deleteConfig = (entity, id) => apiFetch(`/api/${entity}/${id}`, { m
 
 // --- Reports ---
 export const fetchWeeklyReport = (days = 7) => apiFetch(`/api/reports/weekly?days=${days}`);
+
+// --- Settings (Singleton) ---
+export const fetchSettings = () => apiFetch('/api/settings');
+export const updateSettings = (data) => apiFetch('/api/settings', { method: 'PUT', body: JSON.stringify(data) });
+
+// --- Statuses ---
+export const createStatus = (data) => apiFetch('/api/statuses', { method: 'POST', body: JSON.stringify(data) });
+export const updateStatus = (name, data) => apiFetch(`/api/statuses/${name}`, { method: 'PUT', body: JSON.stringify(data) });
+export const deleteStatus = (name, fallbackStatusName) => apiFetch(`/api/statuses/${name}`, { method: 'DELETE', body: JSON.stringify({ fallback_status_name: fallbackStatusName }) });

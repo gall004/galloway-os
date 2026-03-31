@@ -8,6 +8,7 @@ const configRoutes = require('./routes/config.routes');
 const statusesRoutes = require('./routes/statuses.routes');
 const metricsRoutes = require('./routes/metrics.routes');
 const reportsRoutes = require('./routes/reports.routes');
+const settingsRoutes = require('./routes/settings.routes');
 
 /**
  * @description Create and configure the Express application.
@@ -26,6 +27,7 @@ function createApp() {
   app.use(statusesRoutes);
   app.use(metricsRoutes);
   app.use(reportsRoutes);
+  app.use(settingsRoutes);
 
   // Serve static assets from the React PWA build
   app.use(express.static(path.join(__dirname, '../client/dist')));
