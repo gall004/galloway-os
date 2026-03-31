@@ -50,7 +50,7 @@ export default function ProjectCombobox({ value, onChange, projects, customers, 
 
   return (
     <>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={setOpen} modal={true}>
         <PopoverTrigger asChild>
           <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between font-normal">
             <span className="truncate">{selectedLabel}</span>

@@ -16,11 +16,11 @@ export default function RecurringSettings() {
 
   const load = useCallback(async () => {
     try {
-      const [allRules, customers, projects] = await Promise.all([
-        fetchTasks('is_template=true'), fetchConfig('customers'), fetchConfig('projects')
+      const [allRules, customers, projects, statuses] = await Promise.all([
+        fetchTasks('is_template=true'), fetchConfig('customers'), fetchConfig('projects'), fetchConfig('statuses')
       ])
       setData(allRules)
-      setConfig({ customers, projects })
+      setConfig({ customers, projects, statuses })
       setLoading(false)
     } catch { setLoading(false) }
   }, [])
