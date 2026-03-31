@@ -118,7 +118,15 @@ export default function WorkflowSettings() {
   useEffect(() => { load() }, [load])
 
   const handleToggle = async (field, value) => {
+    const visibleColumnCount = boardColumns.length;
     try {
+      if (value === true && (field === 'inbox_mode' || field === 'manager_mode')) {
+        if (visibleColumnCount >= 5) {
+          toast.error('Maximum of 5 columns reached. Delete a custom column first to enable this mode.');
+          return;
+        }
+      }
+
       if (value === false) {
         const modeStatusMap = {
           inbox_mode: { name: 'inbox', label: 'Inbox Mode' },
@@ -307,12 +315,17 @@ export default function WorkflowSettings() {
         </DndContext>
 
         {/* Add Custom Column */}
-        <div className="flex items-center gap-2">
-          <Input className="flex-1 h-9" placeholder="Internal key (e.g., review)" value={newName} onChange={(e) => setNewName(e.target.value)} />
-          <Input className="flex-1 h-9" placeholder="Display label (e.g., In Review)" value={newLabel} onChange={(e) => setNewLabel(e.target.value)} />
-          <Button size="sm" onClick={handleAddStatus} disabled={!newName.trim() || !newLabel.trim()}>
-            <Plus className="h-4 w-4 mr-1" /> Add Column
-          </Button>
+        <div className="pt-2">
+          {boardColumns.length >= 5 && (
+            <p className="text-sm font-medium text-destructive mb-3">Maximum of 5 active columns reached. Remove a custom column or disable a workflow mode to add a new customized board stage.</p>
+          )}
+          <div className="flex items-center gap-2">
+            <Input className="flex-1 h-9" placeholder="Internal key (e.g., review)" value={newName} onChange={(e) => setNewName(e.target.value)} disabled={boardColumns.length >= 5} />
+            <Input className="flex-1 h-9" placeholder="Display label (e.g., In Review)" value={newLabel} onChange={(e) => setNewLabel(e.target.value)} disabled={boardColumns.length >= 5} />
+            <Button size="sm" onClick={handleAddStatus} disabled={!newName.trim() || !newLabel.trim() || boardColumns.length >= 5}>
+              <Plus className="h-4 w-4 mr-1" /> Add Column
+            </Button>
+          </div>
         </div>
       </div>
 
