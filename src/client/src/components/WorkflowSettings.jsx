@@ -226,7 +226,7 @@ export default function WorkflowSettings() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-16">Drag</TableHead>
+              <TableHead className="w-16"></TableHead>
               <TableHead>Column Name</TableHead>
               <TableHead className="hidden md:table-cell">Internal Key</TableHead>
               <TableHead className="w-24 text-right">Actions</TableHead>
