@@ -12,7 +12,7 @@ function getMetrics() {
     SELECT c.name AS customer, COUNT(*) AS count
     FROM tasks
     LEFT JOIN customers c ON tasks.customer_id = c.id
-    WHERE tasks.status_name NOT IN ('done', 'inbox')
+    WHERE tasks.status_name NOT IN ('done', 'inbox') AND tasks.is_template = 0
     GROUP BY c.name
     ORDER BY count DESC
   `).all();
@@ -22,7 +22,7 @@ function getMetrics() {
       strftime('%Y-W%W', date_completed) AS week,
       COUNT(*) AS count
     FROM tasks
-    WHERE status_name = 'done'
+    WHERE status_name = 'done' AND is_template = 0
       AND date_completed IS NOT NULL
       AND date_completed >= date('now', '-56 days')
     GROUP BY week
@@ -32,7 +32,7 @@ function getMetrics() {
   const statusCounts = db.prepare(`
     SELECT status_name, COUNT(*) AS count
     FROM tasks
-    WHERE status_name NOT IN ('done', 'inbox')
+    WHERE status_name NOT IN ('done', 'inbox') AND is_template = 0
     GROUP BY status_name
   `).all();
 
@@ -42,7 +42,7 @@ function getMetrics() {
   const cycleTimeRow = db.prepare(`
     SELECT AVG(julianday(date_completed) - julianday(date_created)) AS avg_days
     FROM tasks
-    WHERE status_name = 'done'
+    WHERE status_name = 'done' AND is_template = 0
       AND date_completed IS NOT NULL
       AND date_created IS NOT NULL
   `).get();
@@ -50,7 +50,7 @@ function getMetrics() {
   const delegationTimeRow = db.prepare(`
     SELECT AVG(julianday(date_completed) - julianday(date_delegated)) AS avg_days
     FROM tasks
-    WHERE status_name = 'done'
+    WHERE status_name = 'done' AND is_template = 0
       AND date_completed IS NOT NULL
       AND date_delegated IS NOT NULL
   `).get();
@@ -58,7 +58,7 @@ function getMetrics() {
   const recentImpacts = db.prepare(`
     SELECT title, impact_statement, date_completed
     FROM tasks
-    WHERE status_name = 'done'
+    WHERE status_name = 'done' AND is_template = 0
       AND impact_statement IS NOT NULL
       AND impact_statement != ''
     ORDER BY date_completed DESC
@@ -66,7 +66,7 @@ function getMetrics() {
   `).all();
 
   const totalCompleted = db.prepare(`
-    SELECT COUNT(*) AS count FROM tasks WHERE status_name = 'done'
+    SELECT COUNT(*) AS count FROM tasks WHERE status_name = 'done' AND is_template = 0
   `).get()?.count || 0;
 
   logger.info('Metrics computed');

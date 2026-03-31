@@ -22,7 +22,7 @@ async function apiFetch(url, options = {}) {
 }
 
 // --- Tasks ---
-export const fetchTasks = () => apiFetch('/api/tasks');
+export const fetchTasks = (query = '') => apiFetch(`/api/tasks${query ? `?${query}` : ''}`);
 export const createTask = (data) => apiFetch('/api/tasks', { method: 'POST', body: JSON.stringify(data) });
 export const updateTask = (id, data) => apiFetch(`/api/tasks/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 export const deleteTask = (id) => apiFetch(`/api/tasks/${id}`, { method: 'DELETE' });
