@@ -10,8 +10,9 @@ services:
     env_file:
       - .env.production
     volumes:
-      # Mount explicitly strictly to src/db for complete architectural data isolation
+      # Persistent data & logs survive container rebuilds
       - ./src/db:/app/src/db
+      - ./logs:/app/logs
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:7432/healthz"]
       interval: 30s

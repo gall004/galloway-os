@@ -18,6 +18,12 @@ const config = {
   /** @type {string} Log level for Pino logger */
   logLevel: process.env.LOG_LEVEL || 'info',
 
+  /** @type {string} Directory for persistent log files (relative to project root) */
+  logDir: path.resolve(__dirname, '../../', process.env.LOG_DIR || 'logs'),
+
+  /** @type {number} Number of days to retain log files before automatic cleanup */
+  logRetentionDays: parseInt(process.env.LOG_RETENTION_DAYS, 10) || 14,
+
   /** @type {string} IANA timezone for the recurring task scheduler (e.g., 'America/Chicago') */
   timezone: process.env.TZ || Intl.DateTimeFormat().resolvedOptions().timeZone,
 

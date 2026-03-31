@@ -43,6 +43,8 @@ galloway-os is a lightweight, full-stack Node.js application paired with SQLite 
 | `NODE_ENV` | Environment mode (`development` \| `production`) | `development` |
 | `DB_FILE` | Filename of SQLite database (resolves inside `src/db/`) | `dev.sqlite` |
 | `LOG_LEVEL` | Logging level (`error` \| `warn` \| `info` \| `debug`) | `info` |
+| `LOG_DIR` | Directory for persistent daily log files | `logs` |
+| `LOG_RETENTION_DAYS` | Number of days to retain log files | `14` |
 | `TZ` | IANA timezone for the recurring task scheduler | System default |
 | `RECURRING_CRON` | Cron expression for recurring task evaluation | `0 5 * * *` (5:00 AM daily) |
 
