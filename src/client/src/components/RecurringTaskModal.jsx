@@ -59,7 +59,7 @@ export default function RecurringTaskModal({ open, onOpenChange, rule, onSave, c
     const payload = { 
       ...data,
       is_template: true, // Marker to save as blueprint
-      status_name: 'inbox', 
+      status_name: 'active', 
       project_id: Number(data.project_id),
       days_of_week: data.days_of_week.length > 0 && frequency !== 'monthly' ? data.days_of_week.map(Number) : null
     }
