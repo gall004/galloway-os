@@ -3,6 +3,7 @@ const logger = require('./logger');
 const { createApp } = require('./app');
 const { initializeDatabase } = require('./models/database');
 const { runMigrations } = require('../db/migrate');
+const { evaluateRecurringTasks } = require('./scheduler');
 
 /**
  * @description Server entry point.
@@ -17,6 +18,8 @@ async function main() {
 
     app.listen(config.port, () => {
       logger.info({ port: config.port, env: config.nodeEnv }, 'galloway-os server started');
+      evaluateRecurringTasks();
+      setInterval(evaluateRecurringTasks, 60 * 60 * 1000);
     });
   } catch (err) {
     logger.error({ err }, 'Failed to start server');

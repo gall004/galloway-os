@@ -40,9 +40,12 @@ router.post('/api/tasks', (req, res) => {
 /**
  * @description GET /api/tasks — Retrieve all tasks with joined names.
  */
-router.get('/api/tasks', (_req, res) => {
-  try { res.json(getAllTasks()); }
-  catch (err) {
+router.get('/api/tasks', (req, res) => {
+  try {
+    const isTemplate = req.query.is_template === 'true';
+    const tasks = getAllTasks({ is_template: isTemplate });
+    res.json(tasks);
+  } catch (err) {
     logger.error({ err: err.message }, 'Failed to retrieve tasks');
     res.status(500).json({ error: true, message: 'Failed to retrieve tasks.', code: 'INTERNAL_ERROR' });
   }

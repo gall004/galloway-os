@@ -76,8 +76,8 @@ function createTask(data) {
   }
 
   const stmt = db.prepare(`
-    INSERT INTO tasks (title, description, date_due, status_name, project_id, customer_id, delegated_to, order_index, is_focused)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO tasks (title, description, date_due, status_name, project_id, customer_id, delegated_to, order_index, is_focused, is_template, frequency, days_of_week, due_date_offset_days, prevent_duplicates, next_run_date, source_recurring_task_id, is_active_template)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const result = stmt.run(
@@ -89,7 +89,15 @@ function createTask(data) {
     data.customer_id || 1,
     data.delegated_to || null,
     orderIndex,
-    isFocused
+    isFocused,
+    data.is_template ? 1 : 0,
+    data.frequency || null,
+    data.days_of_week ? JSON.stringify(data.days_of_week) : null,
+    data.due_date_offset_days !== undefined ? data.due_date_offset_days : null,
+    data.prevent_duplicates !== undefined ? (data.prevent_duplicates ? 1 : 0) : 1,
+    data.next_run_date || null,
+    data.source_recurring_task_id || null,
+    data.is_active_template !== undefined ? (data.is_active_template ? 1 : 0) : 1
   );
 
   const task = db.prepare(`${TASKS_SELECT} WHERE tasks.id = ?`).get(result.lastInsertRowid);
@@ -101,9 +109,10 @@ function createTask(data) {
  * @description Retrieve all tasks with joined lookup names.
  * @returns {Array<Object>}
  */
-function getAllTasks() {
+function getAllTasks(opts = {}) {
   const db = getDatabase();
-  return db.prepare(`${TASKS_SELECT} ORDER BY tasks.order_index ASC, tasks.date_created DESC`).all();
+  const baseWhere = opts.is_template ? 'WHERE tasks.is_template = 1' : 'WHERE tasks.is_template = 0';
+  return db.prepare(`${TASKS_SELECT} ${baseWhere} ORDER BY tasks.order_index ASC, tasks.date_created DESC`).all();
 }
 
 /**
@@ -165,14 +174,20 @@ function updateTask(id, updates) {
     updates.is_focused = updates.is_focused ? 1 : 0;
   }
 
-  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'date_delegated', 'status_name', 'project_id', 'customer_id', 'delegated_to', 'order_index', 'impact_statement', 'is_focused'];
+  const allowedFields = ['title', 'description', 'date_due', 'date_completed', 'date_delegated', 'status_name', 'project_id', 'customer_id', 'delegated_to', 'order_index', 'impact_statement', 'is_focused', 'is_template', 'frequency', 'days_of_week', 'due_date_offset_days', 'prevent_duplicates', 'next_run_date', 'source_recurring_task_id', 'is_active_template'];
   const setClauses = [];
   const values = [];
 
   for (const field of allowedFields) {
     if (updates[field] !== undefined) {
       setClauses.push(`${field} = ?`);
-      values.push(updates[field]);
+      if (field === 'days_of_week') {
+         values.push(updates[field] ? JSON.stringify(updates[field]) : null);
+      } else if (['is_template', 'prevent_duplicates', 'is_active_template', 'is_focused'].includes(field)) {
+         values.push(updates[field] ? 1 : 0);
+      } else {
+         values.push(updates[field]);
+      }
     }
   }
 

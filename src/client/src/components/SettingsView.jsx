@@ -1,17 +1,20 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import ConfigTable from '@/components/ConfigTable'
+import RecurringSettings from '@/components/RecurringSettings'
 
 const TAB_LABELS = {
   statuses: 'Statuses',
   customers: 'Customers',
   projects: 'Projects',
+  recurring: 'Recurring Tasks',
 }
 
 const TABS = [
   { key: 'statuses', label: 'Status', pluralLabel: 'Statuses', readOnly: true, nameField: 'name' },
   { key: 'customers', label: 'Customer', pluralLabel: 'Customers' },
   { key: 'projects', label: 'Project', pluralLabel: 'Projects', parentEntity: 'customers', parentLabel: 'Customer' },
+  { key: 'recurring', label: 'Recurring', pluralLabel: 'Recurring Tasks' },
 ]
 
 /**
@@ -36,7 +39,9 @@ export default function SettingsView() {
           </Button>
         ))}
       </div>
-      {tab && (
+      {tab && tab.key === 'recurring' ? (
+        <RecurringSettings key="recurring" />
+      ) : tab ? (
         <ConfigTable
           key={tab.key}
           entity={tab.key}
@@ -47,7 +52,7 @@ export default function SettingsView() {
           readOnly={tab.readOnly}
           nameField={tab.nameField}
         />
-      )}
+      ) : null}
     </div>
   )
 }

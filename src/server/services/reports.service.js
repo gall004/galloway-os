@@ -54,7 +54,7 @@ function generateWeeklyReport(days = 7) {
   // 1. Completed in last X days
   const completedStats = db.prepare(`
     ${TASKS_REPORT_SELECT}
-    WHERE tasks.status_name = 'done'
+    WHERE tasks.status_name = 'done' AND tasks.is_template = 0
       AND tasks.date_completed >= ?
     ORDER BY tasks.date_completed DESC
   `).all(cutoffIso);
@@ -62,7 +62,7 @@ function generateWeeklyReport(days = 7) {
   // 2. Top 5 active tasks
   const topActive = db.prepare(`
     ${TASKS_REPORT_SELECT}
-    WHERE tasks.status_name = 'active'
+    WHERE tasks.status_name = 'active' AND tasks.is_template = 0
     ORDER BY tasks.order_index ASC
     LIMIT 5
   `).all();
@@ -70,7 +70,7 @@ function generateWeeklyReport(days = 7) {
   // 3. Delegation summary
   const delegated = db.prepare(`
     ${TASKS_REPORT_SELECT}
-    WHERE tasks.status_name = 'delegated'
+    WHERE tasks.status_name = 'delegated' AND tasks.is_template = 0
     ORDER BY tasks.date_delegated ASC
   `).all();
 
