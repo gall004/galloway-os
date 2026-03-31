@@ -5,9 +5,8 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
-import { MoreHorizontal, Edit2, CheckCircle2, Trash2, Clock, Target } from 'lucide-react'
+import { MoreHorizontal, Edit2, CheckCircle2, Trash2, Clock, Target, ArrowUpToLine, ArrowDownToLine } from 'lucide-react'
 
 /**
  * @description TaskCard — Massive UI Overhaul: Condensed padding, focal title typography, and dropdown-menus.
@@ -75,6 +74,13 @@ export default function TaskCard({ task, onClick, onComplete, onDelete, onInsert
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onInsert?.({ status_name: task.status_name, order_index: task.order_index }) }} className="cursor-pointer">
+                <ArrowUpToLine className="w-4 h-4 mr-2" /> Insert Task Above
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); onInsert?.({ status_name: task.status_name, order_index: task.order_index + 1 }) }} className="cursor-pointer">
+                <ArrowDownToLine className="w-4 h-4 mr-2" /> Insert Task Below
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => setShowDelete(true)} className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer">
                 <Trash2 className="w-4 h-4 mr-2" /> Delete
               </DropdownMenuItem>
@@ -111,21 +117,9 @@ export default function TaskCard({ task, onClick, onComplete, onDelete, onInsert
 
   return (
     <>
-      <ContextMenu>
-        <ContextMenuTrigger asChild>
-          <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="pb-2.5">
-            {cardContent}
-          </div>
-        </ContextMenuTrigger>
-        <ContextMenuContent>
-          <ContextMenuItem onClick={(e) => { e.stopPropagation(); onInsert?.({ status_name: task.status_name, order_index: task.order_index }) }}>
-            ＋ Insert Task Above
-          </ContextMenuItem>
-          <ContextMenuItem onClick={(e) => { e.stopPropagation(); onInsert?.({ status_name: task.status_name, order_index: task.order_index + 1 }) }}>
-            ＋ Insert Task Below
-          </ContextMenuItem>
-        </ContextMenuContent>
-      </ContextMenu>
+      <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="pb-2.5">
+        {cardContent}
+      </div>
       
       <DeleteConfirmDialog open={showDelete} onOpenChange={setShowDelete} title="Delete task?" description={`Permanently delete "${task.title}"?`} onConfirm={() => onDelete?.(task)} />
     </>
