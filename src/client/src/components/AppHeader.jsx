@@ -22,8 +22,8 @@ export default function AppHeader() {
   const { pathname } = useLocation()
 
   const links = [
-    { to: '/', label: 'Priority', icon: Inbox },
-    { to: '/dashboard', label: 'Dashboard', icon: AppWindow },
+    { to: '/', label: 'Board', icon: Inbox },
+    { to: '/dashboard', label: 'Insights', icon: AppWindow },
     { to: '/archive', label: 'Archive', icon: Layers },
     { to: '/settings', label: 'Settings', icon: Settings },
   ]
