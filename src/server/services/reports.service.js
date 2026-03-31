@@ -67,12 +67,16 @@ function generateWeeklyReport(days = 7) {
     LIMIT 5
   `).all();
 
-  // 3. Delegation summary
-  const delegated = db.prepare(`
-    ${TASKS_REPORT_SELECT}
-    WHERE tasks.status_name = 'delegated' AND tasks.is_template = 0
-    ORDER BY tasks.date_delegated ASC
-  `).all();
+  // 3. Delegation summary (only if manager_mode is on)
+  const settings = db.prepare('SELECT manager_mode FROM app_settings WHERE id = 1').get() || { manager_mode: 1 };
+  let delegated = [];
+  if (settings.manager_mode) {
+    delegated = db.prepare(`
+      ${TASKS_REPORT_SELECT}
+      WHERE tasks.status_name = 'delegated' AND tasks.is_template = 0
+      ORDER BY tasks.date_delegated ASC
+    `).all();
+  }
 
   const reportDate = formatDate(now.toISOString());
   
@@ -107,17 +111,19 @@ function generateWeeklyReport(days = 7) {
   }
   md += `\n`;
 
-  // Section 3: Delegated
-  md += `## 🤝 Waiting On\n`;
-  if (delegated.length === 0) {
-    md += `*No delegated tasks currently pending.*\n`;
-  } else {
-    delegated.forEach(t => {
-      const assignee = t.delegated_to ? `Delegated to: ${t.delegated_to}` : 'Delegated';
-      const age = getDaysSince(t.date_delegated);
-      const ageStr = age > 0 ? ` - ${age} ${age === 1 ? 'day' : 'days'} old` : '';
-      md += `- **${t.title}** (${assignee})${ageStr}\n`;
-    });
+  // Section 3: Delegated (conditionally added)
+  if (settings.manager_mode) {
+    md += `## 🤝 Waiting On\n`;
+    if (delegated.length === 0) {
+      md += `*No delegated tasks currently pending.*\n`;
+    } else {
+      delegated.forEach(t => {
+        const assignee = t.delegated_to ? `Delegated to: ${t.delegated_to}` : 'Delegated';
+        const age = getDaysSince(t.date_delegated);
+        const ageStr = age > 0 ? ` - ${age} ${age === 1 ? 'day' : 'days'} old` : '';
+        md += `- **${t.title}** (${assignee})${ageStr}\n`;
+      });
+    }
   }
   
   return { report: md.trim() };

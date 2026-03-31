@@ -1,5 +1,5 @@
 const express = require('express');
-const { getAllStatuses, getStatus, createStatus, updateStatusLabel, deleteStatus } = require('../services/statuses.service');
+const { getAllStatuses, getStatus, createStatus, updateStatusLabel, deleteStatus, reorderStatuses } = require('../services/statuses.service');
 const logger = require('../logger');
 
 const router = express.Router();
@@ -35,6 +35,20 @@ router.post('/api/statuses', (req, res) => {
   } catch (err) {
     const statusMap = { VALIDATION_ERROR: 400 };
     const status = statusMap[err.code] || (err.message?.includes('UNIQUE') ? 409 : 500);
+    res.status(status).json({ error: true, message: err.message, code: err.code || 'INTERNAL_ERROR' });
+  }
+});
+
+/**
+ * @description PUT /api/statuses/reorder — Reorder board columns.
+ * Body: [{ name: string, display_order: number }]
+ */
+router.put('/api/statuses/reorder', (req, res) => {
+  try {
+    reorderStatuses(req.body);
+    res.json(getAllStatuses());
+  } catch (err) {
+    const status = err.code === 'VALIDATION_ERROR' ? 400 : 500;
     res.status(status).json({ error: true, message: err.message, code: err.code || 'INTERNAL_ERROR' });
   }
 });

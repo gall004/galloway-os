@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Card } from '@/components/ui/card'
-import { fetchMetrics } from '@/lib/api'
+import { fetchMetrics, fetchSettings } from '@/lib/api'
 import CustomerDonut from '@/components/charts/CustomerDonut'
 import VelocityBar from '@/components/charts/VelocityBar'
 import StatusGauge from '@/components/charts/StatusGauge'
@@ -9,15 +9,18 @@ import ReportGenerator from '@/components/ReportGenerator'
 
 /**
  * @description Analytics dashboard with charts, gauges, and operational metrics.
+ * Conditionally hides delegation metrics when Manager Mode is disabled.
  */
 export default function AnalyticsDashboard() {
   const [metrics, setMetrics] = useState(null)
+  const [settings, setSettings] = useState(null)
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
     try {
-      const data = await fetchMetrics()
+      const [data, appSettings] = await Promise.all([fetchMetrics(), fetchSettings()])
       setMetrics(data)
+      setSettings(appSettings)
     } catch {
       setMetrics(null)
     } finally {
@@ -43,6 +46,8 @@ export default function AnalyticsDashboard() {
     )
   }
 
+  const managerMode = !!settings?.manager_mode
+
   return (
     <div className="p-4 space-y-4 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-2">
@@ -51,7 +56,7 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* Top row — KPI cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className={`grid grid-cols-2 ${managerMode ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4`}>
         <MetricCard
           label="Tasks Completed"
           value={metrics.totalCompleted}
@@ -62,14 +67,16 @@ export default function AnalyticsDashboard() {
           value={metrics.avgCycleTimeDays != null ? `${metrics.avgCycleTimeDays}d` : '—'}
           subtitle="Created → Done"
         />
-        <MetricCard
-          label="Delegation Time"
-          value={metrics.avgDelegationTimeDays != null ? `${metrics.avgDelegationTimeDays}d` : '—'}
-          subtitle="Delegated → Done"
-        />
+        {managerMode && (
+          <MetricCard
+            label="Delegation Time"
+            value={metrics.avgDelegationTimeDays != null ? `${metrics.avgDelegationTimeDays}d` : '—'}
+            subtitle="Delegated → Done"
+          />
+        )}
         <MetricCard
           label="Active Tasks"
-          value={(metrics.activeVsDelegated.active || 0) + (metrics.activeVsDelegated.delegated || 0)}
+          value={(metrics.activeVsDelegated.active || 0) + (managerMode ? (metrics.activeVsDelegated.delegated || 0) : 0)}
           subtitle="In flight now"
         />
       </div>
@@ -81,11 +88,13 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* Bottom row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <StatusGauge
-          active={metrics.activeVsDelegated.active || 0}
-          delegated={metrics.activeVsDelegated.delegated || 0}
-        />
+      <div className={`grid grid-cols-1 ${managerMode ? 'md:grid-cols-2' : ''} gap-4`}>
+        {managerMode && (
+          <StatusGauge
+            active={metrics.activeVsDelegated.active || 0}
+            delegated={metrics.activeVsDelegated.delegated || 0}
+          />
+        )}
 
         {/* Recent Wins */}
         <Card className="p-5">

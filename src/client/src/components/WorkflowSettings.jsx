@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { Edit2, Trash2, Plus, Lock, ShieldCheck } from 'lucide-react'
-import { fetchSettings, updateSettings, fetchConfig, createStatus, updateStatus, deleteStatus } from '@/lib/api'
+import { Edit2, Trash2, Plus, Lock, ShieldCheck, ArrowUp, ArrowDown } from 'lucide-react'
+import { fetchSettings, updateSettings, fetchConfig, createStatus, updateStatus, deleteStatus, reorderStatuses } from '@/lib/api'
 import SafeDeleteStatusModal from '@/components/SafeDeleteStatusModal'
 import { fetchTasks } from '@/lib/api'
 
@@ -30,8 +30,8 @@ export default function WorkflowSettings() {
       const [s, st] = await Promise.all([fetchSettings(), fetchConfig('statuses')])
       setSettings(s)
       setStatuses(st)
-      setLoading(false)
-    } catch { setLoading(false) }
+    } catch { /* handled by loading state */ }
+    setLoading(false)
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -90,6 +90,25 @@ export default function WorkflowSettings() {
     } catch (e) { toast.error(e.message) }
   }
 
+  const boardColumns = statuses.filter((s) => s.system_name !== 'done')
+
+  const handleMove = async (index, direction) => {
+    const swapIndex = index + direction
+    if (swapIndex < 0 || swapIndex >= boardColumns.length) return
+
+    const reordered = [...boardColumns]
+    const temp = reordered[index]
+    reordered[index] = reordered[swapIndex]
+    reordered[swapIndex] = temp
+
+    const items = reordered.map((s, i) => ({ name: s.name, display_order: i }))
+    try {
+      const updated = await reorderStatuses(items)
+      setStatuses(updated)
+      toast.success('Column order updated')
+    } catch (e) { toast.error(e.message) }
+  }
+
   if (loading) return <div className="text-center p-8 text-muted-foreground animate-pulse">Loading settings...</div>
 
   return (
@@ -101,14 +120,14 @@ export default function WorkflowSettings() {
           <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
             <div className="space-y-0.5">
               <Label htmlFor="inbox-mode" className="font-medium">Inbox Mode</Label>
-              <p className="text-xs text-muted-foreground">Show the Inbox triage column on the board.</p>
+              <p className="text-xs text-muted-foreground">Capture tasks quickly without triaging. New items land in an Inbox column and are promoted to the board when ready.</p>
             </div>
             <Switch id="inbox-mode" checked={!!settings?.inbox_mode} onCheckedChange={(v) => handleToggle('inbox_mode', v)} />
           </div>
           <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
             <div className="space-y-0.5">
               <Label htmlFor="manager-mode" className="font-medium">Manager Mode</Label>
-              <p className="text-xs text-muted-foreground">Show the Delegated / Waiting column on the board.</p>
+              <p className="text-xs text-muted-foreground">Track work you've handed off to others. Adds a Delegated column with SLA aging indicators and delegation metrics on the dashboard.</p>
             </div>
             <Switch id="manager-mode" checked={!!settings?.manager_mode} onCheckedChange={(v) => handleToggle('manager_mode', v)} />
           </div>
@@ -118,17 +137,29 @@ export default function WorkflowSettings() {
       {/* Status Column Management */}
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-foreground">Board Columns</h3>
+        <p className="text-xs text-muted-foreground">Drag to reorder how columns appear on the Priority Board. Done is always last.</p>
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-16">Order</TableHead>
               <TableHead>Column Name</TableHead>
               <TableHead className="hidden md:table-cell">Internal Key</TableHead>
               <TableHead className="w-24 text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {statuses.map((s) => (
+            {boardColumns.map((s, idx) => (
               <TableRow key={s.name}>
+                <TableCell>
+                  <div className="flex items-center gap-0.5">
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground/60 hover:text-foreground" onClick={() => handleMove(idx, -1)} disabled={idx === 0}>
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground/60 hover:text-foreground" onClick={() => handleMove(idx, 1)} disabled={idx === boardColumns.length - 1}>
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </TableCell>
                 <TableCell>
                   {editingName === s.name ? (
                     <div className="flex items-center gap-2">
@@ -161,6 +192,19 @@ export default function WorkflowSettings() {
                 </TableCell>
               </TableRow>
             ))}
+            {/* Done row — informational only */}
+            <TableRow className="opacity-50">
+              <TableCell></TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Done</span>
+                  <ShieldCheck className="h-3.5 w-3.5 text-muted-foreground" title="System locked" />
+                  <Lock className="h-3.5 w-3.5 text-muted-foreground" title="Not renamable" />
+                </div>
+              </TableCell>
+              <TableCell className="hidden md:table-cell text-muted-foreground font-mono text-xs">done</TableCell>
+              <TableCell className="text-right text-xs text-muted-foreground">Always last</TableCell>
+            </TableRow>
           </TableBody>
         </Table>
 

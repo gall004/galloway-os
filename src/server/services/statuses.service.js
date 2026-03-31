@@ -7,7 +7,7 @@ const logger = require('../logger');
  */
 function getAllStatuses() {
   const db = getDatabase();
-  return db.prepare('SELECT rowid as id, name, label, system_name, is_system_locked, is_renamable FROM statuses ORDER BY rowid').all();
+  return db.prepare('SELECT rowid as id, name, label, system_name, is_system_locked, is_renamable, display_order FROM statuses ORDER BY display_order ASC, rowid ASC').all();
 }
 
 /**
@@ -18,7 +18,7 @@ function getAllStatuses() {
  */
 function getStatus(name) {
   const db = getDatabase();
-  const row = db.prepare('SELECT rowid as id, name, label, system_name, is_system_locked, is_renamable FROM statuses WHERE name = ?').get(name);
+  const row = db.prepare('SELECT rowid as id, name, label, system_name, is_system_locked, is_renamable, display_order FROM statuses WHERE name = ?').get(name);
   if (!row) {
     const err = new Error(`Status '${name}' not found`);
     err.code = 'NOT_FOUND';
@@ -48,7 +48,8 @@ function createStatus(data) {
   }
 
   const safeName = data.name.trim().toLowerCase().replace(/\s+/g, '_');
-  db.prepare('INSERT INTO statuses (name, label, is_system_locked, is_renamable) VALUES (?, ?, 0, 1)').run(safeName, data.label.trim());
+  const maxOrder = db.prepare('SELECT COALESCE(MAX(display_order), 0) as max_order FROM statuses WHERE system_name != \'done\' OR system_name IS NULL').get()?.max_order || 0;
+  db.prepare('INSERT INTO statuses (name, label, is_system_locked, is_renamable, display_order) VALUES (?, ?, 0, 1, ?)').run(safeName, data.label.trim(), maxOrder + 1);
   logger.info({ statusName: safeName, label: data.label.trim() }, 'Custom status created');
   return getStatus(safeName);
 }
@@ -137,4 +138,28 @@ function deleteStatus(name, fallbackStatusName) {
   logger.info({ statusName: name }, 'Status deleted');
 }
 
-module.exports = { getAllStatuses, getStatus, createStatus, updateStatusLabel, deleteStatus };
+/**
+ * @description Reorder statuses by updating display_order for each.
+ * @param {Array<{name: string, display_order: number}>} items
+ * @returns {number} Count of updated rows.
+ */
+function reorderStatuses(items) {
+  const db = getDatabase();
+  if (!Array.isArray(items) || items.length === 0) {
+    const err = new Error('Items array is required.');
+    err.code = 'VALIDATION_ERROR';
+    throw err;
+  }
+
+  const update = db.prepare('UPDATE statuses SET display_order = ? WHERE name = ?');
+  const run = db.transaction(() => {
+    for (const item of items) {
+      update.run(item.display_order, item.name);
+    }
+  });
+  run();
+  logger.info({ count: items.length }, 'Statuses reordered');
+  return items.length;
+}
+
+module.exports = { getAllStatuses, getStatus, createStatus, updateStatusLabel, deleteStatus, reorderStatuses };
