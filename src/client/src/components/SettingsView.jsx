@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Settings2, Users, FolderKanban, Repeat, Palette } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import ConfigTable from '@/components/ConfigTable'
 import RecurringSettings from '@/components/RecurringSettings'
@@ -15,11 +16,11 @@ const TAB_LABELS = {
 }
 
 const TABS = [
-  { key: 'workflow', label: 'Workflow', pluralLabel: 'Workflow' },
-  { key: 'customers', label: 'Customer', pluralLabel: 'Customers' },
-  { key: 'projects', label: 'Project', pluralLabel: 'Projects', parentEntity: 'customers', parentLabel: 'Customer' },
-  { key: 'recurring', label: 'Recurring', pluralLabel: 'Recurring Tasks' },
-  { key: 'appearance', label: 'Appearance', pluralLabel: 'Appearance' },
+  { key: 'workflow', label: 'Workflow', pluralLabel: 'Workflow', icon: Settings2 },
+  { key: 'customers', label: 'Customer', pluralLabel: 'Customers', icon: Users },
+  { key: 'projects', label: 'Project', pluralLabel: 'Projects', parentEntity: 'customers', parentLabel: 'Customer', icon: FolderKanban },
+  { key: 'recurring', label: 'Recurring', pluralLabel: 'Recurring Tasks', icon: Repeat },
+  { key: 'appearance', label: 'Appearance', pluralLabel: 'Appearance', icon: Palette },
 ]
 
 /**
@@ -37,7 +38,7 @@ export default function SettingsView() {
       </div>
 
       <div className="flex flex-col md:flex-row gap-8">
-        <aside className="md:w-56 lg:w-64 flex-shrink-0">
+        <aside className="md:w-56 lg:w-64 shrink-0">
           {/* Mobile Navigation */}
           <div className="md:hidden mb-2">
             <Select value={activeTab} onValueChange={setActiveTab}>
@@ -47,7 +48,10 @@ export default function SettingsView() {
               <SelectContent>
                 {TABS.map((t) => (
                   <SelectItem key={t.key} value={t.key}>
-                    {TAB_LABELS[t.key]}
+                    <div className="flex items-center gap-2">
+                      {t.icon && <t.icon className="h-4 w-4 shrink-0 text-muted-foreground" />}
+                      <span>{TAB_LABELS[t.key]}</span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -60,9 +64,10 @@ export default function SettingsView() {
               <Button
                 key={t.key}
                 variant={activeTab === t.key ? 'secondary' : 'ghost'}
-                className={`justify-start flex-shrink-0 ${activeTab === t.key ? 'font-medium bg-muted' : ''}`}
+                className={`justify-start shrink-0 ${activeTab === t.key ? 'font-medium bg-muted text-foreground' : 'text-muted-foreground'}`}
                 onClick={() => setActiveTab(t.key)}
               >
+                {t.icon && <t.icon className="mr-2 h-4 w-4" />}
                 {TAB_LABELS[t.key]}
               </Button>
             ))}
