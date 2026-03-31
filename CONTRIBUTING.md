@@ -1,4 +1,4 @@
-# Contributing to galloway-os
+# Contributing to Focus Board
 
 This document is the single source of truth for development standards, Git workflow, and testing expectations. It must remain strictly current with the actual state of the project.
 
