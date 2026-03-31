@@ -69,8 +69,13 @@ export default function ArchiveView() {
   const handleSaveTask = async (taskData) => {
     try {
       const updated = await updateTask(editingTask.id, taskData)
-      setData((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
-      toast.success('Task updated')
+      if (updated.status_name !== 'done') {
+        setData((prev) => prev.filter((t) => t.id !== updated.id))
+        toast.success('Task moved out of archive')
+      } else {
+        setData((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+        toast.success('Task updated')
+      }
       setModalOpen(false)
       setEditingTask(null)
     } catch (e) { toast.error(e.message) }

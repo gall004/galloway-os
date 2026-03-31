@@ -75,15 +75,18 @@ function createTask(data) {
     shiftOrderIndexes(db, statusName, orderIndex);
   }
 
+  const dateCompleted = statusName === 'done' ? new Date().toISOString() : null;
+
   const stmt = db.prepare(`
-    INSERT INTO tasks (title, description, date_due, status_name, project_id, customer_id, delegated_to, order_index, is_focused, is_template, frequency, days_of_week, due_date_offset_days, prevent_duplicates, next_run_date, source_recurring_task_id, is_active_template)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO tasks (title, description, date_due, date_completed, status_name, project_id, customer_id, delegated_to, order_index, is_focused, is_template, frequency, days_of_week, due_date_offset_days, prevent_duplicates, next_run_date, source_recurring_task_id, is_active_template)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const result = stmt.run(
     data.title,
     data.description || null,
     data.date_due || null,
+    dateCompleted,
     statusName,
     data.project_id || 1,
     data.customer_id || 1,
