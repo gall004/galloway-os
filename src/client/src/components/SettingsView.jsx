@@ -6,7 +6,6 @@ import WorkflowSettings from '@/components/WorkflowSettings'
 
 const TAB_LABELS = {
   workflow: 'Workflow',
-  statuses: 'Statuses',
   customers: 'Customers',
   projects: 'Projects',
   recurring: 'Recurring Tasks',
@@ -14,7 +13,6 @@ const TAB_LABELS = {
 
 const TABS = [
   { key: 'workflow', label: 'Workflow', pluralLabel: 'Workflow' },
-  { key: 'statuses', label: 'Status', pluralLabel: 'Statuses', readOnly: true, nameField: 'name' },
   { key: 'customers', label: 'Customer', pluralLabel: 'Customers' },
   { key: 'projects', label: 'Project', pluralLabel: 'Projects', parentEntity: 'customers', parentLabel: 'Customer' },
   { key: 'recurring', label: 'Recurring', pluralLabel: 'Recurring Tasks' },
