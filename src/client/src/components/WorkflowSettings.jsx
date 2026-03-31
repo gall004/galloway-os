@@ -95,6 +95,7 @@ export default function WorkflowSettings() {
   const [editLabel, setEditLabel] = useState('')
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteTaskCount, setDeleteTaskCount] = useState(0)
+  const [deleteTemplateCount, setDeleteTemplateCount] = useState(0)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [disableModeContext, setDisableModeContext] = useState(null)
 
@@ -125,10 +126,12 @@ export default function WorkflowSettings() {
         };
         const st = modeStatusMap[field];
         if (st) {
-          const tasks = await fetchTasks();
-          const count = tasks.filter((t) => t.status_name === st.name).length;
-          if (count > 0) {
-            setDisableModeContext({ field, modeName: st.label, statusName: st.name, taskCount: count });
+          const [tasks, templates] = await Promise.all([fetchTasks(), fetchTasks('is_template=true')]);
+          const taskCount = tasks.filter((t) => t.status_name === st.name).length;
+          const templateCount = templates.filter((t) => t.status_name === st.name).length;
+          
+          if (taskCount > 0 || templateCount > 0) {
+            setDisableModeContext({ field, modeName: st.label, statusName: st.name, taskCount, templateCount });
             return;
           }
         }
@@ -177,11 +180,13 @@ export default function WorkflowSettings() {
 
   const handleDeleteClick = async (status) => {
     try {
-      const tasks = await fetchTasks()
-      const count = tasks.filter((t) => t.status_name === status.name).length
-      if (count > 0) {
+      const [tasks, templates] = await Promise.all([fetchTasks(), fetchTasks('is_template=true')])
+      const taskCount = tasks.filter((t) => t.status_name === status.name).length
+      const templateCount = templates.filter((t) => t.status_name === status.name).length
+      if (taskCount > 0 || templateCount > 0) {
         setDeleteTarget(status)
-        setDeleteTaskCount(count)
+        setDeleteTaskCount(taskCount)
+        setDeleteTemplateCount(templateCount)
         setDeleteModalOpen(true)
       } else {
         await deleteStatus(status.name)
@@ -317,16 +322,21 @@ export default function WorkflowSettings() {
         status={deleteTarget}
         allStatuses={statuses}
         taskCount={deleteTaskCount}
+        templateCount={deleteTemplateCount}
         onConfirm={handleSafeDelete}
       />
-
-      <SafeDisableModeModal
-        open={!!disableModeContext}
-        onOpenChange={(v) => !v && setDisableModeContext(null)}
-        {...(disableModeContext || {})}
-        allStatuses={statuses}
-        onConfirm={handleSafeDisableMode}
-      />
+      {disableModeContext && (
+        <SafeDisableModeModal
+          open={!!disableModeContext}
+          onOpenChange={(v) => !v && setDisableModeContext(null)}
+          modeName={disableModeContext.modeName}
+          disabledStatusName={disableModeContext.statusName}
+          taskCount={disableModeContext.taskCount}
+          templateCount={disableModeContext.templateCount}
+          availableStatuses={statuses}
+          onConfirm={(fallback) => handleSafeDisableMode(disableModeContext.statusName, fallback)}
+        />
+      )}
     </div>
   )
 }

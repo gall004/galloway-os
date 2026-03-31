@@ -248,8 +248,8 @@ function bulkReassignTasks(fromStatus, toStatus) {
   validateStatus(db, fromStatus);
   validateStatus(db, toStatus);
   
-  const result = db.prepare('UPDATE tasks SET status_name = ? WHERE status_name = ? AND is_template = 0').run(toStatus, fromStatus);
-  logger.info({ fromStatus, toStatus, count: result.changes }, 'Tasks bulk reassigned');
+  const result = db.prepare('UPDATE tasks SET status_name = ? WHERE status_name = ?').run(toStatus, fromStatus);
+  logger.info({ fromStatus, toStatus, count: result.changes }, 'Tasks bulk reassigned (instances and templates)');
   return result.changes;
 }
 

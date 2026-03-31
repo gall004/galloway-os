@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
  * @description SafeDeleteStatusModal — prompts for a fallback status before deleting a column with tasks.
  * @param {{ open, onOpenChange, status, allStatuses, taskCount, onConfirm }} props
  */
-export default function SafeDeleteStatusModal({ open, onOpenChange, status, allStatuses, taskCount, onConfirm }) {
+export default function SafeDeleteStatusModal({ open, onOpenChange, status, allStatuses, taskCount = 0, templateCount = 0, onConfirm }) {
   const [fallback, setFallback] = useState('')
   const available = allStatuses.filter((s) => !['inbox', 'delegated', 'done', status?.name].includes(s.name))
 
@@ -22,7 +22,10 @@ export default function SafeDeleteStatusModal({ open, onOpenChange, status, allS
         <DialogHeader>
           <DialogTitle>Delete &quot;{status?.label}&quot; Column?</DialogTitle>
           <DialogDescription>
-            This column has <strong>{taskCount}</strong> {taskCount === 1 ? 'task' : 'tasks'}. Choose a column to move them to before deleting.
+            This column contains {taskCount > 0 && <span><strong>{taskCount}</strong> active {taskCount === 1 ? 'task' : 'tasks'}</span>}
+            {taskCount > 0 && templateCount > 0 && ' and '}
+            {templateCount > 0 && <span><strong>{templateCount}</strong> recurring {templateCount === 1 ? 'template' : 'templates'}</span>}. 
+            Choose a column to move them to before deleting.
           </DialogDescription>
         </DialogHeader>
         <Select value={fallback} onValueChange={setFallback}>

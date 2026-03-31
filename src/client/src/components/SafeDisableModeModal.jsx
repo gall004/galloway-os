@@ -7,12 +7,11 @@ import { Button } from '@/components/ui/button'
  * @description SafeDisableModeModal — prompts for a fallback status before disabling a mode (Inbox/Manager) that contains tasks.
  * @param {{ open, onOpenChange, modeName, statusName, allStatuses, taskCount, onConfirm }} props
  */
-export default function SafeDisableModeModal({ open, onOpenChange, modeName, statusName, allStatuses, taskCount, onConfirm }) {
+export default function SafeDisableModeModal({ open, onOpenChange, modeName, statusName, allStatuses, taskCount = 0, templateCount = 0, onConfirm }) {
   const [fallback, setFallback] = useState('none')
-
-  // If we just want them to drop it in Active, or any other core column, actually it's easier to just let them drop it in ANY core column 
-  // currently enabled, but 'Active' is the easiest safe haven. Let's just allow all strictly active board columns.
-  const boardColumns = allStatuses.filter(s => !['inbox', 'delegated', 'done', statusName].includes(s.name))
+  
+  // Safe havens exclude system governance columns that may be restricted
+  const boardColumns = allStatuses ? allStatuses.filter(s => !['inbox', 'delegated', 'done', statusName].includes(s.name)) : [];
 
   const handleConfirm = () => {
     onConfirm(statusName, fallback)
@@ -30,7 +29,9 @@ export default function SafeDisableModeModal({ open, onOpenChange, modeName, sta
         <DialogHeader>
           <DialogTitle>Disable {modeName}?</DialogTitle>
           <DialogDescription>
-            There are <strong>{taskCount}</strong> {taskCount === 1 ? 'task' : 'tasks'} currently in the '{statusName}' column. Disabling this mode will hide the column from your board. Where should we move these tasks?
+            There are {taskCount > 0 && <span><strong>{taskCount}</strong> {taskCount === 1 ? 'task' : 'tasks'}</span>}
+            {taskCount > 0 && templateCount > 0 && ' and '}
+            {templateCount > 0 && <span><strong>{templateCount}</strong> {templateCount === 1 ? 'template' : 'templates'}</span>} currently in the &apos;{statusName}&apos; column. Disabling this mode will hide the column from your board. Where should we move these tasks?
           </DialogDescription>
         </DialogHeader>
         <Select value={fallback} onValueChange={setFallback}>
