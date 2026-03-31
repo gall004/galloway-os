@@ -23,15 +23,19 @@ export default function SafeDisableModeModal({ open, onOpenChange, modeName, sta
     onOpenChange(false)
   }
 
+  const totalCount = taskCount + templateCount;
+  const isAre = totalCount === 1 ? 'There is' : 'There are';
+  const themIt = totalCount === 1 ? 'it' : 'them';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
           <DialogTitle>Disable {modeName}?</DialogTitle>
           <DialogDescription>
-            There are {taskCount > 0 && <span><strong>{taskCount}</strong> {taskCount === 1 ? 'task' : 'tasks'}</span>}
+            {isAre} {taskCount > 0 && <span><strong>{taskCount}</strong> {taskCount === 1 ? 'task' : 'tasks'}</span>}
             {taskCount > 0 && templateCount > 0 && ' and '}
-            {templateCount > 0 && <span><strong>{templateCount}</strong> {templateCount === 1 ? 'template' : 'templates'}</span>} currently in the &apos;{statusName}&apos; column. Disabling this mode will hide the column from your board. Where should we move these tasks?
+            {templateCount > 0 && <span><strong>{templateCount}</strong> {templateCount === 1 ? 'template' : 'templates'}</span>} currently in the &apos;{statusName}&apos; column. Disabling this mode will hide the column from your board. Where should we move {themIt}?
           </DialogDescription>
         </DialogHeader>
         <Select value={fallback} onValueChange={setFallback}>
