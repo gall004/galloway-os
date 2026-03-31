@@ -61,6 +61,7 @@ export default function PriorityBoard() {
   const [editingTask, setEditingTask] = useState(null)
   const [insertDefaults, setInsertDefaults] = useState(null)
   const [activeTask, setActiveTask] = useState(null)
+  const [activeWidth, setActiveWidth] = useState(null)
   const [impactOpen, setImpactOpen] = useState(false)
   const [completingTask, setCompletingTask] = useState(null)
   const [isZenModeEnabled, setIsZenModeEnabled] = useState(false)
@@ -105,6 +106,7 @@ export default function PriorityBoard() {
     const task = event.active.data.current?.task || null
     dragStartStatus.current = task?.status_name || null
     setActiveTask(task)
+    setActiveWidth(event.active.rect.current?.initial?.width || 300)
   }
 
   const handleDragOver = useCallback((event) => {
@@ -150,12 +152,13 @@ export default function PriorityBoard() {
       const otherItems = prev.filter(t => t.id.toString() !== activeId && t.status_name !== activeContainer && t.status_name !== overContainer && t.status_name !== 'done')
       const doneItems = prev.filter(t => t.status_name === 'done')
 
-      return [...otherItems, ...doneItems, ...sortedActiveItems, ...sortedOverItems].sort((a,b) => a.order_index - b.order_index)
+      return [...otherItems, ...doneItems, ...sortedActiveItems, ...sortedOverItems]
     })
   }, [tasks, config.statuses])
 
   const handleDragEnd = useCallback(async (event) => {
     setActiveTask(null)
+    setActiveWidth(null)
     const { active, over } = event
     if (!over) {
       loadAll() 
@@ -200,7 +203,7 @@ export default function PriorityBoard() {
       setTasks(prev => {
         const others = prev.filter(t => t.status_name !== finalContainer && t.status_name !== 'done')
         const doneItems = prev.filter(t => t.status_name === 'done')
-        return [...others, ...doneItems, ...reordered.map((t, i) => ({ ...t, order_index: i }))].sort((a,b) => a.order_index - b.order_index)
+        return [...others, ...doneItems, ...reordered.map((t, i) => ({ ...t, order_index: i }))]
       })
     } else {
       targetUpdates = colTasks.map((t, i) => ({ id: t.id, order_index: i }))
@@ -403,7 +406,13 @@ export default function PriorityBoard() {
           </>
         )}
         {!isZenModeEnabled && (
-          <DragOverlay dropAnimation={null}>{activeTask ? <div className="z-50 opacity-95 rotate-2 cursor-grabbing shadow-2xl"><TaskCard task={activeTask} overlay /></div> : null}</DragOverlay>
+          <DragOverlay dropAnimation={null}>
+            {activeTask ? (
+              <div style={{ width: activeWidth || 'auto' }} className="z-50 opacity-95 rotate-2 cursor-grabbing shadow-2xl">
+                <TaskCard task={activeTask} overlay />
+              </div>
+            ) : null}
+          </DragOverlay>
         )}
       </DndContext>
       <TaskModal open={modalOpen} onOpenChange={setModalOpen} task={editingTask} onSave={handleSaveTask} onDelete={handleDelete} config={config} onConfigChange={setConfig} insertDefaults={insertDefaults} />
