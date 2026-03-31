@@ -7,12 +7,8 @@ services:
     restart: unless-stopped
     ports:
       - "7432:7432"
-    environment:
-      - PORT=7432
-      - NODE_ENV=production
-      # Environment Segregation DB config natively dropping to src/db volume
-      - DB_FILE=prod.sqlite
-      - LOG_LEVEL=info
+    env_file:
+      - .env.production
     volumes:
       # Mount explicitly strictly to src/db for complete architectural data isolation
       - ./src/db:/app/src/db

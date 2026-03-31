@@ -5,9 +5,9 @@
   "private": true,
   "main": "src/server/index.js",
   "scripts": {
-    "start": "node src/server/index.js",
+    "start": "node --env-file .env.production src/server/index.js",
     "dev": "concurrently --names server,client --prefix-colors blue,magenta \"npm run dev:server\" \"npm run dev:client\"",
-    "dev:server": "nodemon --watch src/server --watch src/db src/server/index.js",
+    "dev:server": "nodemon --watch src/server --watch src/db --exec 'node --env-file .env' src/server/index.js",
     "dev:client": "cd src/client && npx vite",
     "test": "jest --forceExit --detectOpenHandles",
     "test:unit": "jest tests/unit --forceExit",
