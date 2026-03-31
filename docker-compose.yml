@@ -1,9 +1,9 @@
 services:
-  galloway-os:
+  focus-board:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: galloway-os
+    container_name: focus-board
     restart: unless-stopped
     ports:
       - "7432:7432"

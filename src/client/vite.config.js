@@ -22,8 +22,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Galloway OS',
-        short_name: 'GallowayOS',
+        name: 'Focus Board by RoseyCX',
+        short_name: 'FocusBoard',
         description: 'Executive Priority Board',
         theme_color: '#ffffff',
         background_color: '#ffffff',

@@ -18,7 +18,7 @@ async function main() {
     const app = createApp();
 
     app.listen(config.port, () => {
-      logger.info({ port: config.port, env: config.nodeEnv }, 'galloway-os server started');
+      logger.info({ port: config.port, env: config.nodeEnv }, 'focus-board server started');
 
       evaluateRecurringTasks();
 

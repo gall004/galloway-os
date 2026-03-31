@@ -1,10 +1,10 @@
-# galloway-os
+# Focus Board by RoseyCX
 
 > A frictionless, high-visibility Priority interface that instantly clarifies immediate priorities, reliably tracks delegated work, and automatically curates a searchable system of record for retroactive performance tracking — without introducing unnecessary administrative overhead.
 
 ## Architecture
 
-galloway-os is a lightweight, full-stack Node.js application paired with SQLite for absolute data privacy, zero recurring cloud costs, and ultimate portability. The entire environment is containerized with Docker.
+Focus Board is a lightweight, full-stack Node.js application paired with SQLite for absolute data privacy, zero recurring cloud costs, and ultimate portability. The entire environment is containerized with Docker.
 
 | Layer | Technology |
 |-------|-----------|
@@ -125,7 +125,7 @@ npm run lint
 ## Directory Structure
 
 ```
-galloway-os/
+focus-board/
 ├── .agents/                       # AI agent governance
 │   ├── rules/                     # Always-on enforcement policies
 │   └── workflows/                 # Step-by-step operational SOPs
