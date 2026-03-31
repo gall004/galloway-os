@@ -44,7 +44,7 @@ export default function PriorityColumn({ columnKey, label, count, taskIds, child
       <ContextMenuTrigger asChild>
         <div
           ref={setNodeRef}
-          className={`flex flex-col h-full min-h-0 rounded-lg border-t-4 transition-all duration-300 ${
+          className={`flex flex-col flex-1 h-full min-h-0 rounded-lg border-t-4 transition-all duration-300 ${
             isOver ? 'ring-2 ring-primary/60 ring-inset shadow-md scale-[1.01]' : ''
           }`}
           style={{
