@@ -18,6 +18,7 @@ import ZenModeView from '@/components/ZenModeView'
 import { Target } from 'lucide-react'
 import { fetchTasks, updateTask, createTask, deleteTask, reorderTasks, fetchConfig, fetchSettings } from '@/lib/api'
 import InboxQuickAdd from '@/components/InboxQuickAdd'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 function CarouselTabs({ columns, getColumnLabel }) {
   const { api } = useCarousel()
@@ -61,11 +62,11 @@ export default function PriorityBoard() {
   const [editingTask, setEditingTask] = useState(null)
   const [insertDefaults, setInsertDefaults] = useState(null)
   const [activeTask, setActiveTask] = useState(null)
-  const [activeWidth, setActiveWidth] = useState(null)
   const [impactOpen, setImpactOpen] = useState(false)
   const [completingTask, setCompletingTask] = useState(null)
   const [isZenModeEnabled, setIsZenModeEnabled] = useState(false)
   const dragStartStatus = useRef(null)
+  const isMobile = useIsMobile()
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
@@ -106,7 +107,6 @@ export default function PriorityBoard() {
     const task = event.active.data.current?.task || null
     dragStartStatus.current = task?.status_name || null
     setActiveTask(task)
-    setActiveWidth(event.active.rect.current?.initial?.width || 300)
   }
 
   const handleDragOver = useCallback((event) => {
@@ -152,13 +152,12 @@ export default function PriorityBoard() {
       const otherItems = prev.filter(t => t.id.toString() !== activeId && t.status_name !== activeContainer && t.status_name !== overContainer && t.status_name !== 'done')
       const doneItems = prev.filter(t => t.status_name === 'done')
 
-      return [...otherItems, ...doneItems, ...sortedActiveItems, ...sortedOverItems]
+      return [...otherItems, ...doneItems, ...sortedActiveItems, ...sortedOverItems].sort((a,b) => a.order_index - b.order_index)
     })
   }, [tasks, config.statuses])
 
   const handleDragEnd = useCallback(async (event) => {
     setActiveTask(null)
-    setActiveWidth(null)
     const { active, over } = event
     if (!over) {
       loadAll() 
@@ -203,7 +202,7 @@ export default function PriorityBoard() {
       setTasks(prev => {
         const others = prev.filter(t => t.status_name !== finalContainer && t.status_name !== 'done')
         const doneItems = prev.filter(t => t.status_name === 'done')
-        return [...others, ...doneItems, ...reordered.map((t, i) => ({ ...t, order_index: i }))]
+        return [...others, ...doneItems, ...reordered.map((t, i) => ({ ...t, order_index: i }))].sort((a,b) => a.order_index - b.order_index)
       })
     } else {
       targetUpdates = colTasks.map((t, i) => ({ id: t.id, order_index: i }))
@@ -313,17 +312,21 @@ export default function PriorityBoard() {
             onDelete={handleDelete}
             onToggleFocus={handleToggleFocus}
           />
-        ) : (
-          <>
-            {/* Desktop View */}
-            <ResizablePanelGroup direction="horizontal" className="hidden! md:flex! px-4 pb-4 h-[calc(100vh-120px)] max-h-[calc(100vh-120px)] overflow-hidden">
-              {columns.map((col, idx) => {
-                const colTasks = getTasksForColumn(col.name);
-                const isInbox = col.system_name === 'inbox';
-                const panelSize = isInbox ? 20 : col.system_name === 'active' ? Math.floor(80 / columns.length) : Math.floor(80 / columns.length);
-                return (
-                  <React.Fragment key={col.name}>
-                    <ResizablePanel defaultSize={panelSize} minSize={15} className="h-full flex flex-col min-h-0">
+        ) : isMobile ? (
+          /* Mobile View — only mounted on narrow viewports */
+          <div className="px-4 pb-4 h-[calc(100vh-120px)] relative">
+            <Carousel 
+              className="w-full h-full flex flex-col" 
+              opts={{ loop: false, align: "start" }}
+            >
+              <CarouselTabs columns={columns} getColumnLabel={getColumnLabel} />
+              
+              <CarouselContent className="flex-1 min-h-0">
+                {columns.map((col) => {
+                  const colTasks = getTasksForColumn(col.name);
+                  const isInbox = col.system_name === 'inbox';
+                  return (
+                    <CarouselItem key={col.name} className="h-full flex flex-col min-h-0 basis-full px-2">
                       <PriorityColumn
                         columnKey={col.name}
                         label={getColumnLabel(col.name)}
@@ -350,69 +353,57 @@ export default function PriorityBoard() {
                           />
                         ))}
                       </PriorityColumn>
-                    </ResizablePanel>
-                    {idx < columns.length - 1 && <ResizableHandle withHandle />}
-                  </React.Fragment>
-                );
-              })}
-            </ResizablePanelGroup>
-
-            {/* Mobile View */}
-            <div className="md:hidden px-4 pb-4 h-[calc(100vh-120px)] relative">
-              <Carousel 
-                className="w-full h-full flex flex-col" 
-                opts={{ loop: false, align: "start" }}
-              >
-                <CarouselTabs columns={columns} getColumnLabel={getColumnLabel} />
-                
-                <CarouselContent className="flex-1 min-h-0">
-                  {columns.map((col) => {
-                    const colTasks = getTasksForColumn(col.name);
-                    const isInbox = col.system_name === 'inbox';
-                    return (
-                      <CarouselItem key={col.name} className="h-full flex flex-col min-h-0 basis-full px-2">
-                        <PriorityColumn
-                          columnKey={col.name}
-                          label={getColumnLabel(col.name)}
-                          count={colTasks.length}
-                          taskIds={colTasks.map((t) => `task-${t.id}`)}
-                          onInsertTask={openInsert}
-                          headerSlot={
-                            isInbox && (
-                              <InboxQuickAdd 
-                                onSave={(title) => handleSaveTask({ title, status_name: 'inbox', order_index: 0 })} 
-                              />
-                            )
-                          }
-                        >
-                          {colTasks.map((task) => (
-                            <TaskCard
-                              key={task.id}
-                              task={task}
-                              onClick={openEdit}
-                              onComplete={handleComplete}
-                              onDelete={handleDelete}
-                              onInsert={openInsert}
-                              onToggleFocus={handleToggleFocus}
-                            />
-                          ))}
-                        </PriorityColumn>
-                      </CarouselItem>
-                    );
-                  })}
-                </CarouselContent>
-              </Carousel>
-            </div>
-          </>
+                    </CarouselItem>
+                  );
+                })}
+              </CarouselContent>
+            </Carousel>
+          </div>
+        ) : (
+          /* Desktop View — only mounted on wide viewports */
+          <ResizablePanelGroup direction="horizontal" className="px-4 pb-4 h-[calc(100vh-120px)] max-h-[calc(100vh-120px)] overflow-hidden">
+            {columns.map((col, idx) => {
+              const colTasks = getTasksForColumn(col.name);
+              const isInbox = col.system_name === 'inbox';
+              const panelSize = isInbox ? 20 : col.system_name === 'active' ? Math.floor(80 / columns.length) : Math.floor(80 / columns.length);
+              return (
+                <React.Fragment key={col.name}>
+                  <ResizablePanel defaultSize={panelSize} minSize={15} className="h-full flex flex-col min-h-0">
+                    <PriorityColumn
+                      columnKey={col.name}
+                      label={getColumnLabel(col.name)}
+                      count={colTasks.length}
+                      taskIds={colTasks.map((t) => `task-${t.id}`)}
+                      onInsertTask={openInsert}
+                      headerSlot={
+                        isInbox && (
+                          <InboxQuickAdd 
+                            onSave={(title) => handleSaveTask({ title, status_name: 'inbox', order_index: 0 })} 
+                          />
+                        )
+                      }
+                    >
+                      {colTasks.map((task) => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          onClick={openEdit}
+                          onComplete={handleComplete}
+                          onDelete={handleDelete}
+                          onInsert={openInsert}
+                          onToggleFocus={handleToggleFocus}
+                        />
+                      ))}
+                    </PriorityColumn>
+                  </ResizablePanel>
+                  {idx < columns.length - 1 && <ResizableHandle withHandle />}
+                </React.Fragment>
+              );
+            })}
+          </ResizablePanelGroup>
         )}
         {!isZenModeEnabled && (
-          <DragOverlay dropAnimation={null}>
-            {activeTask ? (
-              <div style={{ width: activeWidth || 'auto' }} className="z-50 opacity-95 rotate-2 cursor-grabbing shadow-2xl">
-                <TaskCard task={activeTask} overlay />
-              </div>
-            ) : null}
-          </DragOverlay>
+          <DragOverlay dropAnimation={null}>{activeTask ? <div className="z-50 opacity-95 rotate-2 cursor-grabbing shadow-2xl"><TaskCard task={activeTask} overlay /></div> : null}</DragOverlay>
         )}
       </DndContext>
       <TaskModal open={modalOpen} onOpenChange={setModalOpen} task={editingTask} onSave={handleSaveTask} onDelete={handleDelete} config={config} onConfigChange={setConfig} insertDefaults={insertDefaults} />
