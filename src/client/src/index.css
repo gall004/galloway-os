@@ -56,8 +56,11 @@
     --color-success-foreground: var(--success-foreground);
 }
 
+/* ===========================
+   BASE: Minimal Light (default)
+   =========================== */
 :root {
-    --background: oklch(1 0 0);
+    --background: oklch(0.985 0.002 250);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
@@ -92,13 +95,16 @@
 
     --delegated: oklch(0.93 0.05 55);
     --delegated-foreground: oklch(0.45 0.14 55);
-    --column-inbox: oklch(0.85 0.02 250);
+    --column-inbox: oklch(0.60 0.12 250);
     --column-my-tasks: oklch(0.55 0.12 250);
     --column-delegated: oklch(0.55 0.14 55);
     --success: oklch(0.55 0.15 150);
     --success-foreground: oklch(0.985 0 0);
 }
 
+/* ===========================
+   BASE: Minimal Dark
+   =========================== */
 .dark {
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
@@ -134,11 +140,259 @@
 
     --delegated: oklch(0.32 0.07 55);
     --delegated-foreground: oklch(0.85 0.10 55);
-    --column-inbox: oklch(0.45 0.02 250);
+    --column-inbox: oklch(0.50 0.10 250);
     --column-my-tasks: oklch(0.65 0.12 250);
     --column-delegated: oklch(0.65 0.14 55);
     --success: oklch(0.55 0.15 150);
     --success-foreground: oklch(0.985 0 0);
+}
+
+/* ===========================
+   THEME: Ocean — calm, focused
+   Cool blue-teal palette
+   =========================== */
+.theme-ocean {
+    --background: oklch(0.97 0.01 230);
+    --foreground: oklch(0.15 0.02 230);
+    --card: oklch(0.99 0.005 230);
+    --card-foreground: oklch(0.15 0.02 230);
+    --popover: oklch(0.99 0.005 230);
+    --popover-foreground: oklch(0.15 0.02 230);
+    --primary: oklch(0.45 0.15 230);
+    --primary-foreground: oklch(0.98 0.005 230);
+    --secondary: oklch(0.94 0.02 230);
+    --secondary-foreground: oklch(0.25 0.05 230);
+    --muted: oklch(0.94 0.015 230);
+    --muted-foreground: oklch(0.50 0.04 230);
+    --accent: oklch(0.90 0.04 190);
+    --accent-foreground: oklch(0.20 0.06 190);
+    --border: oklch(0.90 0.02 230);
+    --input: oklch(0.90 0.02 230);
+    --ring: oklch(0.55 0.12 230);
+    --column-inbox: oklch(0.55 0.10 200);
+    --column-my-tasks: oklch(0.50 0.14 230);
+    --column-delegated: oklch(0.55 0.12 55);
+}
+
+.theme-ocean.dark {
+    --background: oklch(0.15 0.02 230);
+    --foreground: oklch(0.95 0.01 230);
+    --card: oklch(0.20 0.03 230);
+    --card-foreground: oklch(0.95 0.01 230);
+    --popover: oklch(0.20 0.03 230);
+    --popover-foreground: oklch(0.95 0.01 230);
+    --primary: oklch(0.70 0.14 210);
+    --primary-foreground: oklch(0.12 0.02 230);
+    --secondary: oklch(0.25 0.04 230);
+    --secondary-foreground: oklch(0.92 0.01 230);
+    --muted: oklch(0.25 0.03 230);
+    --muted-foreground: oklch(0.65 0.04 230);
+    --accent: oklch(0.30 0.06 190);
+    --accent-foreground: oklch(0.92 0.01 190);
+    --border: oklch(1 0 0 / 12%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.65 0.12 210);
+    --column-inbox: oklch(0.50 0.10 200);
+    --column-my-tasks: oklch(0.60 0.14 220);
+    --column-delegated: oklch(0.60 0.12 55);
+}
+
+/* ===========================
+   THEME: Sunset — warm, energetic
+   Amber-coral palette
+   =========================== */
+.theme-sunset {
+    --background: oklch(0.97 0.01 60);
+    --foreground: oklch(0.15 0.03 40);
+    --card: oklch(0.99 0.005 55);
+    --card-foreground: oklch(0.15 0.03 40);
+    --popover: oklch(0.99 0.005 55);
+    --popover-foreground: oklch(0.15 0.03 40);
+    --primary: oklch(0.55 0.18 35);
+    --primary-foreground: oklch(0.98 0.005 55);
+    --secondary: oklch(0.94 0.025 55);
+    --secondary-foreground: oklch(0.30 0.08 40);
+    --muted: oklch(0.94 0.02 55);
+    --muted-foreground: oklch(0.50 0.05 40);
+    --accent: oklch(0.88 0.06 75);
+    --accent-foreground: oklch(0.25 0.08 75);
+    --border: oklch(0.90 0.025 55);
+    --input: oklch(0.90 0.025 55);
+    --ring: oklch(0.60 0.15 35);
+    --column-inbox: oklch(0.60 0.12 75);
+    --column-my-tasks: oklch(0.55 0.18 35);
+    --column-delegated: oklch(0.58 0.14 340);
+}
+
+.theme-sunset.dark {
+    --background: oklch(0.14 0.02 40);
+    --foreground: oklch(0.95 0.01 55);
+    --card: oklch(0.19 0.03 40);
+    --card-foreground: oklch(0.95 0.01 55);
+    --popover: oklch(0.19 0.03 40);
+    --popover-foreground: oklch(0.95 0.01 55);
+    --primary: oklch(0.72 0.16 35);
+    --primary-foreground: oklch(0.12 0.02 40);
+    --secondary: oklch(0.24 0.04 40);
+    --secondary-foreground: oklch(0.92 0.01 55);
+    --muted: oklch(0.24 0.03 40);
+    --muted-foreground: oklch(0.65 0.05 55);
+    --accent: oklch(0.32 0.06 75);
+    --accent-foreground: oklch(0.92 0.02 75);
+    --border: oklch(1 0 0 / 12%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.68 0.14 35);
+    --column-inbox: oklch(0.55 0.10 75);
+    --column-my-tasks: oklch(0.62 0.16 35);
+    --column-delegated: oklch(0.55 0.12 340);
+}
+
+/* ===========================
+   THEME: Forest — earthy, grounded
+   Deep green-sage palette
+   =========================== */
+.theme-forest {
+    --background: oklch(0.97 0.01 145);
+    --foreground: oklch(0.15 0.03 145);
+    --card: oklch(0.99 0.005 145);
+    --card-foreground: oklch(0.15 0.03 145);
+    --popover: oklch(0.99 0.005 145);
+    --popover-foreground: oklch(0.15 0.03 145);
+    --primary: oklch(0.45 0.12 155);
+    --primary-foreground: oklch(0.98 0.005 145);
+    --secondary: oklch(0.94 0.02 145);
+    --secondary-foreground: oklch(0.25 0.06 145);
+    --muted: oklch(0.94 0.015 145);
+    --muted-foreground: oklch(0.50 0.04 145);
+    --accent: oklch(0.88 0.05 100);
+    --accent-foreground: oklch(0.25 0.07 100);
+    --border: oklch(0.90 0.02 145);
+    --input: oklch(0.90 0.02 145);
+    --ring: oklch(0.50 0.10 155);
+    --column-inbox: oklch(0.55 0.08 100);
+    --column-my-tasks: oklch(0.48 0.12 155);
+    --column-delegated: oklch(0.55 0.12 55);
+}
+
+.theme-forest.dark {
+    --background: oklch(0.14 0.02 145);
+    --foreground: oklch(0.95 0.01 145);
+    --card: oklch(0.19 0.03 145);
+    --card-foreground: oklch(0.95 0.01 145);
+    --popover: oklch(0.19 0.03 145);
+    --popover-foreground: oklch(0.95 0.01 145);
+    --primary: oklch(0.68 0.12 155);
+    --primary-foreground: oklch(0.12 0.02 145);
+    --secondary: oklch(0.24 0.04 145);
+    --secondary-foreground: oklch(0.92 0.01 145);
+    --muted: oklch(0.24 0.03 145);
+    --muted-foreground: oklch(0.65 0.04 145);
+    --accent: oklch(0.30 0.05 100);
+    --accent-foreground: oklch(0.92 0.02 100);
+    --border: oklch(1 0 0 / 12%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.60 0.10 155);
+    --column-inbox: oklch(0.50 0.08 100);
+    --column-my-tasks: oklch(0.58 0.12 155);
+    --column-delegated: oklch(0.58 0.10 55);
+}
+
+/* ===========================
+   THEME: Midnight — premium, sleek
+   Rich indigo-violet palette
+   =========================== */
+.theme-midnight {
+    --background: oklch(0.16 0.03 280);
+    --foreground: oklch(0.93 0.01 280);
+    --card: oklch(0.20 0.04 280);
+    --card-foreground: oklch(0.93 0.01 280);
+    --popover: oklch(0.22 0.04 280);
+    --popover-foreground: oklch(0.93 0.01 280);
+    --primary: oklch(0.72 0.16 280);
+    --primary-foreground: oklch(0.13 0.03 280);
+    --secondary: oklch(0.24 0.04 280);
+    --secondary-foreground: oklch(0.90 0.01 280);
+    --muted: oklch(0.24 0.035 280);
+    --muted-foreground: oklch(0.62 0.05 280);
+    --accent: oklch(0.45 0.12 310);
+    --accent-foreground: oklch(0.92 0.01 310);
+    --destructive: oklch(0.70 0.19 22);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 14%);
+    --ring: oklch(0.65 0.14 280);
+    --column-inbox: oklch(0.55 0.12 310);
+    --column-my-tasks: oklch(0.60 0.15 270);
+    --column-delegated: oklch(0.60 0.12 55);
+    --delegated: oklch(0.32 0.07 55);
+    --delegated-foreground: oklch(0.85 0.10 55);
+    --success: oklch(0.55 0.15 150);
+    --success-foreground: oklch(0.985 0 0);
+}
+
+/* Midnight is inherently dark — .dark variant matches base */
+.theme-midnight.dark {
+    --background: oklch(0.12 0.03 280);
+    --foreground: oklch(0.95 0.01 280);
+    --card: oklch(0.17 0.04 280);
+    --card-foreground: oklch(0.95 0.01 280);
+    --popover: oklch(0.19 0.04 280);
+    --popover-foreground: oklch(0.95 0.01 280);
+    --primary: oklch(0.75 0.16 280);
+    --primary-foreground: oklch(0.10 0.03 280);
+    --secondary: oklch(0.22 0.04 280);
+    --secondary-foreground: oklch(0.92 0.01 280);
+    --muted: oklch(0.22 0.035 280);
+    --muted-foreground: oklch(0.65 0.05 280);
+}
+
+/* ===========================
+   THEME: Rose — soft, modern
+   Warm blush-magenta palette
+   =========================== */
+.theme-rose {
+    --background: oklch(0.97 0.01 350);
+    --foreground: oklch(0.15 0.03 350);
+    --card: oklch(0.99 0.005 350);
+    --card-foreground: oklch(0.15 0.03 350);
+    --popover: oklch(0.99 0.005 350);
+    --popover-foreground: oklch(0.15 0.03 350);
+    --primary: oklch(0.55 0.18 350);
+    --primary-foreground: oklch(0.98 0.005 350);
+    --secondary: oklch(0.94 0.02 350);
+    --secondary-foreground: oklch(0.25 0.06 350);
+    --muted: oklch(0.94 0.015 350);
+    --muted-foreground: oklch(0.50 0.04 350);
+    --accent: oklch(0.88 0.05 320);
+    --accent-foreground: oklch(0.25 0.07 320);
+    --border: oklch(0.90 0.02 350);
+    --input: oklch(0.90 0.02 350);
+    --ring: oklch(0.60 0.15 350);
+    --column-inbox: oklch(0.58 0.10 320);
+    --column-my-tasks: oklch(0.55 0.16 350);
+    --column-delegated: oklch(0.55 0.12 55);
+}
+
+.theme-rose.dark {
+    --background: oklch(0.14 0.02 350);
+    --foreground: oklch(0.95 0.01 350);
+    --card: oklch(0.19 0.03 350);
+    --card-foreground: oklch(0.95 0.01 350);
+    --popover: oklch(0.19 0.03 350);
+    --popover-foreground: oklch(0.95 0.01 350);
+    --primary: oklch(0.72 0.16 350);
+    --primary-foreground: oklch(0.12 0.02 350);
+    --secondary: oklch(0.24 0.04 350);
+    --secondary-foreground: oklch(0.92 0.01 350);
+    --muted: oklch(0.24 0.03 350);
+    --muted-foreground: oklch(0.65 0.04 350);
+    --accent: oklch(0.30 0.06 320);
+    --accent-foreground: oklch(0.92 0.02 320);
+    --border: oklch(1 0 0 / 12%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.68 0.14 350);
+    --column-inbox: oklch(0.52 0.10 320);
+    --column-my-tasks: oklch(0.60 0.15 350);
+    --column-delegated: oklch(0.58 0.10 55);
 }
 
 @layer base {
@@ -151,4 +405,16 @@
   html {
     @apply font-sans;
     }
+}
+
+/* ===========================
+   Micro-Animations
+   =========================== */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out both;
 }
