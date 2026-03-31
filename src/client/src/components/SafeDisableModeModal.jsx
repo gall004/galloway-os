@@ -12,7 +12,7 @@ export default function SafeDisableModeModal({ open, onOpenChange, modeName, sta
 
   // If we just want them to drop it in Active, or any other core column, actually it's easier to just let them drop it in ANY core column 
   // currently enabled, but 'Active' is the easiest safe haven. Let's just allow all strictly active board columns.
-  const boardColumns = allStatuses.filter(s => s.name !== statusName && s.name !== 'done')
+  const boardColumns = allStatuses.filter(s => !['inbox', 'delegated', 'done', statusName].includes(s.name))
 
   const handleConfirm = () => {
     onConfirm(statusName, fallback)

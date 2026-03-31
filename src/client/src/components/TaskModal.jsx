@@ -88,8 +88,8 @@ export default function TaskModal({ open, onOpenChange, task, onSave, onDelete, 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               <FormField control={form.control} name="status_name" render={({ field }) => {
                 const availableStatuses = config.statuses?.filter((s) => {
-                  if (s.system_name === 'inbox' && settings?.inbox_mode === false) return false
-                  if (s.system_name === 'delegated' && settings?.manager_mode === false) return false
+                  if (s.system_name === 'inbox' && settings && !settings.inbox_mode) return false
+                  if (s.system_name === 'delegated' && settings && !settings.manager_mode) return false
                   return true
                 }) || []
                 return (

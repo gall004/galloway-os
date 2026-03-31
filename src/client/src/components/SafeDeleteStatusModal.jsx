@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
  */
 export default function SafeDeleteStatusModal({ open, onOpenChange, status, allStatuses, taskCount, onConfirm }) {
   const [fallback, setFallback] = useState('')
-  const available = allStatuses.filter((s) => s.name !== status?.name)
+  const available = allStatuses.filter((s) => !['inbox', 'delegated', 'done', status?.name].includes(s.name))
 
   const handleConfirm = () => {
     onConfirm(status.name, fallback)
