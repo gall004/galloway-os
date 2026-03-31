@@ -31,7 +31,7 @@ export default function SettingsView() {
   const tab = TABS.find((t) => t.key === activeTab)
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 py-8">
+    <div className="w-full flex-1 max-w-[1600px] mx-auto px-4 md:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h2 className="text-2xl font-bold tracking-tight text-foreground">Configuration</h2>
         <p className="text-sm text-muted-foreground mt-1">Manage your workflow layout, preferences, and data lists.</p>
