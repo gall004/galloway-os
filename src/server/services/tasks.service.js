@@ -237,4 +237,20 @@ function reorderTasks(items) {
   logger.info({ count: items.length }, 'Tasks reordered');
 }
 
-module.exports = { createTask, getAllTasks, updateTask, deleteTask, reorderTasks };
+/**
+ * @description Bulk reassign tasks from one status to another.
+ * @param {string} fromStatus
+ * @param {string} toStatus
+ * @returns {number} The amount of tasks updated.
+ */
+function bulkReassignTasks(fromStatus, toStatus) {
+  const db = getDatabase();
+  validateStatus(db, fromStatus);
+  validateStatus(db, toStatus);
+  
+  const result = db.prepare('UPDATE tasks SET status_name = ? WHERE status_name = ? AND is_template = 0').run(toStatus, fromStatus);
+  logger.info({ fromStatus, toStatus, count: result.changes }, 'Tasks bulk reassigned');
+  return result.changes;
+}
+
+module.exports = { createTask, getAllTasks, updateTask, deleteTask, reorderTasks, bulkReassignTasks };

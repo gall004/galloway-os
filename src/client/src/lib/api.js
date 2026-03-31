@@ -27,6 +27,7 @@ export const createTask = (data) => apiFetch('/api/tasks', { method: 'POST', bod
 export const updateTask = (id, data) => apiFetch(`/api/tasks/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 export const deleteTask = (id) => apiFetch(`/api/tasks/${id}`, { method: 'DELETE' });
 export const reorderTasks = (items) => apiFetch('/api/tasks/reorder', { method: 'PUT', body: JSON.stringify(items) });
+export const reassignStatusTasks = (fromStatus, toStatus) => apiFetch('/api/tasks/reassign', { method: 'PUT', body: JSON.stringify({ from_status: fromStatus, to_status: toStatus }) });
 
 // --- Metrics ---
 export const fetchMetrics = () => apiFetch('/api/metrics');

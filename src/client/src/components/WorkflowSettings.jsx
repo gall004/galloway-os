@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Edit2, Trash2, Plus, Lock, ShieldCheck, GripVertical } from 'lucide-react'
-import { fetchSettings, updateSettings, fetchConfig, createStatus, updateStatus, deleteStatus, reorderStatuses, fetchTasks } from '@/lib/api'
+import { fetchSettings, updateSettings, fetchConfig, createStatus, updateStatus, deleteStatus, reorderStatuses, fetchTasks, reassignStatusTasks } from '@/lib/api'
 import SafeDeleteStatusModal from '@/components/SafeDeleteStatusModal'
+import SafeDisableModeModal from '@/components/SafeDisableModeModal'
 import {
   DndContext,
   closestCenter,
@@ -95,6 +96,7 @@ export default function WorkflowSettings() {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteTaskCount, setDeleteTaskCount] = useState(0)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [disableModeContext, setDisableModeContext] = useState(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -116,9 +118,36 @@ export default function WorkflowSettings() {
 
   const handleToggle = async (field, value) => {
     try {
+      if (value === false) {
+        const modeStatusMap = {
+          inbox_mode: { name: 'inbox', label: 'Inbox Mode' },
+          manager_mode: { name: 'delegated', label: 'Manager Mode' }
+        };
+        const st = modeStatusMap[field];
+        if (st) {
+          const tasks = await fetchTasks();
+          const count = tasks.filter((t) => t.status_name === st.name).length;
+          if (count > 0) {
+            setDisableModeContext({ field, modeName: st.label, statusName: st.name, taskCount: count });
+            return;
+          }
+        }
+      }
+
       const updated = await updateSettings({ [field]: value })
       setSettings(updated)
       toast.success('Setting updated')
+    } catch (e) { toast.error(e.message) }
+  }
+
+  const handleSafeDisableMode = async (statusName, fallback) => {
+    try {
+      await reassignStatusTasks(statusName, fallback);
+      const updated = await updateSettings({ [disableModeContext.field]: false });
+      setSettings(updated);
+      setDisableModeContext(null);
+      load();
+      toast.success(`Tasks moved and ${disableModeContext.modeName} disabled`);
     } catch (e) { toast.error(e.message) }
   }
 
@@ -287,6 +316,14 @@ export default function WorkflowSettings() {
         allStatuses={statuses}
         taskCount={deleteTaskCount}
         onConfirm={handleSafeDelete}
+      />
+
+      <SafeDisableModeModal
+        open={!!disableModeContext}
+        onOpenChange={(v) => !v && setDisableModeContext(null)}
+        {...(disableModeContext || {})}
+        allStatuses={statuses}
+        onConfirm={handleSafeDisableMode}
       />
     </div>
   )
