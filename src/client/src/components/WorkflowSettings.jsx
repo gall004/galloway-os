@@ -170,7 +170,12 @@ export default function WorkflowSettings() {
     } catch (e) { toast.error(e.message) }
   }
 
-  const boardColumns = statuses.filter((s) => s.system_name !== 'done')
+  const boardColumns = statuses.filter((s) => {
+    if (s.system_name === 'done') return false;
+    if (s.system_name === 'inbox' && !settings?.inbox_mode) return false;
+    if (s.system_name === 'delegated' && !settings?.manager_mode) return false;
+    return true;
+  })
 
   const handleDragEnd = async (event) => {
     const { active, over } = event
