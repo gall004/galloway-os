@@ -287,7 +287,7 @@ export default function PriorityBoard() {
   )
 
   return (
-    <>
+    <div className="flex flex-col flex-1 min-h-0 w-full">
       <div className="flex items-center justify-between px-4 py-2">
         <span className="text-xs text-muted-foreground">{tasks.filter((t) => t.status_name !== 'done').length} active tasks</span>
         <div className="flex items-center gap-2">
@@ -314,7 +314,7 @@ export default function PriorityBoard() {
           />
         ) : isMobile ? (
           /* Mobile View — only mounted on narrow viewports */
-          <div className="px-4 pb-4 h-[calc(100vh-120px)] relative">
+          <div className="flex-1 min-h-0 px-4 pb-4 relative">
             <Carousel 
               className="w-full h-full flex flex-col" 
               opts={{ loop: false, align: "start" }}
@@ -362,7 +362,7 @@ export default function PriorityBoard() {
           </div>
         ) : (
           /* Desktop View — only mounted on wide viewports */
-          <ResizablePanelGroup direction="horizontal" className="px-4 pb-4 h-[calc(100vh-120px)] max-h-[calc(100vh-120px)] overflow-hidden">
+          <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0 px-4 pb-4 overflow-hidden">
             {columns.map((col, idx) => {
               const colTasks = getTasksForColumn(col.name);
               const isInbox = col.system_name === 'inbox';
@@ -410,6 +410,6 @@ export default function PriorityBoard() {
       </DndContext>
       <TaskModal open={modalOpen} onOpenChange={setModalOpen} task={editingTask} onSave={handleSaveTask} onDelete={handleDelete} config={config} onConfigChange={setConfig} insertDefaults={insertDefaults} />
       <ImpactCaptureModal open={impactOpen} onOpenChange={setImpactOpen} task={completingTask} onConfirm={handleConfirmComplete} />
-    </>
+    </div>
   )
 }

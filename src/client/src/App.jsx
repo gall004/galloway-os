@@ -14,14 +14,16 @@ export default function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <div className="min-h-screen bg-background text-foreground">
+        <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
           <AppHeader />
-          <Routes>
-            <Route path="/" element={<PriorityBoard />} />
-            <Route path="/dashboard" element={<AnalyticsDashboard />} />
-            <Route path="/archive" element={<ArchiveView />} />
-            <Route path="/settings" element={<SettingsView />} />
-          </Routes>
+          <main className="flex-1 min-h-0 flex flex-col relative w-full">
+            <Routes>
+              <Route path="/" element={<PriorityBoard />} />
+              <Route path="/dashboard" element={<AnalyticsDashboard />} />
+              <Route path="/archive" element={<ArchiveView />} />
+              <Route path="/settings" element={<SettingsView />} />
+            </Routes>
+          </main>
         </div>
         <Toaster richColors position="bottom-right" />
       </ThemeProvider>
