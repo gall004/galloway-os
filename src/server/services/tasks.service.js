@@ -89,7 +89,7 @@ function createTask(data) {
     dateCompleted,
     statusName,
     data.project_id || 1,
-    data.customer_id || 1,
+    data.customer_id || null,
     data.delegated_to || null,
     orderIndex,
     isFocused,

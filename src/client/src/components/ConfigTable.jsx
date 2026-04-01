@@ -20,7 +20,7 @@ export default function ConfigTable({ entity, label, pluralLabel, parentEntity, 
   const [modalOpen, setModalOpen] = useState(false)
   const [editItem, setEditItem] = useState(null)
   const [formValue, setFormValue] = useState('')
-  const [parentId, setParentId] = useState('1')
+  const [parentId, setParentId] = useState('')
   const [expandedRow, setExpandedRow] = useState(null)
 
   const load = useCallback(() => {
@@ -30,11 +30,11 @@ export default function ConfigTable({ entity, label, pluralLabel, parentEntity, 
 
   useEffect(() => { load() }, [load])
 
-  const openCreate = () => { setEditItem(null); setFormValue(''); setParentId('1'); setModalOpen(true) }
+  const openCreate = () => { setEditItem(null); setFormValue(''); setParentId(''); setModalOpen(true) }
   const openEdit = (item) => {
     setEditItem(item)
     setFormValue(readOnly ? (item.label || '') : (item.name || ''))
-    setParentId(String(item.customer_id || '1'))
+    setParentId(item.customer_id ? String(item.customer_id) : '')
     setModalOpen(true)
   }
 
@@ -45,12 +45,12 @@ export default function ConfigTable({ entity, label, pluralLabel, parentEntity, 
         toast.success(`${label} label updated`)
       } else if (editItem) {
         const data = { name: formValue }
-        if (parentEntity) { data.customer_id = Number(parentId) || 1 }
+        if (parentEntity) { data.customer_id = Number(parentId) || null }
         await updateConfig(entity, editItem.id, data)
         toast.success(`${label} updated`)
       } else {
         const data = { name: formValue }
-        if (parentEntity) { data.customer_id = Number(parentId) || 1 }
+        if (parentEntity) { data.customer_id = Number(parentId) || null }
         await createConfig(entity, data)
         toast.success(`${label} created`)
       }

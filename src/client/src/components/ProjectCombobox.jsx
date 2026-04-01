@@ -19,7 +19,7 @@ export default function ProjectCombobox({ value, onChange, projects, customers, 
   const [open, setOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
   const [newName, setNewName] = useState('')
-  const [newCustomerId, setNewCustomerId] = useState('1')
+  const [newCustomerId, setNewCustomerId] = useState('')
 
   const options = useMemo(() => {
     return projects.map((p) => {
@@ -37,13 +37,13 @@ export default function ProjectCombobox({ value, onChange, projects, customers, 
 
   const handleCreate = async () => {
     try {
-      const created = await createConfig('projects', { name: newName.trim(), customer_id: Number(newCustomerId) || 1 })
+      const created = await createConfig('projects', { name: newName.trim(), customer_id: Number(newCustomerId) || null })
       const updated = await fetchConfig('projects')
       onProjectsChange(updated)
       onChange(String(created.id))
       setCreateOpen(false)
       setNewName('')
-      setNewCustomerId('1')
+      setNewCustomerId('')
       toast.success(`Project "${created.name}" created`)
     } catch (e) { toast.error(e.message) }
   }
@@ -74,7 +74,7 @@ export default function ProjectCombobox({ value, onChange, projects, customers, 
                 ))}
               </CommandGroup>
               <CommandGroup>
-                <CommandItem onSelect={() => { setOpen(false); setCreateOpen(true); setNewName(''); setNewCustomerId('1') }} className="text-primary">
+                <CommandItem onSelect={() => { setOpen(false); setCreateOpen(true); setNewName(''); setNewCustomerId('') }} className="text-primary">
                   ＋ Create new Project
                 </CommandItem>
               </CommandGroup>

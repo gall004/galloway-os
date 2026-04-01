@@ -29,14 +29,14 @@ describe('Reports API', () => {
     // 2. Transformed task out of range (8 days ago)
     const oldDate = new Date();
     oldDate.setDate(oldDate.getDate() - 8);
-    stmt.run('Old Task', 'done', 1, 1, oldDate.toISOString(), null, 0, null);
+    stmt.run('Old Task', 'done', null, 1, oldDate.toISOString(), null, 0, null);
     // 3. Active task
-    stmt.run('Active Task 1', 'active', 1, 1, null, null, 1, null);
-    stmt.run('Active Task 2', 'active', 1, 1, null, null, 2, null);
+    stmt.run('Active Task 1', 'active', null, 1, null, null, 1, null);
+    stmt.run('Active Task 2', 'active', null, 1, null, null, 2, null);
     // 5. Delegated task
     const oldDelg = new Date();
     oldDelg.setDate(oldDelg.getDate() - 3);
-    stmt.run('Delegated Task', 'delegated', 1, 1, null, oldDelg.toISOString(), 0, null);
+    stmt.run('Delegated Task', 'delegated', null, 1, null, oldDelg.toISOString(), 0, null);
   });
 
   afterAll(() => {

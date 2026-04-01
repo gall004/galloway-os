@@ -19,7 +19,7 @@ export default function CustomerCombobox({ value, onChange, customers, onCustome
   const [newName, setNewName] = useState('')
 
   const selectedLabel = (() => {
-    if (!value || value === '1') return 'No Client'
+    if (!value) return 'No Client'
     return customers.find((c) => String(c.id) === value)?.name || 'Select client…'
   })()
 
@@ -52,11 +52,11 @@ export default function CustomerCombobox({ value, onChange, customers, onCustome
               <CommandGroup>
                 <CommandItem
                   value="__no_client__"
-                  onSelect={() => { onChange('1'); setOpen(false) }}
+                  onSelect={() => { onChange(''); setOpen(false) }}
                 >
-                  <span className={value === '1' || !value ? 'font-semibold' : ''}>No Client</span>
+                  <span className={!value ? 'font-semibold' : ''}>No Client</span>
                 </CommandItem>
-                {customers.filter(c => c.id !== 1).map((c) => (
+                {customers.map((c) => (
                   <CommandItem
                     key={c.id}
                     value={c.name}
