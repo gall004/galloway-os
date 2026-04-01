@@ -18,11 +18,12 @@ function getMetrics(timeframe = '7d') {
     : `AND date_completed >= datetime('now', '-${days} days')`;
 
   const tasksByCustomer = db.prepare(`
-    SELECT c.name AS customer, COUNT(*) AS count
+    SELECT COALESCE(c.name, 'Unassigned') AS customer, COUNT(*) AS count
     FROM tasks
     LEFT JOIN customers c ON tasks.customer_id = c.id
     WHERE tasks.status_name != 'done' AND tasks.is_template = 0
-    GROUP BY c.name
+      AND (c.name IS NULL OR c.name != 'N/A')
+    GROUP BY customer
     ORDER BY count DESC
   `).all();
 

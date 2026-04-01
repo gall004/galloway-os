@@ -50,7 +50,7 @@ function createTask(data) {
 
   if (data.project_id && data.project_id !== 1) {
     const proj = db.prepare('SELECT customer_id FROM projects WHERE id = ?').get(data.project_id);
-    if (proj && proj.customer_id !== 1) {
+    if (proj && proj.customer_id) {
       data.customer_id = proj.customer_id;
     }
   }
@@ -152,7 +152,7 @@ function updateTask(id, updates) {
 
   if (updates.project_id && updates.project_id !== 1) {
     const proj = db.prepare('SELECT customer_id FROM projects WHERE id = ?').get(updates.project_id);
-    if (proj && proj.customer_id !== 1 && !updates.customer_id) {
+    if (proj && proj.customer_id && !updates.customer_id) {
       updates.customer_id = proj.customer_id;
     }
   }

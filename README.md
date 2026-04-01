@@ -90,14 +90,14 @@ The SQLite databases persist in the `./src/db/` directory securely isolated per 
 | `GET` | `/api/tasks` | Retrieve all tasks with joined names and status_label |
 | `POST` | `/api/tasks` | Create a new task (order_index shifts existing tasks) |
 | `PUT` | `/api/tasks/reorder` | Bulk-update order_index for drag-and-drop |
-| `PUT` | `/api/tasks/:id` | Update a task (status_name key, FK IDs for project/customer) |
+| `PUT` | `/api/tasks/:id` | Update a task (status_name key, FK IDs for project/client) |
 | `DELETE` | `/api/tasks/:id` | Delete a task |
 | `GET` | `/api/statuses` | List all statuses (name key + label) |
 | `GET` | `/api/statuses/:name` | Get a single status by name key |
 | `PUT` | `/api/statuses/:name` | Update display label only (name is immutable) |
-| `GET/POST` | `/api/customers` | List / Create customers |
-| `PUT/DELETE` | `/api/customers/:id` | Update / Delete a customer |
-| `GET/POST` | `/api/projects` | List / Create projects (includes customer_id) |
+| `GET/POST` | `/api/customers` | List / Create clients |
+| `PUT/DELETE` | `/api/customers/:id` | Update / Delete a client |
+| `GET/POST` | `/api/projects` | List / Create projects (optional client association) |
 | `PUT/DELETE` | `/api/projects/:id` | Update / Delete a project |
 
 ## Testing

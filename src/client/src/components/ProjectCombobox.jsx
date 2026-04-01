@@ -10,9 +10,9 @@ import CustomerCombobox from '@/components/CustomerCombobox'
 import { createConfig, fetchConfig } from '@/lib/api'
 
 /**
- * @description Searchable combobox for projects with "Project — Customer" format
+ * @description Searchable combobox for projects with "Project — Client" format
  * and inline "+ Create new Project" action. The quick-create form includes a
- * CustomerCombobox for deep nesting (create customer from within create project).
+ * CustomerCombobox for optional client association.
  * @param {{ value, onChange, projects, customers, onProjectsChange, onCustomersChange }} props
  */
 export default function ProjectCombobox({ value, onChange, projects, customers, onProjectsChange, onCustomersChange }) {
@@ -59,7 +59,7 @@ export default function ProjectCombobox({ value, onChange, projects, customers, 
         </PopoverTrigger>
         <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
           <Command>
-            <CommandInput placeholder="Search projects or customers…" />
+            <CommandInput placeholder="Search projects or clients…" />
             <CommandList>
               <CommandEmpty>No project found.</CommandEmpty>
               <CommandGroup>
@@ -94,7 +94,7 @@ export default function ProjectCombobox({ value, onChange, projects, customers, 
               <Input id="new-project-name" className="w-full" placeholder="e.g., Q3 Rollout" value={newName} onChange={(e) => setNewName(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Customer</Label>
+              <Label>Client <span className="text-muted-foreground font-normal">(Optional)</span></Label>
               <CustomerCombobox
                 value={newCustomerId}
                 onChange={setNewCustomerId}

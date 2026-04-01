@@ -13,7 +13,7 @@ const PALETTE = [
 ]
 
 /**
- * @description Donut chart showing active task breakdown by customer.
+ * @description Donut chart showing active task breakdown by client.
  * @param {{ data: Array<{customer: string, count: number}> }} props
  */
 export default function CustomerDonut({ data }) {
@@ -22,7 +22,7 @@ export default function CustomerDonut({ data }) {
   if (!data.length) {
     return (
       <Card className="p-5">
-        <h3 className="text-sm font-semibold text-foreground mb-3">Tasks by Customer</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-3">Tasks by Client</h3>
         <p className="text-sm text-muted-foreground">No active tasks</p>
       </Card>
     )
@@ -30,7 +30,7 @@ export default function CustomerDonut({ data }) {
 
   return (
     <Card className="p-5">
-      <h3 className="text-sm font-semibold text-foreground mb-3">Tasks by Customer</h3>
+      <h3 className="text-sm font-semibold text-foreground mb-3">Tasks by Client</h3>
       <div className="relative h-[200px]">
         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <PieChart>

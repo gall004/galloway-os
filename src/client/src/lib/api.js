@@ -30,7 +30,7 @@ export const reorderTasks = (items) => apiFetch('/api/tasks/reorder', { method: 
 export const reassignStatusTasks = (fromStatus, toStatus) => apiFetch('/api/tasks/reassign', { method: 'PUT', body: JSON.stringify({ from_status: fromStatus, to_status: toStatus }) });
 
 // --- Metrics ---
-export const fetchMetrics = () => apiFetch('/api/metrics');
+export const fetchMetrics = (timeframe) => apiFetch(`/api/metrics${timeframe ? `?timeframe=${timeframe}` : ''}`);
 
 // --- Config (generic) ---
 export const fetchConfig = (entity) => apiFetch(`/api/${entity}`);

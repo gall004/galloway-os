@@ -142,11 +142,11 @@ export default function ConfigTable({ entity, label, pluralLabel, parentEntity, 
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="config-value">{readOnly ? 'Display Label' : 'Name'}</Label>
-              <Input id="config-value" className="w-full" placeholder={readOnly ? 'e.g., My Custom Label' : `e.g., ${label === 'Customer' ? 'Acme Corp' : label === 'Project' ? 'Q3 Rollout' : 'Urgent'}`} value={formValue} onChange={(e) => setFormValue(e.target.value)} />
+              <Input id="config-value" className="w-full" placeholder={readOnly ? 'e.g., My Custom Label' : `e.g., ${label === 'Client' ? 'Acme Corp' : label === 'Project' ? 'Q3 Rollout' : 'Urgent'}`} value={formValue} onChange={(e) => setFormValue(e.target.value)} />
             </div>
             {parentEntity && !readOnly && (
               <div className="space-y-2">
-                <Label>{parentLabel}</Label>
+                <Label>{parentLabel} <span className="text-muted-foreground font-normal">(Optional)</span></Label>
                 <CustomerCombobox
                   value={parentId}
                   onChange={setParentId}

@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label'
 import { createConfig, fetchConfig } from '@/lib/api'
 
 /**
- * @description Searchable combobox for customers with inline "+ Create new Customer" action.
+ * @description Searchable combobox for clients with inline "+ Create new Client" action.
+ * Includes a "No Client" option for explicit deselection.
  * @param {{ value, onChange, customers, onCustomersChange }} props
  */
 export default function CustomerCombobox({ value, onChange, customers, onCustomersChange }) {
@@ -17,7 +18,10 @@ export default function CustomerCombobox({ value, onChange, customers, onCustome
   const [createOpen, setCreateOpen] = useState(false)
   const [newName, setNewName] = useState('')
 
-  const selectedLabel = customers.find((c) => String(c.id) === value)?.name || 'Select customer…'
+  const selectedLabel = (() => {
+    if (!value || value === '1') return 'No Client'
+    return customers.find((c) => String(c.id) === value)?.name || 'Select client…'
+  })()
 
   const handleCreate = async () => {
     try {
@@ -27,7 +31,7 @@ export default function CustomerCombobox({ value, onChange, customers, onCustome
       onChange(String(created.id))
       setCreateOpen(false)
       setNewName('')
-      toast.success(`Customer "${created.name}" created`)
+      toast.success(`Client "${created.name}" created`)
     } catch (e) { toast.error(e.message) }
   }
 
@@ -42,11 +46,17 @@ export default function CustomerCombobox({ value, onChange, customers, onCustome
         </PopoverTrigger>
         <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
           <Command>
-            <CommandInput placeholder="Search customers…" />
+            <CommandInput placeholder="Search clients…" />
             <CommandList>
-              <CommandEmpty>No customer found.</CommandEmpty>
+              <CommandEmpty>No client found.</CommandEmpty>
               <CommandGroup>
-                {customers.map((c) => (
+                <CommandItem
+                  value="__no_client__"
+                  onSelect={() => { onChange('1'); setOpen(false) }}
+                >
+                  <span className={value === '1' || !value ? 'font-semibold' : ''}>No Client</span>
+                </CommandItem>
+                {customers.filter(c => c.id !== 1).map((c) => (
                   <CommandItem
                     key={c.id}
                     value={c.name}
@@ -58,7 +68,7 @@ export default function CustomerCombobox({ value, onChange, customers, onCustome
               </CommandGroup>
               <CommandGroup>
                 <CommandItem onSelect={() => { setOpen(false); setCreateOpen(true); setNewName('') }} className="text-primary">
-                  ＋ Create new Customer
+                  ＋ Create new Client
                 </CommandItem>
               </CommandGroup>
             </CommandList>
@@ -68,15 +78,15 @@ export default function CustomerCombobox({ value, onChange, customers, onCustome
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-[380px]">
           <DialogHeader>
-            <DialogTitle>New Customer</DialogTitle>
-            <DialogDescription>Create a customer and automatically select it.</DialogDescription>
+            <DialogTitle>New Client</DialogTitle>
+            <DialogDescription>Create a client and automatically select it.</DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-2">
             <Label htmlFor="new-customer-name">Name</Label>
             <Input id="new-customer-name" className="w-full" placeholder="e.g., Acme Corp" value={newName} onChange={(e) => setNewName(e.target.value)} />
           </div>
           <DialogFooter>
-            <Button onClick={handleCreate} disabled={!newName.trim()}>Create Customer</Button>
+            <Button onClick={handleCreate} disabled={!newName.trim()}>Create Client</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
