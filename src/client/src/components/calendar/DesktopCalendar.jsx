@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDroppable } from '@dnd-kit/core'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -8,8 +8,8 @@ import TimeBlockCard from '@/components/calendar/TimeBlockCard'
 import { createTimeBlock, updateTimeBlock, deleteTimeBlock } from '@/lib/api'
 
 const SLOT_HEIGHT = 40
-const START_HOUR = 6
-const END_HOUR = 22
+const START_HOUR = 0
+const END_HOUR = 24
 const TOTAL_SLOTS = (END_HOUR - START_HOUR) * 2
 
 /**
@@ -69,6 +69,14 @@ function DragOverlayCard({ task }) {
 export default function DesktopCalendar({ calendarData, onTaskClick }) {
   const { days, timeBlocks, activeTasks, loading, reload, goToday, goPrev, goNext } = calendarData
   const [draggedTask, setDraggedTask] = useState(null)
+  const scrollRef = useRef(null)
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      // Auto-scroll to 7:30 AM (15 * 30 min slots @ 40px each = 600px)
+      scrollRef.current.scrollTop = 15 * SLOT_HEIGHT
+    }
+  }, [])
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
@@ -306,7 +314,7 @@ export default function DesktopCalendar({ calendarData, onTaskClick }) {
             </div>
 
             {/* Time Grid */}
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-auto" ref={scrollRef}>
               <div
                 className="grid relative"
                 style={{

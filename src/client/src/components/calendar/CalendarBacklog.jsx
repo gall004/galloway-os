@@ -11,21 +11,31 @@ function BacklogItem({ task }) {
     id: `backlog-${task.id}`,
   })
 
+  // Format indicator
+  const future = task.future_blocks || 0
+  const past = task.past_blocks || 0
+  
+  let indicator = ''
+  if (future > 0 && past > 0) indicator = `${future} Upcoming | ${future + past} Total`
+  else if (future > 0) indicator = `${future} Upcoming`
+  else if (past > 0) indicator = `⚠️ Unplanned (${past} Past)`
+  
+  const isSafelyScheduled = future > 0
+
   return (
     <div
       ref={setNodeRef}
-      {...attributes}
       {...listeners}
-      className={`px-3 py-2 rounded-md border border-border bg-card text-sm cursor-grab active:cursor-grabbing transition-all ${
-        isDragging ? 'opacity-40 scale-95' : 'hover:bg-muted/50 hover:shadow-sm'
-      }`}
+      {...attributes}
+      className={`p-3 border-b border-border text-sm cursor-grab active:cursor-grabbing hover:bg-muted/50 transition-colors ${
+        isDragging ? 'opacity-50 bg-primary/10' : ''
+      } ${isSafelyScheduled ? 'opacity-40 grayscale bg-muted/20' : ''}`}
     >
-      <div className="font-medium truncate">{task.title}</div>
-      {(task.project_name || task.customer_name) && (
-        <div className="text-[11px] text-muted-foreground truncate mt-0.5">
-          {[task.project_name, task.customer_name].filter(Boolean).join(' · ')}
-        </div>
-      )}
+      <div className="font-medium text-foreground truncate">{task.title}</div>
+      <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-1 gap-2">
+        <span className="truncate">{task.customer || 'Internal'} • {task.project}</span>
+        {indicator && <span className={`shrink-0 font-medium whitespace-nowrap ${!isSafelyScheduled && past > 0 ? 'text-destructive/80' : ''}`}>{indicator}</span>}
+      </div>
     </div>
   )
 }

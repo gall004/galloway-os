@@ -4,7 +4,9 @@ const logger = require('../logger');
 const TASKS_SELECT = `
   SELECT tasks.*,
     s.label AS status_label,
-    c.name AS customer, pr.name AS project
+    c.name AS customer, pr.name AS project,
+    (SELECT COUNT(*) FROM time_blocks tb WHERE tb.task_id = tasks.id AND tb.end_time > strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) AS future_blocks,
+    (SELECT COUNT(*) FROM time_blocks tb WHERE tb.task_id = tasks.id AND tb.end_time <= strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) AS past_blocks
   FROM tasks
   LEFT JOIN statuses s ON tasks.status_name = s.name
   LEFT JOIN customers c ON tasks.customer_id = c.id

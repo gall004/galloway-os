@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Search } from 'lucide-react'
 
-const START_HOUR = 6
-const END_HOUR = 22
+const START_HOUR = 0
+const END_HOUR = 24
 
 /**
  * @description Generate time slot options for the schedule picker.
@@ -15,7 +15,8 @@ const END_HOUR = 22
  */
 function generateTimeOptions() {
   const options = []
-  for (let h = START_HOUR; h < END_HOUR; h++) {
+  const hours = Array.from({ length: 24 }, (_, i) => i)
+  for (const h of hours) {
     for (let m = 0; m < 60; m += 30) {
       const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h
       const ampm = h < 12 ? 'AM' : 'PM'
@@ -123,20 +124,35 @@ export default function MobileScheduleSheet({ open, onOpenChange, tasks, selecte
                   {search ? 'No matching tasks' : 'No active tasks!'}
                 </p>
               ) : (
-                filtered.map((task) => (
-                  <button
-                    key={task.id}
-                    onClick={() => setSelectedTask(task)}
-                    className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted transition-colors"
-                  >
-                    <div className="font-medium text-sm">{task.title}</div>
-                    {(task.project_name || task.customer_name) && (
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        {[task.project_name, task.customer_name].filter(Boolean).join(' · ')}
+                filtered.map((task) => {
+                  const future = task.future_blocks || 0
+                  const past = task.past_blocks || 0
+                  let indicator = ''
+                  if (future > 0 && past > 0) indicator = `${future} Upcoming | ${future + past} Total`
+                  else if (future > 0) indicator = `${future} Upcoming`
+                  else if (past > 0) indicator = `⚠️ Unplanned (${past} Past)`
+                  const isSafelyScheduled = future > 0
+
+                  return (
+                    <button
+                      key={task.id}
+                      className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                        task.id === selectedTask?.id
+                          ? 'border-primary bg-primary/10'
+                          : isSafelyScheduled
+                            ? 'opacity-50 grayscale border-border bg-muted/20 hover:bg-muted/50'
+                            : 'border-border hover:bg-muted'
+                      }`}
+                      onClick={() => setSelectedTask(task)}
+                    >
+                      <div className="font-medium text-foreground truncate">{task.title}</div>
+                      <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-0.5 gap-2">
+                        <span className="truncate">{task.customer || 'Internal'} • {task.project}</span>
+                        {indicator && <span className={`shrink-0 font-medium whitespace-nowrap ${!isSafelyScheduled && past > 0 ? 'text-destructive/80' : ''}`}>{indicator}</span>}
                       </div>
-                    )}
-                  </button>
-                ))
+                    </button>
+                  )
+                })
               )}
             </div>
           </div>
