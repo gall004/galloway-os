@@ -38,18 +38,19 @@ export default function CalendarView() {
     if (task) setEditingTask(task)
   }
 
-  const handleUpdate = async (taskId, data) => {
+  const handleUpdate = async (taskData) => {
+    if (!editingTask) return
     try {
-      await updateTask(taskId, data)
+      await updateTask(editingTask.id, taskData)
       toast.success('Task updated')
       setEditingTask(null)
       calendarData.reload()
     } catch (e) { toast.error(e.message) }
   }
 
-  const handleDelete = async (taskId) => {
+  const handleDelete = async (taskToDelete) => {
     try {
-      await deleteTask(taskId)
+      await deleteTask(taskToDelete.id)
       toast.success('Task deleted')
       setEditingTask(null)
       calendarData.reload()
