@@ -50,3 +50,9 @@ export const createStatus = (data) => apiFetch('/api/statuses', { method: 'POST'
 export const updateStatus = (name, data) => apiFetch(`/api/statuses/${name}`, { method: 'PUT', body: JSON.stringify(data) });
 export const deleteStatus = (name, fallbackStatusName) => apiFetch(`/api/statuses/${name}`, { method: 'DELETE', body: JSON.stringify({ fallback_status_name: fallbackStatusName }) });
 export const reorderStatuses = (items) => apiFetch('/api/statuses/reorder', { method: 'PUT', body: JSON.stringify(items) });
+
+// --- Time Blocks ---
+export const fetchTimeBlocks = (start, end) => apiFetch(`/api/time-blocks?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
+export const createTimeBlock = (data) => apiFetch('/api/time-blocks', { method: 'POST', body: JSON.stringify(data) });
+export const updateTimeBlock = (id, data) => apiFetch(`/api/time-blocks/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+export const deleteTimeBlock = (id) => apiFetch(`/api/time-blocks/${id}`, { method: 'DELETE' });

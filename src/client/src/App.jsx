@@ -6,6 +6,7 @@ import PriorityBoard from '@/components/PriorityBoard'
 import AnalyticsDashboard from '@/components/AnalyticsDashboard'
 import ArchiveView from '@/components/ArchiveView'
 import SettingsView from '@/components/SettingsView'
+import CalendarView from '@/components/CalendarView'
 
 /**
  * @description Root application component with ThemeProvider, routing, and Sonner toaster.
@@ -19,6 +20,7 @@ export default function App() {
           <main className="flex-1 min-h-0 flex flex-col relative w-full">
             <Routes>
               <Route path="/" element={<PriorityBoard />} />
+              <Route path="/calendar" element={<CalendarView />} />
               <Route path="/dashboard" element={<AnalyticsDashboard />} />
               <Route path="/archive" element={<ArchiveView />} />
               <Route path="/settings" element={<SettingsView />} />

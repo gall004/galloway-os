@@ -19,7 +19,7 @@ function getSettings() {
 function updateSettings(updates) {
   const db = getDatabase();
 
-  const allowedFields = ['inbox_mode', 'manager_mode', 'theme_preference'];
+  const allowedFields = ['inbox_mode', 'manager_mode', 'theme_preference', 'enable_calendar'];
   const setClauses = [];
   const values = [];
 
