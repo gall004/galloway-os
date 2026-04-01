@@ -5,7 +5,7 @@ const logger = require('../logger');
  * @description Compute aggregate metrics for the analytics dashboard.
  * @returns {Object} Metrics payload with chart data.
  */
-function getMetrics(timeframe = '7d') {
+function getMetrics(timeframe = '7d', boardId = null) {
   const db = getDatabase();
 
   let days = 7;
@@ -15,70 +15,84 @@ function getMetrics(timeframe = '7d') {
   
   const dateFilter = timeframe === 'all_time' 
     ? '' 
-    : `AND date_completed >= datetime('now', '-${days} days')`;
+    : `AND tasks.date_completed >= datetime('now', '-${days} days')`;
+
+  const boardFilter = boardId ? `AND p.board_id = ${parseInt(boardId, 10)}` : '';
 
   const tasksByCustomer = db.prepare(`
-    SELECT COALESCE(c.name, 'Unassigned') AS customer, COUNT(*) AS count
+    SELECT COALESCE(c.name, 'Internal') AS customer, COUNT(*) AS count
     FROM tasks
     LEFT JOIN customers c ON tasks.customer_id = c.id
-    WHERE tasks.status_name != 'done' AND tasks.is_template = 0
+    LEFT JOIN projects p ON tasks.project_id = p.id
+    WHERE tasks.status_name != 'done' AND tasks.is_template = 0 ${boardFilter}
     GROUP BY customer
     ORDER BY count DESC
   `).all();
 
   const completionVelocity = db.prepare(`
     SELECT
-      strftime('%Y-W%W', date_completed) AS week,
+      strftime('%Y-W%W', tasks.date_completed) AS week,
       COUNT(*) AS count
     FROM tasks
-    WHERE status_name = 'done' AND is_template = 0
-      AND date_completed IS NOT NULL
+    LEFT JOIN projects p ON tasks.project_id = p.id
+    WHERE tasks.status_name = 'done' AND tasks.is_template = 0
+      AND tasks.date_completed IS NOT NULL
       ${dateFilter}
+      ${boardFilter}
     GROUP BY week
     ORDER BY week ASC
   `).all();
 
   const statusCounts = db.prepare(`
-    SELECT status_name, COUNT(*) AS count
+    SELECT tasks.status_name, COUNT(*) AS count
     FROM tasks
-    WHERE status_name != 'done' AND is_template = 0
-    GROUP BY status_name
+    LEFT JOIN projects p ON tasks.project_id = p.id
+    WHERE tasks.status_name != 'done' AND tasks.is_template = 0 ${boardFilter}
+    GROUP BY tasks.status_name
   `).all();
 
   const cycleTimeRow = db.prepare(`
-    SELECT AVG(julianday(date_completed) - julianday(date_created)) AS avg_days
+    SELECT AVG(julianday(tasks.date_completed) - julianday(tasks.date_created)) AS avg_days
     FROM tasks
-    WHERE status_name = 'done' AND is_template = 0
-      AND date_completed IS NOT NULL
-      AND date_created IS NOT NULL
+    LEFT JOIN projects p ON tasks.project_id = p.id
+    WHERE tasks.status_name = 'done' AND tasks.is_template = 0
+      AND tasks.date_completed IS NOT NULL
+      AND tasks.date_created IS NOT NULL
       ${dateFilter}
+      ${boardFilter}
   `).get();
 
   const delegationTimeRow = db.prepare(`
-    SELECT AVG(julianday(date_completed) - julianday(date_delegated)) AS avg_days
+    SELECT AVG(julianday(tasks.date_completed) - julianday(tasks.date_delegated)) AS avg_days
     FROM tasks
-    WHERE status_name = 'done' AND is_template = 0
-      AND date_completed IS NOT NULL
-      AND date_delegated IS NOT NULL
+    LEFT JOIN projects p ON tasks.project_id = p.id
+    WHERE tasks.status_name = 'done' AND tasks.is_template = 0
+      AND tasks.date_completed IS NOT NULL
+      AND tasks.date_delegated IS NOT NULL
       ${dateFilter}
+      ${boardFilter}
   `).get();
 
   const recentImpacts = db.prepare(`
-    SELECT title, impact_statement, date_completed
+    SELECT tasks.title, tasks.impact_statement, tasks.date_completed
     FROM tasks
-    WHERE status_name = 'done' AND is_template = 0
-      AND impact_statement IS NOT NULL
-      AND impact_statement != ''
+    LEFT JOIN projects p ON tasks.project_id = p.id
+    WHERE tasks.status_name = 'done' AND tasks.is_template = 0
+      AND tasks.impact_statement IS NOT NULL
+      AND tasks.impact_statement != ''
       ${dateFilter}
-    ORDER BY date_completed DESC
+      ${boardFilter}
+    ORDER BY tasks.date_completed DESC
     LIMIT 5
   `).all();
 
   const totalCompleted = db.prepare(`
-    SELECT COUNT(*) AS count FROM tasks WHERE status_name = 'done' AND is_template = 0 ${dateFilter}
+    SELECT COUNT(*) AS count FROM tasks 
+    LEFT JOIN projects p ON tasks.project_id = p.id
+    WHERE tasks.status_name = 'done' AND tasks.is_template = 0 ${dateFilter} ${boardFilter}
   `).get()?.count || 0;
 
-  logger.info('Metrics computed');
+  logger.info({ boardId }, 'Metrics computed');
 
   return {
     tasksByCustomer,

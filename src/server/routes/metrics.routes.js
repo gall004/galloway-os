@@ -9,8 +9,8 @@ const router = express.Router();
  */
 router.get('/api/metrics', (req, res, next) => {
   try {
-    const { timeframe } = req.query;
-    const metrics = getMetrics(timeframe);
+    const { timeframe, board_id } = req.query;
+    const metrics = getMetrics(timeframe, board_id ? parseInt(board_id, 10) : null);
     res.json(metrics);
   } catch (err) {
     logger.error({ err: err.message }, 'Failed to compute metrics');

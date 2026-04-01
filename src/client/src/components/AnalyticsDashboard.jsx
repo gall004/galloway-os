@@ -7,6 +7,7 @@ import VelocityBar from '@/components/charts/VelocityBar'
 
 import MetricCard from '@/components/charts/MetricCard'
 import ReportGenerator from '@/components/ReportGenerator'
+import { useBoard } from '@/hooks/useBoard'
 
 /**
  * @description Analytics dashboard with charts, gauges, and operational metrics.
@@ -18,11 +19,12 @@ export default function AnalyticsDashboard() {
   const [configStatuses, setConfigStatuses] = useState([])
   const [timeframe, setTimeframe] = useState('7d')
   const [loading, setLoading] = useState(true)
+  const { activeBoardId } = useBoard()
 
   const load = useCallback(async () => {
     try {
       setLoading(true)
-      const [data, appSettings, fetchedStatuses] = await Promise.all([fetchMetrics(timeframe), fetchSettings(), fetchConfig('statuses')])
+      const [data, appSettings, fetchedStatuses] = await Promise.all([fetchMetrics(timeframe, activeBoardId), fetchSettings(activeBoardId), fetchConfig('statuses')])
       setMetrics(data)
       setSettings(appSettings)
       setConfigStatuses(fetchedStatuses || [])
@@ -31,7 +33,7 @@ export default function AnalyticsDashboard() {
     } finally {
       setLoading(false)
     }
-  }, [timeframe])
+  }, [timeframe, activeBoardId])
 
   useEffect(() => { load() }, [load])
 

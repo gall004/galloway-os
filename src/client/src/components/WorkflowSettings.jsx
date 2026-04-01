@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label'
 import { Edit2, Trash2, Plus, Lock, ShieldCheck, GripVertical } from 'lucide-react'
 import { fetchSettings, updateSettings, fetchConfig, createStatus, updateStatus, deleteStatus, reorderStatuses, fetchTasks, reassignStatusTasks } from '@/lib/api'
 import SafeDeleteStatusModal from '@/components/SafeDeleteStatusModal'
-import SafeDisableModeModal from '@/components/SafeDisableModeModal'
+import 	SafeDisableModeModal from '@/components/SafeDisableModeModal'
+import { useBoard } from '@/hooks/useBoard'
 import {
   DndContext,
   closestCenter,
@@ -98,6 +99,7 @@ export default function WorkflowSettings() {
   const [deleteTemplateCount, setDeleteTemplateCount] = useState(0)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [disableModeContext, setDisableModeContext] = useState(null)
+  const { activeBoardId } = useBoard()
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -108,12 +110,12 @@ export default function WorkflowSettings() {
 
   const load = useCallback(async () => {
     try {
-      const [s, st] = await Promise.all([fetchSettings(), fetchConfig('statuses')])
+      const [s, st] = await Promise.all([fetchSettings(activeBoardId), fetchConfig('statuses')])
       setSettings(s)
       setStatuses(st)
     } catch { /* handled by loading state */ }
     setLoading(false)
-  }, [])
+  }, [activeBoardId])
 
   useEffect(() => { load() }, [load])
 
@@ -134,7 +136,7 @@ export default function WorkflowSettings() {
         };
         const st = modeStatusMap[field];
         if (st) {
-          const [tasks, templates] = await Promise.all([fetchTasks(), fetchTasks('is_template=true')]);
+          const [tasks, templates] = await Promise.all([fetchTasks(activeBoardId), fetchTasks(activeBoardId, 'is_template=true')]);
           const taskCount = tasks.filter((t) => t.status_name === st.name).length;
           const templateCount = templates.filter((t) => t.status_name === st.name).length;
           
@@ -145,7 +147,7 @@ export default function WorkflowSettings() {
         }
       }
 
-      const updated = await updateSettings({ [field]: value })
+      const updated = await updateSettings({ [field]: value }, activeBoardId)
       setSettings(updated)
       toast.success('Setting updated')
     } catch (e) { toast.error(e.message) }
@@ -156,7 +158,7 @@ export default function WorkflowSettings() {
       if (fallback !== 'none') {
         await reassignStatusTasks(statusName, fallback);
       }
-      const updated = await updateSettings({ [disableModeContext.field]: false });
+      const updated = await updateSettings({ [disableModeContext.field]: false }, activeBoardId);
       setSettings(updated);
       setDisableModeContext(null);
       load();

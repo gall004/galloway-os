@@ -99,10 +99,14 @@ The SQLite databases persist in the `./src/db/` directory securely isolated per 
 | `GET` | `/api/statuses` | List all statuses (name key + label) |
 | `GET` | `/api/statuses/:name` | Get a single status by name key |
 | `PUT` | `/api/statuses/:name` | Update display label only (name is immutable) |
+| `GET/POST` | `/api/boards` | List / Create boards (workspaces) |
+| `PUT/DELETE` | `/api/boards/:id` | Update / Delete a board |
 | `GET/POST` | `/api/customers` | List / Create clients |
 | `PUT/DELETE` | `/api/customers/:id` | Update / Delete a client |
 | `GET/POST` | `/api/projects` | List / Create projects (optional client association) |
 | `PUT/DELETE` | `/api/projects/:id` | Update / Delete a project |
+
+*Note: All data-fetching routes (tasks, metrics, config, timeblocks) support a `?board_id=` query parameter to scope context to a specific workspace.*
 
 ## Testing
 

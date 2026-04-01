@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { fetchTimeBlocks, fetchTasks } from '@/lib/api'
+import { useBoard } from '@/hooks/useBoard'
 
 /**
  * @description Compute the Monday-start week boundaries for a given offset.
@@ -36,6 +37,7 @@ export function useCalendarData() {
   const [timeBlocks, setTimeBlocks] = useState([])
   const [allTasks, setAllTasks] = useState([])
   const [loading, setLoading] = useState(true)
+  const { activeBoardId } = useBoard()
 
   const { weekStart, weekEnd, days } = useMemo(() => getWeekBounds(weekOffset), [weekOffset])
 
@@ -43,8 +45,8 @@ export function useCalendarData() {
     setLoading(true)
     try {
       const [blocks, tasks] = await Promise.all([
-        fetchTimeBlocks(weekStart.toISOString(), weekEnd.toISOString()),
-        fetchTasks(),
+        fetchTimeBlocks(weekStart.toISOString(), weekEnd.toISOString(), activeBoardId),
+        fetchTasks(activeBoardId),
       ])
       setTimeBlocks(blocks)
       setAllTasks(tasks)
@@ -52,7 +54,7 @@ export function useCalendarData() {
       /* error handled by loading state */
     }
     setLoading(false)
-  }, [weekStart, weekEnd])
+  }, [weekStart, weekEnd, activeBoardId])
 
   useEffect(() => { load() }, [load])
 

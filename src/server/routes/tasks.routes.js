@@ -42,8 +42,9 @@ router.post('/api/tasks', (req, res) => {
  */
 router.get('/api/tasks', (req, res) => {
   try {
+    const boardId = req.query.board_id ? parseInt(req.query.board_id, 10) : null;
     const isTemplate = req.query.is_template === 'true';
-    const tasks = getAllTasks({ is_template: isTemplate });
+    const tasks = getAllTasks({ board_id: boardId, is_template: isTemplate });
     res.json(tasks);
   } catch (err) {
     logger.error({ err: err.message }, 'Failed to retrieve tasks');

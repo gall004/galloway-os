@@ -14,6 +14,9 @@ if (!fs.existsSync(config.logDir)) {
  * @returns {Object} Pino transport configuration.
  */
 function buildTransport() {
+  if (config.nodeEnv === 'test') {
+    return { target: 'pino/file', options: { destination: '/dev/null' } };
+  }
   const fileTarget = {
     target: 'pino-roll',
     options: {

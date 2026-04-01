@@ -5,19 +5,20 @@ const logger = require('../logger');
 const router = express.Router();
 
 const ENTITIES = [
+  { path: 'boards', table: 'boards' },
   { path: 'customers', table: 'customers' },
-  { path: 'projects', table: 'projects', hasCustomerFK: true },
+  { path: 'projects', table: 'projects', hasCustomerFK: true, hasBoardFK: true },
 ];
 
 /**
  * @description Register CRUD routes for a config entity.
- * @param {{ path: string, table: string, hasCustomerFK?: boolean }} entity
+ * @param {{ path: string, table: string, hasCustomerFK?: boolean, hasBoardFK?: boolean }} entity
  */
 function registerEntityRoutes(entity) {
-  const svc = createConfigService(entity.table, entity.hasCustomerFK);
+  const svc = createConfigService(entity.table, entity.hasCustomerFK, entity.hasBoardFK);
 
-  router.get(`/api/${entity.path}`, (_req, res) => {
-    try { res.json(svc.getAll()); }
+  router.get(`/api/${entity.path}`, (req, res) => {
+    try { res.json(svc.getAll(req.query.board_id)); }
     catch (err) { logger.error({ err: err.message }, `Failed to get ${entity.path}`); res.status(500).json({ error: true, message: err.message, code: 'INTERNAL_ERROR' }); }
   });
 
@@ -25,7 +26,9 @@ function registerEntityRoutes(entity) {
     if (!req.body?.name || typeof req.body.name !== 'string' || !req.body.name.trim()) {
       return res.status(400).json({ error: true, message: 'Name is required.', code: 'VALIDATION_ERROR' });
     }
-    try { res.status(201).json(svc.create(req.body)); }
+    const payload = { ...req.body };
+    if (req.query.board_id && !payload.board_id) { payload.board_id = req.query.board_id; }
+    try { res.status(201).json(svc.create(payload)); }
     catch (err) {
       logger.warn({ err: err.message }, `${entity.path} creation failed`);
       const status = err.message?.includes('UNIQUE') ? 409 : 500;

@@ -7,18 +7,24 @@ const logger = require('../logger');
  * @param {boolean} [hasCustomerFK=false] - Whether the table has a customer_id FK.
  * @returns {Object} Service with getAll, getById, create, update, remove.
  */
-function createConfigService(tableName, hasCustomerFK = false) {
+function createConfigService(tableName, hasCustomerFK = false, hasBoardFK = false) {
   return {
     /**
      * @description Get all records from the table.
+     * @param {number|null} boardId
      * @returns {Array<Object>}
      */
-    getAll() {
+    getAll(boardId = null) {
       const db = getDatabase();
-      if (hasCustomerFK) {
-        return db.prepare(`SELECT ${tableName}.*, customers.name AS customer_name FROM ${tableName} LEFT JOIN customers ON ${tableName}.customer_id = customers.id ORDER BY ${tableName}.id`).all();
+      let query = `SELECT ${tableName}.*`;
+      if (hasCustomerFK) { query += `, customers.name AS customer_name`; }
+      query += ` FROM ${tableName}`;
+      if (hasCustomerFK) { query += ` LEFT JOIN customers ON ${tableName}.customer_id = customers.id`; }
+      
+      if (hasBoardFK && boardId) {
+        return db.prepare(`${query} WHERE ${tableName}.board_id = ? ORDER BY ${tableName}.id`).all(boardId);
       }
-      return db.prepare(`SELECT * FROM ${tableName} ORDER BY id`).all();
+      return db.prepare(`${query} ORDER BY ${tableName}.id`).all();
     },
 
     /**
@@ -33,19 +39,19 @@ function createConfigService(tableName, hasCustomerFK = false) {
 
     /**
      * @description Create a new record.
-     * @param {Object} data - Must include { name } and optionally { customer_id }.
+     * @param {Object} data - Must include { name } and optionally { customer_id, board_id }.
      * @returns {Object} The created record.
      */
     create(data) {
       const db = getDatabase();
-      if (hasCustomerFK) {
-        const stmt = db.prepare(`INSERT INTO ${tableName} (name, customer_id) VALUES (?, ?)`);
-        const result = stmt.run(data.name, data.customer_id || null);
-        logger.info({ table: tableName, id: result.lastInsertRowid }, 'Config record created');
-        return db.prepare(`SELECT * FROM ${tableName} WHERE id = ?`).get(result.lastInsertRowid);
-      }
-      const stmt = db.prepare(`INSERT INTO ${tableName} (name) VALUES (?)`);
-      const result = stmt.run(data.name);
+      const cols = ['name'];
+      const vals = [data.name];
+      if (hasCustomerFK) { cols.push('customer_id'); vals.push(data.customer_id || null); }
+      if (hasBoardFK) { cols.push('board_id'); vals.push(data.board_id || 1); }
+      
+      const placeholders = cols.map(() => '?').join(', ');
+      const stmt = db.prepare(`INSERT INTO ${tableName} (${cols.join(', ')}) VALUES (${placeholders})`);
+      const result = stmt.run(...vals);
       logger.info({ table: tableName, id: result.lastInsertRowid }, 'Config record created');
       return db.prepare(`SELECT * FROM ${tableName} WHERE id = ?`).get(result.lastInsertRowid);
     },

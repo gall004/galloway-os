@@ -7,12 +7,13 @@ const router = express.Router();
 /**
  * @description GET /api/settings — Retrieve app settings singleton.
  */
-router.get('/api/settings', (_req, res) => {
+router.get('/api/settings', (req, res, next) => {
   try {
-    res.json(getSettings());
+    const boardId = req.query.board_id ? parseInt(req.query.board_id, 10) : 1;
+    res.json(getSettings(boardId));
   } catch (err) {
     logger.error({ err: err.message }, 'Failed to get settings');
-    res.status(500).json({ error: true, message: err.message, code: 'INTERNAL_ERROR' });
+    next(err);
   }
 });
 
@@ -21,7 +22,8 @@ router.get('/api/settings', (_req, res) => {
  */
 router.put('/api/settings', (req, res) => {
   try {
-    res.json(updateSettings(req.body));
+    const boardId = req.query.board_id ? parseInt(req.query.board_id, 10) : 1;
+    res.json(updateSettings(req.body, boardId));
   } catch (err) {
     const status = err.code === 'VALIDATION_ERROR' ? 400 : 500;
     res.status(status).json({ error: true, message: err.message, code: err.code || 'INTERNAL_ERROR' });

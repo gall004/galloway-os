@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import { BoardProvider } from '@/contexts/BoardProvider'
 import AppHeader from '@/components/AppHeader'
 import PriorityBoard from '@/components/PriorityBoard'
 import AnalyticsDashboard from '@/components/AnalyticsDashboard'
@@ -15,7 +16,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
+        <BoardProvider>
+          <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
           <AppHeader />
           <main className="flex-1 min-h-0 flex flex-col relative w-full">
             <Routes>
@@ -26,8 +28,9 @@ export default function App() {
               <Route path="/settings" element={<SettingsView />} />
             </Routes>
           </main>
-        </div>
-        <Toaster richColors position="bottom-right" />
+          </div>
+          <Toaster richColors position="bottom-right" />
+        </BoardProvider>
       </ThemeProvider>
     </BrowserRouter>
   )

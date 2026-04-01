@@ -7,9 +7,9 @@ const logger = require('../logger');
  * @param {string} endDate - ISO 8601 end of range.
  * @returns {Array} Array of time block objects with joined task data.
  */
-function getTimeBlocks(startDate, endDate) {
+function getTimeBlocks(startDate, endDate, boardId = null) {
   const db = getDatabase();
-  return db.prepare(`
+  let query = `
     SELECT tb.*, t.title AS task_title, t.description AS task_description, t.status_name,
       p.name AS project_name, c.name AS customer_name
     FROM time_blocks tb
@@ -17,8 +17,13 @@ function getTimeBlocks(startDate, endDate) {
     LEFT JOIN projects p ON t.project_id = p.id
     LEFT JOIN customers c ON t.customer_id = c.id
     WHERE tb.start_time < ? AND tb.end_time > ?
-    ORDER BY tb.start_time ASC
-  `).all(endDate, startDate);
+  `;
+  if (boardId) {
+    query += ` AND p.board_id = ? ORDER BY tb.start_time ASC`;
+    return db.prepare(query).all(endDate, startDate, boardId);
+  }
+  query += ` ORDER BY tb.start_time ASC`;
+  return db.prepare(query).all(endDate, startDate);
 }
 
 /**

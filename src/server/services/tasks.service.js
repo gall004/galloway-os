@@ -116,7 +116,13 @@ function createTask(data) {
  */
 function getAllTasks(opts = {}) {
   const db = getDatabase();
-  const baseWhere = opts.is_template ? 'WHERE tasks.is_template = 1' : 'WHERE tasks.is_template = 0';
+  let baseWhere = opts.is_template ? 'WHERE tasks.is_template = 1' : 'WHERE tasks.is_template = 0';
+  
+  if (opts.board_id) {
+    baseWhere += ' AND pr.board_id = ?';
+    return db.prepare(`${TASKS_SELECT} ${baseWhere} ORDER BY tasks.order_index ASC, tasks.date_created DESC`).all(opts.board_id);
+  }
+  
   return db.prepare(`${TASKS_SELECT} ${baseWhere} ORDER BY tasks.order_index ASC, tasks.date_created DESC`).all();
 }
 

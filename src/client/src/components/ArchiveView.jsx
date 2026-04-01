@@ -18,6 +18,7 @@ import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
 import TaskModal from '@/components/TaskModal'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { MoreHorizontal, RotateCcw, Edit2, Trash2 } from 'lucide-react'
+import { useBoard } from '@/hooks/useBoard'
 
 /**
  * @description Completed tasks ledger with overflow-safe table and dropdown actions.
@@ -31,17 +32,18 @@ export default function ArchiveView() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingTask, setEditingTask] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const { activeBoardId } = useBoard()
 
   const load = useCallback(async () => {
     try {
       const [allTasks, customers, projects, statuses] = await Promise.all([
-        fetchTasks(), fetchConfig('customers'), fetchConfig('projects'), fetchConfig('statuses'),
+        fetchTasks(activeBoardId), fetchConfig('customers'), fetchConfig('projects', activeBoardId), fetchConfig('statuses'),
       ])
       setData(allTasks.filter((t) => t.status_name === 'done'))
       setConfig({ customers, projects, statuses })
       setLoading(false)
     } catch { setLoading(false) }
-  }, [])
+  }, [activeBoardId])
 
   useEffect(() => { load() }, [load])
 

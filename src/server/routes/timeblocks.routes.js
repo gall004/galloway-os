@@ -24,12 +24,12 @@ function parseId(rawId) {
  * @description GET /api/time-blocks — Retrieve time blocks for a date range.
  */
 router.get('/api/time-blocks', (req, res) => {
-  const { start, end } = req.query;
+  const { start, end, board_id } = req.query;
   if (!start || !end) {
     return res.status(400).json({ error: true, message: 'start and end query parameters are required.', code: 'VALIDATION_ERROR' });
   }
   try {
-    const blocks = getTimeBlocks(start, end);
+    const blocks = getTimeBlocks(start, end, board_id ? parseInt(board_id, 10) : null);
     res.json(blocks);
   } catch (err) {
     logger.error({ err: err.message }, 'Failed to retrieve time blocks');

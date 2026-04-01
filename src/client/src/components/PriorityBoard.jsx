@@ -19,6 +19,7 @@ import { Target } from 'lucide-react'
 import { fetchTasks, updateTask, createTask, deleteTask, reorderTasks, fetchConfig, fetchSettings } from '@/lib/api'
 import InboxQuickAdd from '@/components/InboxQuickAdd'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { useBoard } from '@/hooks/useBoard'
 
 function CarouselTabs({ columns, getColumnLabel }) {
   const { api } = useCarousel()
@@ -65,6 +66,7 @@ export default function PriorityBoard() {
   const [impactOpen, setImpactOpen] = useState(false)
   const [completingTask, setCompletingTask] = useState(null)
   const [isZenModeEnabled, setIsZenModeEnabled] = useState(false)
+  const { activeBoardId } = useBoard()
   const dragStartStatus = useRef(null)
   const isMobile = useIsMobile()
 
@@ -73,14 +75,14 @@ export default function PriorityBoard() {
   const loadAll = useCallback(async () => {
     try {
       const [t, customers, projects, statuses, appSettings] = await Promise.all([
-        fetchTasks(), fetchConfig('customers'), fetchConfig('projects'), fetchConfig('statuses'), fetchSettings(),
+        fetchTasks(activeBoardId), fetchConfig('customers'), fetchConfig('projects', activeBoardId), fetchConfig('statuses'), fetchSettings(activeBoardId),
       ])
       setTasks(t)
       setConfig({ customers, projects, statuses })
       setSettings(appSettings)
       setLoading(false)
     } catch (err) { setError(err.message); setLoading(false) }
-  }, [])
+  }, [activeBoardId])
 
   useEffect(() => { loadAll() }, [loadAll])
 
