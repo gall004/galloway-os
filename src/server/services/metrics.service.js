@@ -22,7 +22,6 @@ function getMetrics(timeframe = '7d') {
     FROM tasks
     LEFT JOIN customers c ON tasks.customer_id = c.id
     WHERE tasks.status_name != 'done' AND tasks.is_template = 0
-      AND (c.name IS NULL OR c.name != 'N/A')
     GROUP BY customer
     ORDER BY count DESC
   `).all();

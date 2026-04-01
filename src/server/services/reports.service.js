@@ -88,7 +88,7 @@ function generateWeeklyReport(days = 7) {
     md += `*No tasks completed in the last ${days} days.*\n`;
   } else {
     completedStats.forEach(t => {
-      const custProj = [t.customer !== 'N/A' ? t.customer : null, t.project !== 'N/A' ? t.project : null].filter(Boolean).join(' | ');
+      const custProj = [t.customer, t.project !== 'N/A' ? t.project : null].filter(Boolean).join(' | ');
       const meta = custProj ? ` (${custProj})` : '';
       md += `- **${t.title}**${meta}\n`;
       if (t.impact_statement) {
@@ -104,7 +104,7 @@ function generateWeeklyReport(days = 7) {
     md += `*No active tasks currently prioritized.*\n`;
   } else {
     topActive.forEach((t, i) => {
-      const custProj = [t.customer !== 'N/A' ? t.customer : null, t.project !== 'N/A' ? t.project : null].filter(Boolean).join(' | ');
+      const custProj = [t.customer, t.project !== 'N/A' ? t.project : null].filter(Boolean).join(' | ');
       const meta = custProj ? ` (${custProj})` : '';
       md += `${i + 1}. **${t.title}**${meta}\n`;
     });
