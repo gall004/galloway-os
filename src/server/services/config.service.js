@@ -40,7 +40,7 @@ function createConfigService(tableName, hasCustomerFK = false) {
       const db = getDatabase();
       if (hasCustomerFK) {
         const stmt = db.prepare(`INSERT INTO ${tableName} (name, customer_id) VALUES (?, ?)`);
-        const result = stmt.run(data.name, data.customer_id || 1);
+        const result = stmt.run(data.name, data.customer_id || null);
         logger.info({ table: tableName, id: result.lastInsertRowid }, 'Config record created');
         return db.prepare(`SELECT * FROM ${tableName} WHERE id = ?`).get(result.lastInsertRowid);
       }
@@ -66,7 +66,7 @@ function createConfigService(tableName, hasCustomerFK = false) {
         throw err;
       }
       if (hasCustomerFK && data.customer_id !== undefined) {
-        db.prepare(`UPDATE ${tableName} SET name = ?, customer_id = ? WHERE id = ?`).run(data.name || existing.name, data.customer_id, id);
+        db.prepare(`UPDATE ${tableName} SET name = ?, customer_id = ? WHERE id = ?`).run(data.name || existing.name, data.customer_id || null, id);
       } else {
         db.prepare(`UPDATE ${tableName} SET name = ? WHERE id = ?`).run(data.name || existing.name, id);
       }

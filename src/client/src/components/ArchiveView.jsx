@@ -96,7 +96,7 @@ export default function ArchiveView() {
     },
     {
       accessorKey: 'customer',
-      header: ({ column }) => <Button variant="ghost" className="px-0 font-medium whitespace-nowrap" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>Customer {column.getIsSorted() === 'asc' ? '↑' : column.getIsSorted() === 'desc' ? '↓' : '↕'}</Button>,
+      header: ({ column }) => <Button variant="ghost" className="px-0 font-medium whitespace-nowrap" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>Client {column.getIsSorted() === 'asc' ? '↑' : column.getIsSorted() === 'desc' ? '↓' : '↕'}</Button>,
       cell: ({ row }) => <span className="whitespace-nowrap">{row.getValue('customer') || '—'}</span>,
       filterFn: 'includesString',
       size: 120,
@@ -173,7 +173,7 @@ export default function ArchiveView() {
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">Archive ({data.length})</h2>
         <Input
-          placeholder="Filter by title, customer, or project…"
+          placeholder="Filter by title, client, or project…"
           value={globalFilter ?? ''}
           onChange={(e) => setGlobalFilter(e.target.value)}
           className="max-w-xs"
@@ -220,7 +220,7 @@ export default function ArchiveView() {
                     <TableRow className="md:hidden bg-muted/20 border-b">
                       <TableCell colSpan={row.getVisibleCells().length} className="px-5 py-3 border-l-2 border-primary/50">
                         <div className="flex flex-col gap-1.5 text-sm text-muted-foreground whitespace-normal">
-                          <div className="flex items-start gap-2"><strong className="text-foreground min-w-20">Customer:</strong> <span className="text-wrap">{(row.getValue('customer') || '—')}</span></div>
+                          <div className="flex items-start gap-2"><strong className="text-foreground min-w-20">Client:</strong> <span className="text-wrap">{(row.getValue('customer') || '—')}</span></div>
                           <div className="flex items-start gap-2"><strong className="text-foreground min-w-20">Project:</strong> <span className="text-wrap">{(row.getValue('project') || '—')}</span></div>
                           <div className="flex items-start gap-2"><strong className="text-foreground min-w-20">Completed:</strong> <span>{row.getValue('date_completed') ? new Date(row.getValue('date_completed')).toLocaleDateString() : '—'}</span></div>
                         </div>

@@ -9,7 +9,7 @@ import AppearanceSettings from '@/components/AppearanceSettings'
 
 const TAB_LABELS = {
   workflow: 'Workflow',
-  customers: 'Customers',
+  customers: 'Clients',
   projects: 'Projects',
   recurring: 'Recurring Tasks',
   appearance: 'Appearance',
@@ -17,8 +17,8 @@ const TAB_LABELS = {
 
 const TABS = [
   { key: 'workflow', label: 'Workflow', pluralLabel: 'Workflow', icon: Settings2 },
-  { key: 'customers', label: 'Customer', pluralLabel: 'Customers', icon: Users },
-  { key: 'projects', label: 'Project', pluralLabel: 'Projects', parentEntity: 'customers', parentLabel: 'Customer', icon: FolderKanban },
+  { key: 'customers', label: 'Client', pluralLabel: 'Clients', icon: Users },
+  { key: 'projects', label: 'Project', pluralLabel: 'Projects', parentEntity: 'customers', parentLabel: 'Client', icon: FolderKanban },
   { key: 'recurring', label: 'Recurring', pluralLabel: 'Recurring Tasks', icon: Repeat },
   { key: 'appearance', label: 'Appearance', pluralLabel: 'Appearance', icon: Palette },
 ]
