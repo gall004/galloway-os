@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Card } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { fetchMetrics, fetchSettings, fetchConfig } from '@/lib/api'
 import CustomerDonut from '@/components/charts/CustomerDonut'
 import VelocityBar from '@/components/charts/VelocityBar'
@@ -15,11 +16,13 @@ export default function AnalyticsDashboard() {
   const [metrics, setMetrics] = useState(null)
   const [settings, setSettings] = useState(null)
   const [configStatuses, setConfigStatuses] = useState([])
+  const [timeframe, setTimeframe] = useState('7d')
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
     try {
-      const [data, appSettings, fetchedStatuses] = await Promise.all([fetchMetrics(), fetchSettings(), fetchConfig('statuses')])
+      setLoading(true)
+      const [data, appSettings, fetchedStatuses] = await Promise.all([fetchMetrics(timeframe), fetchSettings(), fetchConfig('statuses')])
       setMetrics(data)
       setSettings(appSettings)
       setConfigStatuses(fetchedStatuses || [])
@@ -28,7 +31,7 @@ export default function AnalyticsDashboard() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [timeframe])
 
   useEffect(() => { load() }, [load])
 
@@ -76,20 +79,32 @@ export default function AnalyticsDashboard() {
 
   return (
     <div className="w-full flex-1 max-w-[1600px] mx-auto px-4 md:px-6 lg:px-8 py-8 space-y-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <h2 className="text-2xl font-bold tracking-tight text-foreground">Insights</h2>
-        <ReportGenerator />
+        <div className="flex items-center gap-3">
+          <Select value={timeframe} onValueChange={setTimeframe}>
+            <SelectTrigger className="w-[160px] h-9">
+              <SelectValue placeholder="Timeframe" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7d">Last 7 Days</SelectItem>
+              <SelectItem value="30d">Last 30 Days</SelectItem>
+              <SelectItem value="all_time">All Time</SelectItem>
+            </SelectContent>
+          </Select>
+          <ReportGenerator />
+        </div>
       </div>
 
       {parkedTasks.length > 0 && (
         <div className="relative w-full rounded-lg border p-4 bg-muted text-muted-foreground border-border mb-6">
-          <div className="text-sm font-medium">Parked Tasks: {parkedTasks.reduce((acc, p) => acc + p.count, 0)} in {parkedTasks.map(p => p.status_name).join(', ')}</div>
+          <div className="text-sm font-medium">Parked Tasks: {parkedTasks.reduce((acc, p) => acc + p.count, 0)} in {parkedTasks.map(p => p.status_name).join(', ')} <span className="opacity-70 font-normal italic ml-2">(As of right now)</span></div>
         </div>
       )}
 
       {orphanedTasks.length > 0 && (
         <div className="relative w-full rounded-lg border p-4 border-destructive/50 text-destructive dark:border-destructive mb-6">
-          <div className="text-sm font-medium">Data Anomaly: {orphanedTasks.reduce((acc, o) => acc + o.count, 0)} orphaned tasks detected in deleted columns ({orphanedTasks.map(o => o.status_name).join(', ')})</div>
+          <div className="text-sm font-medium">Data Anomaly: {orphanedTasks.reduce((acc, o) => acc + o.count, 0)} orphaned tasks detected in deleted columns <span className="opacity-70 font-normal italic ml-2">(As of right now)</span></div>
         </div>
       )}
 
@@ -98,7 +113,7 @@ export default function AnalyticsDashboard() {
         <MetricCard
           label="Tasks Completed"
           value={metrics.totalCompleted}
-          subtitle="All time"
+          subtitle={timeframe === '7d' ? 'In the last 7 days' : timeframe === '30d' ? 'In the last 30 days' : 'All time'}
         />
         <MetricCard
           label="Avg Cycle Time"
@@ -115,7 +130,7 @@ export default function AnalyticsDashboard() {
         <MetricCard
           label="Active Tasks"
           value={totalActiveTasks}
-          subtitle="In flight now"
+          subtitle="Current pipeline"
         />
       </div>
 

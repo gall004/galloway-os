@@ -5,8 +5,17 @@ const logger = require('../logger');
  * @description Compute aggregate metrics for the analytics dashboard.
  * @returns {Object} Metrics payload with chart data.
  */
-function getMetrics() {
+function getMetrics(timeframe = '7d') {
   const db = getDatabase();
+
+  let days = 7;
+  if (timeframe === '30d') {
+    days = 30;
+  }
+  
+  const dateFilter = timeframe === 'all_time' 
+    ? '' 
+    : `AND date_completed >= datetime('now', '-${days} days')`;
 
   const tasksByCustomer = db.prepare(`
     SELECT c.name AS customer, COUNT(*) AS count
@@ -24,7 +33,7 @@ function getMetrics() {
     FROM tasks
     WHERE status_name = 'done' AND is_template = 0
       AND date_completed IS NOT NULL
-      AND date_completed >= date('now', '-56 days')
+      ${dateFilter}
     GROUP BY week
     ORDER BY week ASC
   `).all();
@@ -42,6 +51,7 @@ function getMetrics() {
     WHERE status_name = 'done' AND is_template = 0
       AND date_completed IS NOT NULL
       AND date_created IS NOT NULL
+      ${dateFilter}
   `).get();
 
   const delegationTimeRow = db.prepare(`
@@ -50,6 +60,7 @@ function getMetrics() {
     WHERE status_name = 'done' AND is_template = 0
       AND date_completed IS NOT NULL
       AND date_delegated IS NOT NULL
+      ${dateFilter}
   `).get();
 
   const recentImpacts = db.prepare(`
@@ -58,12 +69,13 @@ function getMetrics() {
     WHERE status_name = 'done' AND is_template = 0
       AND impact_statement IS NOT NULL
       AND impact_statement != ''
+      ${dateFilter}
     ORDER BY date_completed DESC
     LIMIT 5
   `).all();
 
   const totalCompleted = db.prepare(`
-    SELECT COUNT(*) AS count FROM tasks WHERE status_name = 'done' AND is_template = 0
+    SELECT COUNT(*) AS count FROM tasks WHERE status_name = 'done' AND is_template = 0 ${dateFilter}
   `).get()?.count || 0;
 
   logger.info('Metrics computed');
