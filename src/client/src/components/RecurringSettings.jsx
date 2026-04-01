@@ -59,7 +59,6 @@ export default function RecurringSettings() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12 hidden md:table-cell">ID</TableHead>
               <TableHead>Template Title</TableHead>
               <TableHead className="hidden md:table-cell">Frequency</TableHead>
               <TableHead className="hidden md:table-cell">Next Run</TableHead>
@@ -76,7 +75,6 @@ export default function RecurringSettings() {
                     onClick={() => setExpandedRow(isExpanded ? null : rule.id)}
                     className="cursor-pointer md:cursor-default transition-colors hover:bg-muted/50"
                   >
-                    <TableCell className="text-muted-foreground hidden md:table-cell">{rule.id}</TableCell>
                     <TableCell className="font-medium truncate">{rule.title}</TableCell>
                     <TableCell className="hidden md:table-cell capitalize">{rule.frequency}</TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground">{rule.next_run_date || 'N/A'}</TableCell>
@@ -96,7 +94,7 @@ export default function RecurringSettings() {
                   </TableRow>
                   {isExpanded && (
                     <TableRow className="md:hidden bg-muted/20 border-b">
-                      <TableCell colSpan={3} className="px-5 py-3 border-l-2 border-primary/50">
+                      <TableCell colSpan={2} className="px-5 py-3 border-l-2 border-primary/50">
                         <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
                            <div className="flex gap-2"><strong className="text-foreground min-w-16">Status:</strong> <span className={rule.is_active_template ? "text-green-500 font-medium" : ""}>{rule.is_active_template ? 'Active' : 'Inactive'}</span></div>
                            <div className="flex gap-2"><strong className="text-foreground min-w-16">Freq:</strong> <span className="capitalize">{rule.frequency}</span></div>
