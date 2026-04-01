@@ -76,7 +76,6 @@ export default function ConfigTable({ entity, label, pluralLabel, parentEntity, 
       <Table>
         <TableHeader>
           <TableRow>
-            {!readOnly && <TableHead className="w-12 hidden md:table-cell">ID</TableHead>}
             {readOnly && <TableHead className="w-32 hidden md:table-cell">Key</TableHead>}
             <TableHead>{readOnly ? 'Display Label' : 'Name'}</TableHead>
             {parentEntity && <TableHead className="hidden md:table-cell">{parentLabel}</TableHead>}
@@ -93,7 +92,6 @@ export default function ConfigTable({ entity, label, pluralLabel, parentEntity, 
                   onClick={() => setExpandedRow(isExpanded ? null : itemIdentifier)}
                   className="cursor-pointer md:cursor-default transition-colors hover:bg-muted/50"
                 >
-                  {!readOnly && <TableCell className="text-muted-foreground hidden md:table-cell">{item.id}</TableCell>}
                   {readOnly && <TableCell className="text-muted-foreground font-mono text-xs hidden md:table-cell">{item[nameField]}</TableCell>}
                   <TableCell className="font-medium truncate">{readOnly ? item.label : item.name}</TableCell>
                   {parentEntity && <TableCell className="hidden md:table-cell truncate">{item.customer_name || '—'}</TableCell>}
@@ -116,9 +114,8 @@ export default function ConfigTable({ entity, label, pluralLabel, parentEntity, 
                 </TableRow>
                 {isExpanded && (
                   <TableRow className="md:hidden bg-muted/20 border-b">
-                    <TableCell colSpan={readOnly ? 3 : parentEntity ? 4 : 3} className="px-5 py-3 border-l-2 border-primary/50">
+                    <TableCell colSpan={readOnly ? 3 : parentEntity ? 3 : 2} className="px-5 py-3 border-l-2 border-primary/50">
                       <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
-                        {!readOnly && <div className="flex gap-2"><strong className="text-foreground min-w-16">ID:</strong> <span>{item.id}</span></div>}
                         {readOnly && <div className="flex gap-2"><strong className="text-foreground min-w-16">Key:</strong> <span className="font-mono">{item[nameField]}</span></div>}
                         {parentEntity && <div className="flex gap-2"><strong className="text-foreground min-w-16">{parentLabel}:</strong> <span className="text-wrap">{(item.customer_name || '—')}</span></div>}
                       </div>
