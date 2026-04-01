@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useCalendarData } from '@/hooks/useCalendarData'
-import { fetchSettings } from '@/lib/api'
+import { fetchSettings, fetchConfig, updateTask, deleteTask } from '@/lib/api'
 import DesktopCalendar from '@/components/calendar/DesktopCalendar'
 import MobileAgenda from '@/components/calendar/MobileAgenda'
 import { Loader2, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import TaskModal from '@/components/TaskModal'
+import { toast } from 'sonner'
 
 /**
  * @description CalendarView — responsive router that renders DesktopCalendar or MobileAgenda.
@@ -16,13 +18,43 @@ export default function CalendarView() {
   const isMobile = useIsMobile()
   const navigate = useNavigate()
   const [authorized, setAuthorized] = useState(null)
+  const [config, setConfig] = useState({})
+  const [editingTask, setEditingTask] = useState(null)
   const calendarData = useCalendarData()
 
   useEffect(() => {
     fetchSettings().then((s) => {
       setAuthorized(!!s.enable_calendar)
     }).catch(() => setAuthorized(false))
+
+    Promise.all([fetchConfig('customers'), fetchConfig('projects'), fetchConfig('statuses')])
+      .then(([customers, projects, statuses]) => {
+        setConfig({ customers, projects, statuses })
+      }).catch(console.error)
   }, [])
+
+  const handleTaskClick = (taskId) => {
+    const task = calendarData.allTasks.find(t => t.id === taskId)
+    if (task) setEditingTask(task)
+  }
+
+  const handleUpdate = async (taskId, data) => {
+    try {
+      await updateTask(taskId, data)
+      toast.success('Task updated')
+      setEditingTask(null)
+      calendarData.reload()
+    } catch (e) { toast.error(e.message) }
+  }
+
+  const handleDelete = async (taskId) => {
+    try {
+      await deleteTask(taskId)
+      toast.success('Task deleted')
+      setEditingTask(null)
+      calendarData.reload()
+    } catch (e) { toast.error(e.message) }
+  }
 
   if (authorized === null) {
     return (
@@ -49,9 +81,22 @@ export default function CalendarView() {
     )
   }
 
-  return isMobile ? (
-    <MobileAgenda calendarData={calendarData} />
-  ) : (
-    <DesktopCalendar calendarData={calendarData} />
+  return (
+    <>
+      {isMobile ? (
+        <MobileAgenda calendarData={calendarData} onTaskClick={handleTaskClick} />
+      ) : (
+        <DesktopCalendar calendarData={calendarData} onTaskClick={handleTaskClick} />
+      )}
+      
+      <TaskModal
+        open={!!editingTask}
+        onOpenChange={(v) => !v && setEditingTask(null)}
+        task={editingTask}
+        config={config}
+        onSave={handleUpdate}
+        onDelete={handleDelete}
+      />
+    </>
   )
 }

@@ -10,7 +10,7 @@ const logger = require('../logger');
 function getTimeBlocks(startDate, endDate) {
   const db = getDatabase();
   return db.prepare(`
-    SELECT tb.*, t.title AS task_title, t.status_name,
+    SELECT tb.*, t.title AS task_title, t.description AS task_description, t.status_name,
       p.name AS project_name, c.name AS customer_name
     FROM time_blocks tb
     JOIN tasks t ON tb.task_id = t.id

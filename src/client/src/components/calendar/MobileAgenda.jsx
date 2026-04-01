@@ -7,9 +7,9 @@ import MobileScheduleSheet from '@/components/calendar/MobileScheduleSheet'
 
 /**
  * @description MobileAgenda — 1-day agenda with horizontal date selector and tap-to-schedule.
- * @param {{ calendarData: Object }} props
+ * @param {{ calendarData: Object, onTaskClick: Function }} props
  */
-export default function MobileAgenda({ calendarData }) {
+export default function MobileAgenda({ calendarData, onTaskClick }) {
   const { days, timeBlocks, activeTasks, loading, reload, goToday, goPrev, goNext } = calendarData
   const [selectedDayIndex, setSelectedDayIndex] = useState(() => {
     const today = new Date()
@@ -123,18 +123,24 @@ export default function MobileAgenda({ calendarData }) {
               const start = new Date(block.start_time)
               const end = new Date(block.end_time)
               const timeStr = `${start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} – ${end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+              const isDone = block.status_name === 'done'
               return (
                 <div
                   key={block.id}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-primary/20 bg-primary/5"
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer active:scale-[0.98] transition-all ${
+                    isDone ? 'bg-muted/30 border-border opacity-75' : 'border-primary/20 bg-primary/5 hover:bg-primary/10'
+                  }`}
+                  onClick={() => onTaskClick && onTaskClick(block.task_id)}
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm truncate">{block.task_title}</div>
+                    <div className={`font-medium text-sm truncate ${isDone ? 'line-through text-muted-foreground' : ''}`}>
+                      {block.task_title}
+                    </div>
                     <div className="text-xs text-muted-foreground">{timeStr}</div>
                   </div>
                   <button
-                    className="p-1 rounded-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
-                    onClick={() => handleDeleteBlock(block.id)}
+                    className="p-1 rounded-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0 z-10"
+                    onClick={(e) => { e.stopPropagation(); handleDeleteBlock(block.id); }}
                   >
                     <X className="h-4 w-4" />
                   </button>

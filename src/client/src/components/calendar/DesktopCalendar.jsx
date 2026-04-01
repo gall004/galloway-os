@@ -66,7 +66,7 @@ function DragOverlayCard({ task }) {
 /**
  * @description DesktopCalendar — 7-day grid with time slots and unscheduled backlog sidebar.
  */
-export default function DesktopCalendar({ calendarData }) {
+export default function DesktopCalendar({ calendarData, onTaskClick }) {
   const { days, timeBlocks, activeTasks, loading, reload, goToday, goPrev, goNext } = calendarData
   const [draggedTask, setDraggedTask] = useState(null)
 
@@ -152,14 +152,74 @@ export default function DesktopCalendar({ calendarData }) {
   }, [])
 
   const renderedBlocks = useMemo(() => {
-    return timeBlocks.map((block) => {
+    const dayBlocksMap = {}
+    timeBlocks.forEach(block => {
+      const start = new Date(block.start_time)
+      const dayIndex = days.findIndex((d) => d.toDateString() === start.toDateString())
+      if (dayIndex >= 0) {
+        if (!dayBlocksMap[dayIndex]) dayBlocksMap[dayIndex] = []
+        dayBlocksMap[dayIndex].push(block)
+      }
+    })
+
+    const styledBlocks = []
+
+    for (const [dayIdxStr, blocks] of Object.entries(dayBlocksMap)) {
+      const dayIndex = Number(dayIdxStr)
+      blocks.sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
+      
+      let currentGroup = []
+      let groupEndMax = 0
+
+      const layoutGroup = (group) => {
+        const cols = []
+        for (const b of group) {
+          const bStart = new Date(b.start_time).getTime()
+          let placed = false
+          for (const col of cols) {
+            const lastInCol = col[col.length - 1]
+            if (bStart >= new Date(lastInCol.end_time).getTime()) {
+              col.push(b)
+              b._colIndex = cols.indexOf(col)
+              placed = true
+              break
+            }
+          }
+          if (!placed) {
+            cols.push([b])
+            b._colIndex = cols.length - 1
+          }
+        }
+        for (const b of group) {
+          b._totalColumns = cols.length
+          b._dayIndex = dayIndex
+          styledBlocks.push(b)
+        }
+      }
+
+      for (const block of blocks) {
+        const startMs = new Date(block.start_time).getTime()
+        const endMs = new Date(block.end_time).getTime()
+        if (currentGroup.length === 0) {
+          currentGroup = [block]
+          groupEndMax = endMs
+        } else {
+          if (startMs < groupEndMax) {
+            currentGroup.push(block)
+            groupEndMax = Math.max(groupEndMax, endMs)
+          } else {
+            layoutGroup(currentGroup)
+            currentGroup = [block]
+            groupEndMax = endMs
+          }
+        }
+      }
+      if (currentGroup.length > 0) layoutGroup(currentGroup)
+    }
+
+    return styledBlocks.map((block) => {
       const blockStart = new Date(block.start_time)
       const blockEnd = new Date(block.end_time)
-
-      const dayIndex = days.findIndex((d) => {
-        return d.toDateString() === blockStart.toDateString()
-      })
-      if (dayIndex === -1) return null
 
       const startMinutes = blockStart.getHours() * 60 + blockStart.getMinutes()
       const endMinutes = blockEnd.getHours() * 60 + blockEnd.getMinutes()
@@ -173,15 +233,18 @@ export default function DesktopCalendar({ calendarData }) {
           key={block.id}
           block={block}
           style={{
-            gridColumn: dayIndex + 2,
+            gridColumn: block._dayIndex + 2,
             gridRow: `${Math.floor(topSlot) + 2} / span ${Math.max(1, Math.floor(spanSlots))}`,
-            zIndex: 10,
+            marginLeft: `${(block._colIndex / block._totalColumns) * 100}%`,
+            width: `${100 / block._totalColumns}%`,
+            zIndex: 10 + block._colIndex,
           }}
           onDelete={handleDeleteBlock}
+          onClick={() => onTaskClick(block.task_id)}
         />
       )
     })
-  }, [timeBlocks, days, handleDeleteBlock])
+  }, [timeBlocks, days, handleDeleteBlock, onTaskClick])
 
   const hourLabels = useMemo(() => {
     const labels = []

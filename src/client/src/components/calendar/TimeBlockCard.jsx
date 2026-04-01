@@ -4,17 +4,14 @@ import { X } from 'lucide-react'
 /**
  * @description TimeBlockCard — renders a scheduled block on the calendar grid.
  * Draggable for rescheduling, with a delete button.
- * @param {{ block: Object, style: Object, onDelete: Function }} props
+ * @param {{ block: Object, style: Object, onDelete: Function, onClick: Function }} props
  */
-export default function TimeBlockCard({ block, style, onDelete }) {
+export default function TimeBlockCard({ block, style, onDelete, onClick }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `block-${block.id}`,
   })
 
   const isDone = block.status_name === 'done'
-  const startTime = new Date(block.start_time)
-  const endTime = new Date(block.end_time)
-  const timeLabel = `${startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} – ${endTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
 
   return (
     <div
@@ -27,13 +24,23 @@ export default function TimeBlockCard({ block, style, onDelete }) {
           ? 'opacity-40 scale-95 bg-primary/60'
           : isDone
             ? 'bg-muted/30 border border-border text-muted-foreground opacity-75'
-            : 'bg-primary/15 border border-primary/30 hover:bg-primary/25 hover:shadow-sm'
+            : 'bg-primary/15 border border-primary/30 hover:bg-primary/25 hover:shadow-md'
       }`}
+      onClick={(e) => {
+        if (e.defaultPrevented) return
+        if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SVG' && e.target.tagName !== 'path') {
+          if (onClick) onClick()
+        }
+      }}
     >
-      <div className={`font-medium truncate leading-tight ${isDone ? 'line-through decoration-muted-foreground/50' : 'text-foreground'}`}>
+      <div className={`font-semibold truncate leading-tight ${isDone ? 'line-through decoration-muted-foreground/50 text-muted-foreground' : 'text-foreground'}`}>
         {block.task_title}
       </div>
-      <div className="text-[10px] text-muted-foreground leading-tight">{timeLabel}</div>
+      {block.task_description && (
+        <div className={`text-[10px] leading-tight line-clamp-2 mt-0.5 ${isDone ? 'text-muted-foreground line-through decoration-muted-foreground/50' : 'text-muted-foreground'}`}>
+          {block.task_description}
+        </div>
+      )}
       <button
         className="absolute top-0.5 right-0.5 p-0.5 rounded-sm opacity-0 group-hover:opacity-100 hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-all"
         onClick={(e) => { e.stopPropagation(); onDelete(block.id) }}
