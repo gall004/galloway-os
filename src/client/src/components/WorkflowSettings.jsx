@@ -265,6 +265,13 @@ export default function WorkflowSettings() {
             </div>
             <Switch id="manager-mode" checked={!!settings?.manager_mode} onCheckedChange={(v) => handleToggle('manager_mode', v)} />
           </div>
+          <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+            <div className="space-y-0.5">
+              <Label htmlFor="calendar-mode" className="font-medium">Calendar Mode</Label>
+              <p className="text-xs text-muted-foreground">Schedule tasks on a visual calendar grid. Enables the Calendar view in navigation for drag-and-drop timeblocking.</p>
+            </div>
+            <Switch id="calendar-mode" checked={!!settings?.enable_calendar} onCheckedChange={(v) => handleToggle('enable_calendar', v)} />
+          </div>
         </div>
       </div>
 

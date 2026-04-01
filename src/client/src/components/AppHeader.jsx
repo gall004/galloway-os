@@ -1,8 +1,10 @@
+import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Menu, AppWindow, Inbox, Settings, Layers } from 'lucide-react'
+import { Menu, AppWindow, Inbox, Settings, Layers, CalendarDays } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader, SheetDescription, SheetClose } from '@/components/ui/sheet'
+import { fetchSettings } from '@/lib/api'
 
 /**
  * @description Compute time-of-day greeting based on local hour.
@@ -20,9 +22,15 @@ function getGreeting() {
  */
 export default function AppHeader() {
   const { pathname } = useLocation()
+  const [calendarEnabled, setCalendarEnabled] = useState(false)
+
+  useEffect(() => {
+    fetchSettings().then((s) => setCalendarEnabled(!!s.enable_calendar)).catch(() => {})
+  }, [])
 
   const links = [
     { to: '/', label: 'Board', icon: Inbox },
+    ...(calendarEnabled ? [{ to: '/calendar', label: 'Calendar', icon: CalendarDays }] : []),
     { to: '/dashboard', label: 'Insights', icon: AppWindow },
     { to: '/archive', label: 'Archive', icon: Layers },
     { to: '/settings', label: 'Settings', icon: Settings },

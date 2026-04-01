@@ -86,6 +86,10 @@ The SQLite databases persist in the `./src/db/` directory securely isolated per 
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| `GET` | `/api/time-blocks` | Get time blocks for a date range |
+| `POST` | `/api/time-blocks` | Create a new time block |
+| `PUT` | `/api/time-blocks/:id` | Reschedule a time block |
+| `DELETE` | `/api/time-blocks/:id` | Remove a time block |
 | `GET` | `/healthz` | Health check (verifies DB connectivity) |
 | `GET` | `/api/tasks` | Retrieve all tasks with joined names and status_label |
 | `POST` | `/api/tasks` | Create a new task (order_index shifts existing tasks) |
