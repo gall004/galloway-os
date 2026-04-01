@@ -33,7 +33,7 @@ function BacklogItem({ task }) {
     >
       <div className="font-medium text-foreground truncate">{task.title}</div>
       <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-1 gap-2">
-        <span className="truncate">{task.customer || 'Internal'} • {task.project}</span>
+        <span className="truncate">{[task.customer, task.project].filter(Boolean).join(' • ')}</span>
         {indicator && <span className={`shrink-0 font-medium whitespace-nowrap ${!isSafelyScheduled && past > 0 ? 'text-destructive/80' : ''}`}>{indicator}</span>}
       </div>
     </div>
