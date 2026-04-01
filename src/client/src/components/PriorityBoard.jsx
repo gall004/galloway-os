@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core'
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, pointerWithin } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 import { toast } from 'sonner'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
@@ -115,18 +115,19 @@ export default function PriorityBoard() {
 
     const activeId = active.id.toString().replace('task-', '')
     const overId = over.id.toString()
-    
-    const activeTaskItem = tasks.find(t => t.id.toString() === activeId)
-    if (!activeTaskItem) return
-    const activeContainer = activeTaskItem.status_name
-
-    let overContainer = null
-    if (overId.startsWith('column-')) overContainer = overId.replace('column-', '')
-    else overContainer = tasks.find(t => `task-${t.id}` === overId)?.status_name
-
-    if (!overContainer || activeContainer === overContainer) return
 
     setTasks((prev) => {
+      const activeTaskItem = prev.find(t => t.id.toString() === activeId)
+      if (!activeTaskItem) return prev
+
+      const activeContainer = activeTaskItem.status_name
+
+      let overContainer = null
+      if (overId.startsWith('column-')) overContainer = overId.replace('column-', '')
+      else overContainer = prev.find(t => `task-${t.id}` === overId)?.status_name
+
+      if (!overContainer || activeContainer === overContainer) return prev
+
       const activeItems = prev.filter(t => t.status_name === activeContainer && t.status_name !== 'done')
       const overItems = prev.filter(t => t.status_name === overContainer && t.status_name !== 'done')
       
@@ -154,7 +155,7 @@ export default function PriorityBoard() {
 
       return [...otherItems, ...doneItems, ...sortedActiveItems, ...sortedOverItems].sort((a,b) => a.order_index - b.order_index)
     })
-  }, [tasks, config.statuses])
+  }, [config.statuses])
 
   const handleDragEnd = useCallback(async (event) => {
     setActiveTask(null)
@@ -303,7 +304,7 @@ export default function PriorityBoard() {
           <Button size="sm" onClick={openCreate}>+ New Task</Button>
         </div>
       </div>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
         {isZenModeEnabled ? (
           <ZenModeView
             tasks={tasks}
