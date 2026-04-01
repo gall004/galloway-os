@@ -12,7 +12,7 @@ function getMetrics() {
     SELECT c.name AS customer, COUNT(*) AS count
     FROM tasks
     LEFT JOIN customers c ON tasks.customer_id = c.id
-    WHERE tasks.status_name NOT IN ('done', 'inbox') AND tasks.is_template = 0
+    WHERE tasks.status_name != 'done' AND tasks.is_template = 0
     GROUP BY c.name
     ORDER BY count DESC
   `).all();
@@ -32,12 +32,9 @@ function getMetrics() {
   const statusCounts = db.prepare(`
     SELECT status_name, COUNT(*) AS count
     FROM tasks
-    WHERE status_name NOT IN ('done', 'inbox') AND is_template = 0
+    WHERE status_name != 'done' AND is_template = 0
     GROUP BY status_name
   `).all();
-
-  const activeCount = statusCounts.find((s) => s.status_name === 'active')?.count || 0;
-  const delegatedCount = statusCounts.find((s) => s.status_name === 'delegated')?.count || 0;
 
   const cycleTimeRow = db.prepare(`
     SELECT AVG(julianday(date_completed) - julianday(date_created)) AS avg_days
@@ -74,7 +71,7 @@ function getMetrics() {
   return {
     tasksByCustomer,
     completionVelocity,
-    activeVsDelegated: { active: activeCount, delegated: delegatedCount },
+    statusCounts,
     avgCycleTimeDays: cycleTimeRow?.avg_days ? Math.round(cycleTimeRow.avg_days * 10) / 10 : null,
     avgDelegationTimeDays: delegationTimeRow?.avg_days ? Math.round(delegationTimeRow.avg_days * 10) / 10 : null,
     recentImpacts,

@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Card } from '@/components/ui/card'
-import { fetchMetrics, fetchSettings } from '@/lib/api'
+import { fetchMetrics, fetchSettings, fetchConfig } from '@/lib/api'
 import CustomerDonut from '@/components/charts/CustomerDonut'
 import VelocityBar from '@/components/charts/VelocityBar'
-import StatusGauge from '@/components/charts/StatusGauge'
+
 import MetricCard from '@/components/charts/MetricCard'
 import ReportGenerator from '@/components/ReportGenerator'
 
@@ -14,13 +14,15 @@ import ReportGenerator from '@/components/ReportGenerator'
 export default function AnalyticsDashboard() {
   const [metrics, setMetrics] = useState(null)
   const [settings, setSettings] = useState(null)
+  const [configStatuses, setConfigStatuses] = useState([])
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
     try {
-      const [data, appSettings] = await Promise.all([fetchMetrics(), fetchSettings()])
+      const [data, appSettings, fetchedStatuses] = await Promise.all([fetchMetrics(), fetchSettings(), fetchConfig('statuses')])
       setMetrics(data)
       setSettings(appSettings)
+      setConfigStatuses(fetchedStatuses || [])
     } catch {
       setMetrics(null)
     } finally {
@@ -47,6 +49,30 @@ export default function AnalyticsDashboard() {
   }
 
   const managerMode = !!settings?.manager_mode
+  const inboxMode = !!settings?.inbox_mode
+
+  let totalActiveTasks = 0
+  const parkedTasks = []
+  const orphanedTasks = []
+
+  if (metrics?.statusCounts) {
+    metrics.statusCounts.forEach(st => {
+      const isValidColumn = configStatuses.some(col => col.name === st.status_name)
+      const isSystemColumn = ['inbox', 'delegated', 'active', 'done'].includes(st.status_name)
+      
+      const isOrphaned = !isValidColumn && !isSystemColumn
+      const isInboxParked = st.status_name === 'inbox' && !inboxMode
+      const isManagerParked = st.status_name === 'delegated' && !managerMode
+
+      if (isOrphaned) {
+        orphanedTasks.push(st)
+      } else if (isInboxParked || isManagerParked) {
+        parkedTasks.push(st)
+      } else {
+        totalActiveTasks += st.count
+      }
+    })
+  }
 
   return (
     <div className="w-full flex-1 max-w-[1600px] mx-auto px-4 md:px-6 lg:px-8 py-8 space-y-6">
@@ -54,6 +80,18 @@ export default function AnalyticsDashboard() {
         <h2 className="text-2xl font-bold tracking-tight text-foreground">Insights</h2>
         <ReportGenerator />
       </div>
+
+      {parkedTasks.length > 0 && (
+        <div className="relative w-full rounded-lg border p-4 bg-muted text-muted-foreground border-border mb-6">
+          <div className="text-sm font-medium">Parked Tasks: {parkedTasks.reduce((acc, p) => acc + p.count, 0)} in {parkedTasks.map(p => p.status_name).join(', ')}</div>
+        </div>
+      )}
+
+      {orphanedTasks.length > 0 && (
+        <div className="relative w-full rounded-lg border p-4 border-destructive/50 text-destructive dark:border-destructive mb-6">
+          <div className="text-sm font-medium">Data Anomaly: {orphanedTasks.reduce((acc, o) => acc + o.count, 0)} orphaned tasks detected in deleted columns ({orphanedTasks.map(o => o.status_name).join(', ')})</div>
+        </div>
+      )}
 
       {/* Top row — KPI cards */}
       <div className={`grid grid-cols-2 ${managerMode ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4`}>
@@ -76,7 +114,7 @@ export default function AnalyticsDashboard() {
         )}
         <MetricCard
           label="Active Tasks"
-          value={(metrics.activeVsDelegated.active || 0) + (managerMode ? (metrics.activeVsDelegated.delegated || 0) : 0)}
+          value={totalActiveTasks}
           subtitle="In flight now"
         />
       </div>
@@ -88,14 +126,7 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* Bottom row */}
-      <div className={`grid grid-cols-1 ${managerMode ? 'md:grid-cols-2' : ''} gap-4`}>
-        {managerMode && (
-          <StatusGauge
-            active={metrics.activeVsDelegated.active || 0}
-            delegated={metrics.activeVsDelegated.delegated || 0}
-          />
-        )}
-
+      <div className="grid grid-cols-1 gap-4">
         {/* Recent Wins */}
         <Card className="p-5">
           <h3 className="text-sm font-semibold text-foreground mb-3">Recent Wins</h3>

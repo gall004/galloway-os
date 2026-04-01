@@ -271,7 +271,7 @@ export default function WorkflowSettings() {
       {/* Status Column Management */}
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-foreground">Board Columns</h3>
-        <p className="text-xs text-muted-foreground">Drag to reorder how columns appear on the Priority Board. Done is always last.</p>
+        <p className="text-xs text-muted-foreground">Drag to reorder how customized columns appear on the Priority Board.</p>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={boardColumns.map(s => s.name)} strategy={verticalListSortingStrategy}>
             <Table>
@@ -296,19 +296,6 @@ export default function WorkflowSettings() {
                     handleDeleteClick={handleDeleteClick}
                   />
                 ))}
-                {/* Done row — informational only */}
-                <TableRow className="opacity-50 pointer-events-none">
-                  <TableCell></TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">Done</span>
-                      <ShieldCheck className="h-3.5 w-3.5 text-muted-foreground" title="System locked" />
-                      <Lock className="h-3.5 w-3.5 text-muted-foreground" title="Not renamable" />
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell text-muted-foreground font-mono text-xs">done</TableCell>
-                  <TableCell className="text-right text-xs text-muted-foreground">Always last</TableCell>
-                </TableRow>
               </TableBody>
             </Table>
           </SortableContext>
